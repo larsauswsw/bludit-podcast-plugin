@@ -1,0 +1,16 @@
+{
+  "plugin-data":
+	{
+		"name": "Podcast",
+		"description": "Skeleton for a Podcast feed (RSS) in Bludit."
+	},
+  "Plugin label": "Podcast",
+  "Feed title": "Feed title",
+  "Feed description": "Feed description",
+  "Author": "Author",
+  "Cover image": "Cover image",
+  "Items limit": "Items limit",
+  "Episodes directory": "Episodes directory"
+}
+
+

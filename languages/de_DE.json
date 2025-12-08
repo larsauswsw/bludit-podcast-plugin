@@ -1,0 +1,16 @@
+{
+  "plugin-data":
+	{
+		"name": "Podcast",
+		"description": "Grundgerüst für einen Podcast-Feed (RSS) in Bludit."
+	},
+  "Plugin label": "Podcast",
+  "Feed title": "Feed Titel",
+  "Feed description": "Feed Beschreibung",
+  "Author": "Autor",
+  "Cover image": "Cover-Bild",
+  "Items limit": "Episoden-Limit",
+  "Episodes directory": "Episoden-Ordner"
+}
+
+

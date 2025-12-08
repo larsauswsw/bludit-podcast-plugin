@@ -1,0 +1,13 @@
+{
+  "name": "Podcast",
+  "description": "Grundgerüst für einen Podcast-Feed (RSS) in Bludit.",
+  "author": "Your Name",
+  "email": "you@example.com",
+  "website": "https://example.com",
+  "version": "0.1.0",
+  "releaseDate": "2025-12-08",
+  "license": "MIT",
+  "compatible": "4.0",
+  "notes": "Einfaches Podcast-Plugin Grundgerüst"
+}
+
