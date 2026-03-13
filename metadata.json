@@ -7,7 +7,7 @@
   "version": "0.1.0",
   "releaseDate": "2025-12-08",
   "license": "MIT",
-  "compatible": "4.0",
+  "compatible": "3.0",
   "notes": "Einfaches Podcast-Plugin Grundgerüst"
 }
 
