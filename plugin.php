@@ -16,14 +16,67 @@ class PodcastPlugin extends Plugin
             'episodesDirectory' => 'content/episodes', // relativer Pfad
             'parentPageSlug' => '',        // optional: Elternseite für Episoden-Seiten
             'submissionPageSlug' => '',    // optional: Seite für Frontend-Episodenformular
-            'sidebarRoles' => ''           // kommagetrennte Rollen für Sidebar-Link; leer = alle eingeloggten Nutzer
+            'sidebarRoles' => '',          // kommagetrennte Rollen für Sidebar-Link; leer = alle eingeloggten Nutzer
+            'feedLanguage' => 'de-de',
+            'feedCategory' => 'Technology',
+            'feedExplicit' => 'no',        // yes | no | clean
+            'episodeCategory' => 'Podcast Episoden' // Kategorie für Episoden-Seiten
         ];
     }
 
     // Einstellungen im Admin-Panel
     public function form()
     {
-        $html = '<div class="podcast-ep">';
+        // Prüfe, ob Episoden-Tab aktiv ist
+        $activeTab = $_GET['tab'] ?? 'settings';
+
+        if ($activeTab === 'episodes') {
+            return $this->renderEpisodesTab();
+        }
+
+        // CSS und JavaScript für alle collapsible Elemente
+        $html = '<style>.podcast-ep{border:1px solid #ccc;padding:10px;margin-bottom:10px;} .podcast-ep-head{display:flex;align-items:center;cursor:pointer;gap:8px;} .podcast-ep-head .podcast-title{flex:1;} .podcast-ep-body{margin-top:8px;display:none;} .podcast-ep.open .podcast-ep-body{display:block;} .podcast-toggle{width:20px;text-align:center;} .episode-save-btn{margin-left:auto;}</style>';
+        $html .= '<script>
+            document.addEventListener("DOMContentLoaded", function(){
+                // Alle Elemente standardmäßig einklappen
+                document.querySelectorAll(".podcast-ep").forEach(function(box){
+                    box.classList.remove("open");
+                    var icon = box.querySelector(".podcast-toggle");
+                    if (icon) { icon.textContent = "▼"; }
+                });
+
+                document.querySelectorAll(".podcast-ep-head").forEach(function(head){
+                    head.addEventListener("click", function(){
+                        var box = head.closest(".podcast-ep");
+                        box.classList.toggle("open");
+                        var icon = head.querySelector(".podcast-toggle");
+                        if (icon) { icon.textContent = box.classList.contains("open") ? "▲" : "▼"; }
+                    });
+                });
+
+                // Beim Klick auf einen Episode-Speichern-Button alle anderen episode_slug Felder ausblenden
+                document.querySelectorAll(".episode-save-btn").forEach(function(btn){
+                    btn.addEventListener("click", function(e){
+                        document.querySelectorAll(".episode-slug-field").forEach(function(field){
+                            field.style.display = "none";
+                        });
+                        var episodeBox = this.closest(".podcast-ep");
+                        var slugField = episodeBox.querySelector(".episode-slug-field");
+                        if (slugField) {
+                            slugField.style.display = "block";
+                        }
+                    });
+                });
+            });
+        </script>';
+
+        // Tabs hinzufügen
+        $html .= '<div class="nav-tabs" style="margin-bottom:20px;">';
+        $html .= '<a href="' . HTML_PATH_ADMIN_ROOT . 'configure-plugin/' . $this->className() . '" class="nav-link' . ($activeTab === 'settings' ? ' active' : '') . '">Einstellungen</a>';
+        $html .= '<a href="' . HTML_PATH_ADMIN_ROOT . 'configure-plugin/' . $this->className() . '?tab=episodes" class="nav-link' . ($activeTab === 'episodes' ? ' active' : '') . '">Episoden verwalten</a>';
+        $html .= '</div>';
+
+        $html .= '<div class="podcast-ep">';
         $html .= '<div class="podcast-ep-head"><span class="podcast-title"><strong>Allgemeine Einstellungen</strong></span><span class="podcast-toggle">▼</span></div>';
         $html .= '<div class="podcast-ep-body">';
         $html .= '<label for="feedTitle">Feed Titel</label>';
@@ -54,11 +107,82 @@ class PodcastPlugin extends Plugin
         $html .= '<label for="sidebarRoles">Sidebar-Link: erlaubte Rollen (kommagetrennt)</label>';
         $html .= '<input id="sidebarRoles" name="sidebarRoles" type="text" value="' . $this->xml($this->getValue('sidebarRoles')) . '">';
         $html .= '<small>Z.B. <code>editor,author,contributor</code>. Leer = alle eingeloggten Nutzer sehen den Sidebar-Link.</small>';
+
+        $html .= '<label for="feedLanguage">Feed-Sprache (z. B. de-de, en-us)</label>';
+        $html .= '<input id="feedLanguage" name="feedLanguage" type="text" value="' . $this->xml($this->getValue('feedLanguage')) . '">';
+
+        $html .= '<label for="feedCategory">iTunes-Kategorie</label>';
+        $categories = $this->categoryValues();
+        $html .= '<select id="feedCategory" name="feedCategory">';
+        $currentCat = $this->getValue('feedCategory');
+        foreach ($categories as $value) {
+            $sel = ($currentCat === $value) ? 'selected' : '';
+            $html .= '<option value="' . $this->xml($value) . '" ' . $sel . '>' . $this->xml($this->categoryLabel($value)) . '</option>';
+        }
+        $html .= '</select>';
+
+        $html .= '<label for="feedExplicit">Explicit</label>';
+        $html .= '<select id="feedExplicit" name="feedExplicit">';
+        foreach (['no', 'yes', 'clean'] as $opt) {
+            $sel = ($this->getValue('feedExplicit') === $opt) ? 'selected' : '';
+            $html .= '<option value="' . $opt . '" ' . $sel . '>' . $opt . '</option>';
+        }
+        $html .= '</select>';
+
+        $html .= '<label for="episodeCategory">Episoden-Kategorie (für Bludit-Seiten)</label>';
+        $html .= '<input id="episodeCategory" name="episodeCategory" type="text" value="' . $this->xml($this->getValue('episodeCategory')) . '" placeholder="Podcast Episoden">';
+        $html .= '<small>Diese Kategorie wird automatisch angelegt und allen Episoden-Seiten zugewiesen.</small>';
         $html .= '</div>'; // body
         $html .= '</div>'; // wrapper
 
+        return $html;
+    }
+
+    /**
+     * Rendert den Episoden-Verwaltungs-Tab
+     */
+    private function renderEpisodesTab()
+    {
+        // CSS und JavaScript für alle collapsible Elemente
+        $html = '<style>.podcast-ep{border:1px solid #ccc;padding:10px;margin-bottom:10px;} .podcast-ep-head{display:flex;align-items:center;cursor:pointer;gap:8px;} .podcast-ep-head .podcast-title{flex:1;} .podcast-ep-body{margin-top:8px;display:none;} .podcast-ep.open .podcast-ep-body{display:block;} .podcast-toggle{width:20px;text-align:center;} .episode-save-btn{margin-left:auto;}</style>';
+        $html .= '<script>
+            document.addEventListener("DOMContentLoaded", function(){
+                // Alle Elemente standardmäßig einklappen
+                document.querySelectorAll(".podcast-ep").forEach(function(box){
+                    box.classList.remove("open");
+                    var icon = box.querySelector(".podcast-toggle");
+                    if (icon) { icon.textContent = "▼"; }
+                });
+
+                document.querySelectorAll(".podcast-ep-head").forEach(function(head){
+                    head.addEventListener("click", function(){
+                        var box = head.closest(".podcast-ep");
+                        box.classList.toggle("open");
+                        var icon = head.querySelector(".podcast-toggle");
+                        if (icon) { icon.textContent = box.classList.contains("open") ? "▲" : "▼"; }
+                    });
+                });
+
+                // Beim Klick auf einen Episode-Speichern-Button alle anderen episode_slug Felder ausblenden
+                document.querySelectorAll(".episode-save-btn").forEach(function(btn){
+                    btn.addEventListener("click", function(e){
+                        document.querySelectorAll(".episode-slug-field").forEach(function(field){
+                            field.style.display = "none";
+                        });
+                        var episodeBox = this.closest(".podcast-ep");
+                        var slugField = episodeBox.querySelector(".episode-slug-field");
+                        if (slugField) {
+                            slugField.style.display = "block";
+                        }
+                    });
+                });
+            });
+        </script>';
+
+        // Formular-Start für POST-Requests
+        $html .= '<form method="post" action="' . HTML_PATH_ADMIN_ROOT . '?plugin=podcast-episodes">';
+
         // Einfache Admin-UI zum Anlegen einer Episode (legt eine JSON-Datei an)
-        $html .= '<hr>';
         $html .= '<div class="podcast-new-ep podcast-ep">';
         $html .= '<div class="podcast-ep-head"><span class="podcast-title"><strong>Neue Episode anlegen</strong></span><span class="podcast-toggle">▼</span></div>';
         $html .= '<div class="podcast-ep-body">';
@@ -93,26 +217,15 @@ class PodcastPlugin extends Plugin
             $html .= '<p>Keine Episoden gefunden.</p>';
         } else {
             $html .= '<p>Bearbeite Felder und speichere. Zum Löschen Checkbox markieren. Klick auf den Pfeil klappt die Episode auf/zu.</p>';
-            $html .= '<style>.podcast-ep{border:1px solid #ccc;padding:10px;margin-bottom:10px;} .podcast-ep-head{display:flex;align-items:center;cursor:pointer;gap:8px;} .podcast-ep-head .podcast-title{flex:1;} .podcast-ep-body{margin-top:8px;display:none;} .podcast-ep.open .podcast-ep-body{display:block;} .podcast-toggle{width:20px;text-align:center;}</style>';
-            $html .= '<script>
-                document.addEventListener("DOMContentLoaded", function(){
-                    document.querySelectorAll(".podcast-ep-head").forEach(function(head){
-                        head.addEventListener("click", function(){
-                            var box = head.closest(".podcast-ep");
-                            box.classList.toggle("open");
-                            var icon = head.querySelector(".podcast-toggle");
-                            if (icon) { icon.textContent = box.classList.contains("open") ? "▲" : "▼"; }
-                        });
-                        var icon = head.querySelector(".podcast-toggle");
-                        if (icon) { icon.textContent = "▼"; }
-                    });
-                });
-            </script>';
             foreach ($episodes as $ep) {
                 $slug = $this->xml($ep['_slug']);
                 $html .= '<div class="podcast-ep">';
                 $html .= '<div class="podcast-ep-head"><span class="podcast-title"><strong>' . $this->xml($ep['title'] ?? $slug) . '</strong></span><span class="podcast-toggle">▼</span></div>';
                 $html .= '<div class="podcast-ep-body">';
+
+                // Verstecktes Feld zur Identifikation der Episode
+                $html .= '<input type="hidden" name="episode_slug" value="' . $slug . '" class="episode-slug-field">';
+
                 $html .= '<label>Titel</label>';
                 $html .= '<input name="epEdit[' . $slug . '][title]" type="text" value="' . $this->xml($ep['title'] ?? '') . '">';
 
@@ -128,15 +241,18 @@ class PodcastPlugin extends Plugin
                 $html .= '<label>GUID</label>';
                 $html .= '<input name="epEdit[' . $slug . '][guid]" type="text" value="' . $this->xml($ep['guid'] ?? '') . '">';
 
-                $html .= '<div>';
-                $html .= '<label><input type="checkbox" name="epDelete[]" value="' . $slug . '"> Löschen</label>';
+                $html .= '<div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">';
+                $html .= '<label><input type="checkbox" name="epDelete[' . $slug . ']" value="' . $slug . '"> Löschen</label>';
+                $html .= '<button type="submit" name="episode_save" value="' . $slug . '" class="btn btn-primary episode-save-btn">Episode speichern</button>';
                 $html .= '</div>';
 
                 $html .= '</div>'; // body
                 $html .= '</div>'; // ep
             }
-            $html .= '<button type="submit" class="btn btn-primary">Änderungen speichern</button>';
         }
+
+        // Formular-Ende
+        $html .= '</form>';
 
         return $html;
     }
@@ -147,7 +263,50 @@ class PodcastPlugin extends Plugin
         // Standardverhalten (speichert dbFields)
         parent::post();
 
-        // Löschung
+        // Kategorie automatisch anlegen, falls gesetzt
+        $categoryName = trim($this->getValue('episodeCategory'));
+        if (!empty($categoryName)) {
+            $this->ensureCategoryExists($categoryName);
+        }
+
+        // Tab-Parameter beibehalten nach POST
+        if (isset($_GET['tab']) && $_GET['tab'] === 'episodes') {
+            header('Location: ' . HTML_PATH_ADMIN_ROOT . 'configure-plugin/' . $this->className() . '?tab=episodes');
+            exit;
+        }
+
+        return true;
+    }
+
+    // Admin-Menüpunkt hinzufügen
+    public function adminSidebar()
+    {
+        $html = '<a id="nav-item-podcast-episodes" class="nav-link" href="' . HTML_PATH_ADMIN_ROOT . '?plugin=podcast-episodes">';
+        $html .= '<span class="oi oi-media-play"></span>Episoden verwalten';
+        $html .= '</a>';
+        return $html;
+    }
+
+    // Eigene Admin-Seite für Episoden-Verwaltung
+    public function adminBody()
+    {
+        if (isset($_GET['plugin']) && $_GET['plugin'] === 'podcast-episodes') {
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $this->handleEpisodesPost();
+                header('Location: ' . HTML_PATH_ADMIN_ROOT . '?plugin=podcast-episodes');
+                exit;
+            }
+            return $this->renderEpisodesTab();
+        }
+        return '';
+    }
+
+    /**
+     * Verarbeitet POST-Requests für Episoden-Verwaltung
+     */
+    private function handleEpisodesPost()
+    {
+        // Löschung einzelner Episoden
         if (!empty($_POST['epDelete']) && is_array($_POST['epDelete'])) {
             foreach ($_POST['epDelete'] as $slug) {
                 $slug = $this->slugify($slug);
@@ -159,10 +318,13 @@ class PodcastPlugin extends Plugin
             }
         }
 
-        // Bearbeitung
-        if (!empty($_POST['epEdit']) && is_array($_POST['epEdit'])) {
-            foreach ($_POST['epEdit'] as $slug => $data) {
-                $slug = $this->slugify($slug);
+        // Bearbeitung einzelner Episode (nur wenn spezifischer Button geklickt wurde)
+        if (!empty($_POST['episode_save']) && !empty($_POST['epEdit']) && is_array($_POST['epEdit'])) {
+            $savedSlug = $this->slugify($_POST['episode_save']);
+
+            if (isset($_POST['epEdit'][$savedSlug])) {
+                $data = $_POST['epEdit'][$savedSlug];
+                $slug = $savedSlug;
                 $path = $this->episodePathBySlug($slug);
                 $title = trim($data['title'] ?? '');
                 $audio = trim($data['audioUrl'] ?? '');
@@ -180,7 +342,8 @@ class PodcastPlugin extends Plugin
                     ];
                     $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
                     @file_put_contents($path, $json);
-                    $this->syncEpisodePage($slug, $payload);
+                    // Beim Bearbeiten den Autor nicht überschreiben
+                    $this->syncEpisodePage($slug, $payload, false);
                 }
             }
         }
@@ -209,11 +372,9 @@ class PodcastPlugin extends Plugin
 
                 $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
                 @file_put_contents($targetDir . '/' . $fileName . '.json', $json);
-                $this->syncEpisodePage($fileName, $data);
+                $this->syncEpisodePage($fileName, $data, true);
             }
         }
-
-        return true;
     }
 
     // Feed-Ausgabe (/podcast.xml) + Frontend-Episodenformular verarbeiten
@@ -226,7 +387,7 @@ class PodcastPlugin extends Plugin
             exit;
         }
 
-        // Frontend-Formular: POST von eingeloggten Nicht-Admins verarbeiten
+        // Frontend-Formular: POST von eingeloggten Nutzern verarbeiten
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['podcast_frontend_submit'])) {
             $this->handleFrontendSubmit();
         }
@@ -329,7 +490,7 @@ class PodcastPlugin extends Plugin
 
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         @file_put_contents($targetDir . '/' . $fileName . '.json', $json);
-        $this->syncEpisodePage($fileName, $data);
+        $this->syncEpisodePage($fileName, $data, true);
 
         // Nach dem Speichern zurück zur selben Seite leiten (PRG-Pattern)
         $submissionSlug = trim($this->getValue('submissionPageSlug'));
@@ -490,16 +651,39 @@ class PodcastPlugin extends Plugin
     private function renderFeed()
     {
         $episodes = $this->loadEpisodes();
-        $channelTitle = $this->getValue('feedTitle');
-        $channelDesc = $this->getValue('feedDescription');
-        $channelLink = DOMAIN_BASE; // Basis-URL der Site
+        $channelTitle   = $this->getValue('feedTitle');
+        $channelDesc    = $this->getValue('feedDescription');
+        $channelAuthor  = $this->getValue('author');
+        $channelLink    = DOMAIN_BASE;
+        $channelImage   = $this->getValue('coverImage');
+        $channelLang    = $this->getValue('feedLanguage');
+        $channelCat     = $this->getValue('feedCategory');
+        $channelExplicit = $this->getValue('feedExplicit') ?: 'no';
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>';
-        $xml .= '<rss version="2.0">';
+        $xml .= '<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom">';
         $xml .= '<channel>';
         $xml .= '<title>' . $this->xml($channelTitle) . '</title>';
         $xml .= '<link>' . $this->xml($channelLink) . '</link>';
         $xml .= '<description>' . $this->xml($channelDesc) . '</description>';
+        if (!empty($channelLang)) {
+            $xml .= '<language>' . $this->xml($channelLang) . '</language>';
+        }
+        $xml .= '<atom:link href="' . $this->xml($channelLink . 'podcast.xml') . '" rel="self" type="application/rss+xml" />';
+        if (!empty($channelAuthor)) {
+            $xml .= '<managingEditor>' . $this->xml($channelAuthor) . '</managingEditor>';
+            $xml .= '<itunes:author>' . $this->xml($channelAuthor) . '</itunes:author>';
+            $xml .= '<itunes:owner>';
+            $xml .= '<itunes:name>' . $this->xml($channelAuthor) . '</itunes:name>';
+            $xml .= '</itunes:owner>';
+        }
+        if (!empty($channelImage)) {
+            $xml .= '<itunes:image href="' . $this->xml($channelImage) . '" />';
+        }
+        if (!empty($channelCat)) {
+            $xml .= '<itunes:category text="' . $this->xml($channelCat) . '" />';
+        }
+        $xml .= '<itunes:explicit>' . $this->xml($channelExplicit) . '</itunes:explicit>';
         $xml .= '<lastBuildDate>' . $this->xml(date(DATE_RSS)) . '</lastBuildDate>';
         $xml .= '<generator>Podcast Plugin</generator>';
 
@@ -508,11 +692,17 @@ class PodcastPlugin extends Plugin
             $xml .= '<title>' . $this->xml($item['title'] ?? '') . '</title>';
             if (!empty($item['summary'])) {
                 $xml .= '<description>' . $this->xml($item['summary']) . '</description>';
+                $xml .= '<itunes:summary>' . $this->xml($item['summary']) . '</itunes:summary>';
             }
+            $xml .= '<itunes:explicit>' . $this->xml($channelExplicit) . '</itunes:explicit>';
             if (!empty($item['audioUrl'])) {
                 // length="0" als Fallback – RSS-Spec verlangt das Attribut, Datei-Größe ist serverseitig unbekannt
-                $xml .= '<enclosure url="' . $this->xml($item['audioUrl']) . '" type="audio/mpeg" length="0" />';
+                $xml .= '<enclosure url="' . $this->xml($item['audioUrl']) . '" length="0" type="audio/mpeg" />';
                 $xml .= '<link>' . $this->xml($item['audioUrl']) . '</link>';
+            }
+            $episodeImage = $item['cover'] ?? $channelImage;
+            if (!empty($episodeImage)) {
+                $xml .= '<itunes:image href="' . $this->xml($episodeImage) . '" />';
             }
             if (!empty($item['guid'])) {
                 $xml .= '<guid isPermaLink="false">' . $this->xml($item['guid']) . '</guid>';
@@ -547,7 +737,7 @@ class PodcastPlugin extends Plugin
         return $text ?: 'episode';
     }
 
-    private function syncEpisodePage($slug, $data)
+    private function syncEpisodePage($slug, $data, $setAuthor = true)
     {
         // Legt eine Bludit-Seite für die Episode an oder aktualisiert sie
         global $pages;
@@ -581,17 +771,33 @@ class PodcastPlugin extends Plugin
             $fields['date'] = $data['date'];
         }
 
+        // Kategorie setzen, falls konfiguriert
+        $categoryName = trim($this->getValue('episodeCategory'));
+        if (!empty($categoryName)) {
+            $categoryKey = $this->ensureCategoryExists($categoryName);
+            if ($categoryKey) {
+                $fields['category'] = $categoryKey;
+            }
+        }
+
         // Seite aktualisieren, falls pageKey bekannt; sonst mit Slug anlegen
         $pageKey = $this->loadEpisodePageKey($slug) ?? $slug;
         $fields['key'] = $pageKey;
 
         $edited = false;
         if ($this->pageExists($pageKey)) {
+            // Beim Bearbeiten: Autor-Feld NICHT setzen, damit der ursprüngliche Autor erhalten bleibt
             $edited = (bool) $pages->edit($fields);
         }
 
         if (!$edited) {
-            // Neu anlegen, merkt sich den tatsächlich verwendeten Key (kann bei Kollision abweichen)
+            // Neu anlegen: Autor setzen, falls gewünscht
+            if ($setAuthor) {
+                $currentUser = $this->getCurrentUsername();
+                if (!empty($currentUser)) {
+                    $fields['username'] = $currentUser;
+                }
+            }
             $newKey = $pages->add($fields);
             if (!empty($newKey)) {
                 $pageKey = $newKey;
@@ -647,6 +853,54 @@ class PodcastPlugin extends Plugin
         return $html;
     }
 
+    private function categoryValues()
+    {
+        return [
+            'Arts','Arts > Books','Arts > Design','Arts > Fashion & Beauty','Arts > Food','Arts > Performing Arts','Arts > Visual Arts',
+            'Business','Business > Careers','Business > Entrepreneurship','Business > Investing','Business > Management','Business > Marketing','Business > Non-Profit',
+            'Comedy','Comedy > Comedy Interviews','Comedy > Improv','Comedy > Stand-Up',
+            'Education','Education > Courses','Education > How To','Education > Language Learning','Education > Self-Improvement',
+            'Fiction','Fiction > Comedy Fiction','Fiction > Drama','Fiction > Science Fiction',
+            'Government',
+            'History',
+            'Health & Fitness','Health & Fitness > Alternative Health','Health & Fitness > Fitness','Health & Fitness > Medicine','Health & Fitness > Mental Health','Health & Fitness > Nutrition','Health & Fitness > Sexuality',
+            'Kids & Family','Kids & Family > Education for Kids','Kids & Family > Parenting','Kids & Family > Pets & Animals','Kids & Family > Stories for Kids',
+            'Leisure','Leisure > Animation & Manga','Leisure > Automotive','Leisure > Aviation','Leisure > Crafts','Leisure > Games','Leisure > Hobbies','Leisure > Home & Garden','Leisure > Video Games',
+            'Music','Music > Music Commentary','Music > Music History','Music > Music Interviews',
+            'News','News > Business News','News > Daily News','News > Entertainment News','News > News Commentary','News > Politics','News > Sports News','News > Tech News',
+            'Religion & Spirituality','Religion & Spirituality > Buddhism','Religion & Spirituality > Christianity','Religion & Spirituality > Hinduism','Religion & Spirituality > Islam','Religion & Spirituality > Judaism','Religion & Spirituality > Religion','Religion & Spirituality > Spirituality',
+            'Science','Science > Astronomy','Science > Chemistry','Science > Earth Sciences','Science > Life Sciences','Science > Mathematics','Science > Natural Sciences','Science > Nature','Science > Physics','Science > Social Sciences',
+            'Society & Culture','Society & Culture > Documentary','Society & Culture > Personal Journals','Society & Culture > Philosophy','Society & Culture > Places & Travel','Society & Culture > Relationships',
+            'Sports','Sports > Baseball','Sports > Basketball','Sports > Cricket','Sports > Fantasy Sports','Sports > Football','Sports > Golf','Sports > Hockey','Sports > Rugby','Sports > Running','Sports > Soccer','Sports > Swimming','Sports > Tennis','Sports > Volleyball','Sports > Wilderness','Sports > Wrestling',
+            'Technology',
+            'True Crime',
+            'TV & Film','TV & Film > After Shows','TV & Film > Film History','TV & Film > Film Interviews','TV & Film > Film Reviews','TV & Film > TV Reviews'
+        ];
+    }
+
+    private function categoryLabel($value)
+    {
+        // Übersetzung aus Sprachdatei; Fallback: Originalwert
+        $key = 'cat_' . $this->categoryKey($value);
+        global $L;
+        if (isset($L) && is_object($L)) {
+            $translated = $L->get($key);
+            if ($translated !== $key) {
+                return $translated;
+            }
+        }
+        return $value;
+    }
+
+    private function categoryKey($value)
+    {
+        $k = strtolower($value);
+        $k = str_replace('&', 'and', $k);
+        $k = preg_replace('/[^a-z0-9]+/', '_', $k);
+        $k = trim($k, '_');
+        return $k;
+    }
+
     private function pageExists($key)
     {
         global $pages;
@@ -655,6 +909,15 @@ class PodcastPlugin extends Plugin
         }
         if (method_exists($pages, 'exists')) {
             return (bool) $pages->exists($key);
+        }
+        // Fallback: Versuche die Seite zu laden
+        if (method_exists($pages, 'get')) {
+            try {
+                $page = $pages->get($key);
+                return $page !== false && $page !== null;
+            } catch (Exception $e) {
+                return false;
+            }
         }
         return false;
     }
@@ -694,6 +957,84 @@ class PodcastPlugin extends Plugin
         }
         return !empty($data['pageKey']) ? $data['pageKey'] : null;
     }
+
+    /**
+     * Ermittelt den Benutzernamen des aktuell angemeldeten Benutzers.
+     */
+    private function getCurrentUsername()
+    {
+        global $login;
+
+        if (isset($login) && is_object($login)) {
+            if (method_exists($login, 'username')) {
+                $username = $login->username();
+                if (!empty($username)) {
+                    return $username;
+                }
+            }
+            if (isset($login->username) && !empty($login->username)) {
+                return $login->username;
+            }
+        }
+
+        if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['username'])) {
+            return $_SESSION['username'];
+        }
+
+        return null;
+    }
+
+    /**
+     * Stellt sicher, dass eine Kategorie existiert. Legt sie an, falls sie nicht vorhanden ist.
+     * @return string|null Key der Kategorie oder null bei Fehler
+     */
+    private function ensureCategoryExists($categoryName)
+    {
+        global $categories;
+
+        if (!isset($categories) || !is_object($categories)) {
+            return null;
+        }
+
+        $categoryKey = $this->slugify($categoryName);
+
+        if (method_exists($categories, 'exists') && $categories->exists($categoryKey)) {
+            return $categoryKey;
+        }
+
+        if (method_exists($categories, 'getAll')) {
+            $allCategories = $categories->getAll();
+            if (is_array($allCategories) && isset($allCategories[$categoryKey])) {
+                return $categoryKey;
+            }
+        }
+
+        // Kategorie als JSON-Datei anlegen
+        $categoriesPath = PATH_ROOT . 'bl-content' . DIRECTORY_SEPARATOR . 'categories' . DIRECTORY_SEPARATOR;
+        if (!is_dir($categoriesPath)) {
+            @mkdir($categoriesPath, 0755, true);
+        }
+
+        $categoryFile = $categoriesPath . $categoryKey . '.json';
+        if (is_file($categoryFile)) {
+            return $categoryKey;
+        }
+
+        $categoryData = [
+            'name' => $categoryName,
+            'description' => 'Automatisch angelegt vom Podcast-Plugin',
+            'template' => '',
+            'list' => []
+        ];
+
+        $json = json_encode($categoryData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if (@file_put_contents($categoryFile, $json) !== false) {
+            if (method_exists($categories, 'reload')) {
+                $categories->reload();
+            }
+            return $categoryKey;
+        }
+
+        return null;
+    }
 }
-
-
