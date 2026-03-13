@@ -15,7 +15,8 @@ class PodcastPlugin extends Plugin
             'itemsLimit' => 20,
             'episodesDirectory' => 'content/episodes', // relativer Pfad
             'parentPageSlug' => '',        // optional: Elternseite für Episoden-Seiten
-            'submissionPageSlug' => ''     // optional: Seite für Frontend-Episodenformular
+            'submissionPageSlug' => '',    // optional: Seite für Frontend-Episodenformular
+            'sidebarRoles' => ''           // kommagetrennte Rollen für Sidebar-Link; leer = alle eingeloggten Nutzer
         ];
     }
 
@@ -48,7 +49,11 @@ class PodcastPlugin extends Plugin
 
         $html .= '<label for="submissionPageSlug">Frontend-Formular-Seite (Slug, optional)</label>';
         $html .= '<input id="submissionPageSlug" name="submissionPageSlug" type="text" value="' . $this->xml($this->getValue('submissionPageSlug')) . '">';
-        $html .= '<small>Slug der Bludit-Seite, auf der eingeloggte Nicht-Admins Episoden anlegen k&ouml;nnen.</small>';
+        $html .= '<small>Slug der Bludit-Seite, auf der eingeloggte Nutzer Episoden anlegen k&ouml;nnen.</small>';
+
+        $html .= '<label for="sidebarRoles">Sidebar-Link: erlaubte Rollen (kommagetrennt)</label>';
+        $html .= '<input id="sidebarRoles" name="sidebarRoles" type="text" value="' . $this->xml($this->getValue('sidebarRoles')) . '">';
+        $html .= '<small>Z.B. <code>editor,author,contributor</code>. Leer = alle eingeloggten Nutzer sehen den Sidebar-Link.</small>';
         $html .= '</div>'; // body
         $html .= '</div>'; // wrapper
 
@@ -249,7 +254,36 @@ class PodcastPlugin extends Plugin
         echo $this->renderFrontendForm();
     }
 
-    // Verarbeitet die Frontend-Formular-Submission (eingeloggte Nicht-Admins)
+    // Zeigt einen Sidebar-Link zur Einreichungsseite für erlaubte Rollen
+    public function siteSidebar()
+    {
+        $submissionSlug = trim($this->getValue('submissionPageSlug'));
+        if (empty($submissionSlug)) {
+            return;
+        }
+
+        global $login;
+        if (!isset($login) || !$login->isLogged()) {
+            return;
+        }
+
+        $allowedRoles = trim($this->getValue('sidebarRoles'));
+        if ($allowedRoles !== '') {
+            $roles    = array_map('trim', explode(',', strtolower($allowedRoles)));
+            $userRole = strtolower($login->role());
+            if (!in_array($userRole, $roles, true)) {
+                return;
+            }
+        }
+
+        $url = DOMAIN_BASE . $submissionSlug . '/';
+        echo '<div class="podcast-sidebar-widget">';
+        echo '<h2 class="plugin-label">Podcast</h2>';
+        echo '<ul><li><a href="' . $this->xml($url) . '">Neue Episode einreichen</a></li></ul>';
+        echo '</div>';
+    }
+
+    // Verarbeitet die Frontend-Formular-Submission (eingeloggte Nutzer)
     private function handleFrontendSubmit()
     {
         global $login;
