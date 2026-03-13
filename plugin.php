@@ -14,7 +14,8 @@ class PodcastPlugin extends Plugin
             'coverImage' => '',
             'itemsLimit' => 20,
             'episodesDirectory' => 'content/episodes', // relativer Pfad
-            'parentPageSlug' => '' // optional: Elternseite für Episoden-Seiten
+            'parentPageSlug' => '',        // optional: Elternseite für Episoden-Seiten
+            'submissionPageSlug' => ''     // optional: Seite für Frontend-Episodenformular
         ];
     }
 
@@ -25,25 +26,29 @@ class PodcastPlugin extends Plugin
         $html .= '<div class="podcast-ep-head"><span class="podcast-title"><strong>Allgemeine Einstellungen</strong></span><span class="podcast-toggle">▼</span></div>';
         $html .= '<div class="podcast-ep-body">';
         $html .= '<label for="feedTitle">Feed Titel</label>';
-        $html .= '<input id="feedTitle" name="feedTitle" type="text" value="' . $this->getValue('feedTitle') . '">';
+        $html .= '<input id="feedTitle" name="feedTitle" type="text" value="' . $this->xml($this->getValue('feedTitle')) . '">';
 
         $html .= '<label for="feedDescription">Feed Beschreibung</label>';
-        $html .= '<textarea id="feedDescription" name="feedDescription">' . $this->getValue('feedDescription') . '</textarea>';
+        $html .= '<textarea id="feedDescription" name="feedDescription">' . $this->xml($this->getValue('feedDescription')) . '</textarea>';
 
         $html .= '<label for="author">Autor</label>';
-        $html .= '<input id="author" name="author" type="text" value="' . $this->getValue('author') . '">';
+        $html .= '<input id="author" name="author" type="text" value="' . $this->xml($this->getValue('author')) . '">';
 
         $html .= '<label for="coverImage">Cover-Bild URL</label>';
-        $html .= '<input id="coverImage" name="coverImage" type="text" value="' . $this->getValue('coverImage') . '">';
+        $html .= '<input id="coverImage" name="coverImage" type="text" value="' . $this->xml($this->getValue('coverImage')) . '">';
 
         $html .= '<label for="itemsLimit">Episoden-Limit</label>';
-        $html .= '<input id="itemsLimit" name="itemsLimit" type="number" min="1" value="' . $this->getValue('itemsLimit') . '">';
+        $html .= '<input id="itemsLimit" name="itemsLimit" type="number" min="1" value="' . $this->xml($this->getValue('itemsLimit')) . '">';
 
         $html .= '<label for="episodesDirectory">Episoden-Ordner</label>';
-        $html .= '<input id="episodesDirectory" name="episodesDirectory" type="text" value="' . $this->getValue('episodesDirectory') . '">';
+        $html .= '<input id="episodesDirectory" name="episodesDirectory" type="text" value="' . $this->xml($this->getValue('episodesDirectory')) . '">';
 
         $html .= '<label for="parentPageSlug">Elternseite (Slug, optional)</label>';
-        $html .= '<input id="parentPageSlug" name="parentPageSlug" type="text" value="' . $this->getValue('parentPageSlug') . '">';
+        $html .= '<input id="parentPageSlug" name="parentPageSlug" type="text" value="' . $this->xml($this->getValue('parentPageSlug')) . '">';
+
+        $html .= '<label for="submissionPageSlug">Frontend-Formular-Seite (Slug, optional)</label>';
+        $html .= '<input id="submissionPageSlug" name="submissionPageSlug" type="text" value="' . $this->xml($this->getValue('submissionPageSlug')) . '">';
+        $html .= '<small>Slug der Bludit-Seite, auf der eingeloggte Nicht-Admins Episoden anlegen k&ouml;nnen.</small>';
         $html .= '</div>'; // body
         $html .= '</div>'; // wrapper
 
@@ -206,7 +211,7 @@ class PodcastPlugin extends Plugin
         return true;
     }
 
-    // Platzhalter für die Feed-Ausgabe (z. B. /podcast.xml)
+    // Feed-Ausgabe (/podcast.xml) + Frontend-Episodenformular verarbeiten
     public function beforeAll()
     {
         // Liefert den Podcast-Feed unter /podcast.xml
@@ -215,6 +220,132 @@ class PodcastPlugin extends Plugin
             echo $this->renderFeed();
             exit;
         }
+
+        // Frontend-Formular: POST von eingeloggten Nicht-Admins verarbeiten
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['podcast_frontend_submit'])) {
+            $this->handleFrontendSubmit();
+        }
+    }
+
+    // Zeigt das Frontend-Formular am Ende der konfigurierten Seite an
+    public function siteBodyEnd()
+    {
+        $submissionSlug = trim($this->getValue('submissionPageSlug'));
+        if (empty($submissionSlug)) {
+            return;
+        }
+
+        global $page, $login;
+        if (!isset($login) || !$login->isLogged()) {
+            return;
+        }
+        if (!isset($page) || !is_object($page)) {
+            return;
+        }
+        if ($page->slug() !== $submissionSlug) {
+            return;
+        }
+
+        echo $this->renderFrontendForm();
+    }
+
+    // Verarbeitet die Frontend-Formular-Submission (eingeloggte Nicht-Admins)
+    private function handleFrontendSubmit()
+    {
+        global $login;
+
+        // Nur für eingeloggte Nutzer
+        if (!isset($login) || !$login->isLogged()) {
+            return;
+        }
+
+        // CSRF-Nonce prüfen
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $nonce = $_POST['podcast_nonce'] ?? '';
+        if (empty($_SESSION['podcast_nonce']) || !hash_equals($_SESSION['podcast_nonce'], $nonce)) {
+            return;
+        }
+        unset($_SESSION['podcast_nonce']); // Einmalverwendung
+
+        $title   = trim($_POST['epTitle']   ?? '');
+        $audio   = trim($_POST['epAudio']   ?? '');
+        $date    = trim($_POST['epDate']    ?? '');
+        $summary = trim($_POST['epSummary'] ?? '');
+        $guid    = trim($_POST['epGuid']    ?? '');
+
+        if (!$title || !$audio) {
+            return;
+        }
+
+        $fileName  = $this->slugify($title);
+        $targetDir = $this->episodesPath();
+        if (!is_dir($targetDir)) {
+            @mkdir($targetDir, 0775, true);
+        }
+
+        $data = [
+            'title'    => $title,
+            'audioUrl' => $audio,
+            'date'     => $date ?: date(DATE_ATOM),
+            'summary'  => $summary,
+            'guid'     => $guid ?: md5($title . $audio)
+        ];
+
+        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        @file_put_contents($targetDir . '/' . $fileName . '.json', $json);
+        $this->syncEpisodePage($fileName, $data);
+
+        // Nach dem Speichern zurück zur selben Seite leiten (PRG-Pattern)
+        $submissionSlug = trim($this->getValue('submissionPageSlug'));
+        $redirect = DOMAIN_BASE . $submissionSlug . '/?podcast_saved=1';
+        header('Location: ' . $redirect);
+        exit;
+    }
+
+    // Generiert das HTML-Formular für das Frontend
+    private function renderFrontendForm()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $nonce = bin2hex(random_bytes(16));
+        $_SESSION['podcast_nonce'] = $nonce;
+
+        $saved = !empty($_GET['podcast_saved']);
+
+        $html  = '<div class="podcast-frontend-form">';
+        $html .= '<h2>Neue Episode einreichen</h2>';
+
+        if ($saved) {
+            $html .= '<p style="color:green;font-weight:bold;">Episode wurde gespeichert!</p>';
+        }
+
+        $html .= '<form method="post">';
+        $html .= '<input type="hidden" name="podcast_frontend_submit" value="1">';
+        $html .= '<input type="hidden" name="podcast_nonce" value="' . $this->xml($nonce) . '">';
+
+        $html .= '<label for="fe_epTitle">Titel *</label>';
+        $html .= '<input id="fe_epTitle" name="epTitle" type="text" required>';
+
+        $html .= '<label for="fe_epAudio">Audio-URL (mp3) *</label>';
+        $html .= '<input id="fe_epAudio" name="epAudio" type="url" required>';
+
+        $html .= '<label for="fe_epDate">Datum (leer = jetzt)</label>';
+        $html .= '<input id="fe_epDate" name="epDate" type="text" placeholder="2025-12-08T10:00:00Z">';
+
+        $html .= '<label for="fe_epSummary">Beschreibung</label>';
+        $html .= '<textarea id="fe_epSummary" name="epSummary"></textarea>';
+
+        $html .= '<label for="fe_epGuid">GUID (leer = automatisch)</label>';
+        $html .= '<input id="fe_epGuid" name="epGuid" type="text">';
+
+        $html .= '<button type="submit">Episode speichern</button>';
+        $html .= '</form>';
+        $html .= '</div>';
+
+        return $html;
     }
 
     /**
@@ -345,7 +476,8 @@ class PodcastPlugin extends Plugin
                 $xml .= '<description>' . $this->xml($item['summary']) . '</description>';
             }
             if (!empty($item['audioUrl'])) {
-                $xml .= '<enclosure url="' . $this->xml($item['audioUrl']) . '" type="audio/mpeg" />';
+                // length="0" als Fallback – RSS-Spec verlangt das Attribut, Datei-Größe ist serverseitig unbekannt
+                $xml .= '<enclosure url="' . $this->xml($item['audioUrl']) . '" type="audio/mpeg" length="0" />';
                 $xml .= '<link>' . $this->xml($item['audioUrl']) . '</link>';
             }
             if (!empty($item['guid'])) {
@@ -369,6 +501,12 @@ class PodcastPlugin extends Plugin
 
     private function slugify($text)
     {
+        // Deutsche Umlaute und Sonderzeichen transliterieren
+        $text = str_replace(
+            ['ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü', 'ß'],
+            ['ae', 'oe', 'ue', 'ae', 'oe', 'ue', 'ss'],
+            $text
+        );
         $text = strtolower($text);
         $text = preg_replace('/[^a-z0-9]+/', '-', $text);
         $text = trim($text, '-');
@@ -465,7 +603,8 @@ class PodcastPlugin extends Plugin
                 ]
             ]
         ];
-        $json = json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        // JSON_HEX_TAG verhindert, dass </script> den Script-Block bricht (XSS)
+        $json = json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG);
 
         $html = '';
         $html .= '<div id="' . $this->xml($id) . '"></div>';
