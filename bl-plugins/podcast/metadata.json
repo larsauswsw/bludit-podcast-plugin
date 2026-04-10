@@ -1,0 +1,7 @@
+{
+    "author": "Plugin Author",
+    "version": "1.0.0",
+    "description": "Podcast Plugin: Episodenverwaltung, iTunes-Feed, Datei-Upload",
+    "compatible": "3.0",
+    "notes": ""
+}
