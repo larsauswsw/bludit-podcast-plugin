@@ -215,14 +215,28 @@ class Podcast extends Plugin {
         $requestPath = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 
         // ── AJAX API ─────────────────────────────────────────────────
+        // Detect post_max_size exceeded: PHP empties $_POST but Content-Length > 0
+        $postMaxBytes = $this->parseBytes(ini_get('post_max_size'));
+        $contentLen   = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+        if ($contentLen > $postMaxBytes && $contentLen > 0) {
+            while (ob_get_level() > 0) ob_end_clean();
+            header('Content-Type: application/json; charset=utf-8');
+            $limitMB = round($postMaxBytes / 1024 / 1024, 0);
+            echo json_encode(['error' => 'Upload zu groß: Gesamtgröße überschreitet das Server-Limit von ' . $limitMB . ' MB. Bitte kleinere Dateien wählen oder Audio-URL verwenden.']);
+            exit;
+        }
+
         if (!empty($_POST['podcast_api_action'])) {
             while (ob_get_level() > 0) {
                 ob_end_clean();
             }
+            // Stray PHP warnings/notices would break JSON — suppress output, capture cleanly
+            ob_start();
             header('Content-Type: application/json; charset=utf-8');
             // Login aus Session lesen (funktioniert auch im Frontend-Kontext)
             $loginCheck = new Login();
             if (!$loginCheck->isLogged() || !in_array($loginCheck->role(), ['admin', 'editor'])) {
+                ob_end_clean();
                 echo json_encode(['error' => 'Unauthorized']);
                 exit;
             }
@@ -232,6 +246,7 @@ class Podcast extends Plugin {
             } catch (Throwable $e) {
                 echo json_encode(['error' => $e->getMessage()]);
             }
+            ob_end_flush();
             exit;
         }
 
@@ -763,8 +778,13 @@ class Podcast extends Plugin {
 
         // Episodenbild
         $imageUrl = '';
-        if (!empty($files['image_file']) && $files['image_file']['error'] === UPLOAD_ERR_OK) {
-            $imageUrl = $this->handleUpload('image_file', 'image');
+        if (!empty($files['image_file'])) {
+            $imgErr = $files['image_file']['error'];
+            if ($imgErr === UPLOAD_ERR_OK) {
+                $imageUrl = $this->handleUpload('image_file', 'image');
+            } elseif ($imgErr !== UPLOAD_ERR_NO_FILE) {
+                return ['error' => $this->uploadErrorMessage($imgErr, 'Bild')];
+            }
         }
         if (!$imageUrl && !empty($post['image_url'])) {
             $imageUrl = trim($post['image_url']);
@@ -773,13 +793,18 @@ class Podcast extends Plugin {
         // Audio
         $audioUrl    = '';
         $audioLength = 0;
-        if (!empty($files['audio_file']) && $files['audio_file']['error'] === UPLOAD_ERR_OK) {
-            $audioUrl = $this->handleUpload('audio_file', 'audio');
-            if ($audioUrl) {
-                $localPath = PATH_UPLOADS . 'podcast' . DS . 'audio' . DS . basename($audioUrl);
-                if (file_exists($localPath)) {
-                    $audioLength = (int) filesize($localPath);
+        if (!empty($files['audio_file'])) {
+            $audErr = $files['audio_file']['error'];
+            if ($audErr === UPLOAD_ERR_OK) {
+                $audioUrl = $this->handleUpload('audio_file', 'audio');
+                if ($audioUrl) {
+                    $localPath = PATH_UPLOADS . 'podcast' . DS . 'audio' . DS . basename($audioUrl);
+                    if (file_exists($localPath)) {
+                        $audioLength = (int) filesize($localPath);
+                    }
                 }
+            } elseif ($audErr !== UPLOAD_ERR_NO_FILE) {
+                return ['error' => $this->uploadErrorMessage($audErr, 'Audio')];
             }
         }
         if (!$audioUrl && !empty($post['audio_url'])) {
@@ -848,6 +873,30 @@ class Podcast extends Plugin {
         $this->deleteEpisodeMeta($key);
 
         return ['success' => true];
+    }
+
+    private function parseBytes($val) {
+        $val  = trim($val);
+        $unit = strtolower(substr($val, -1));
+        $num  = (int) $val;
+        switch ($unit) {
+            case 'g': return $num * 1024 * 1024 * 1024;
+            case 'm': return $num * 1024 * 1024;
+            case 'k': return $num * 1024;
+            default:  return $num;
+        }
+    }
+
+    private function uploadErrorMessage($code, $label) {
+        $messages = [
+            UPLOAD_ERR_INI_SIZE   => $label . '-Datei zu groß (Server-Limit: ' . ini_get('upload_max_filesize') . '). Bitte kleinere Datei wählen oder URL verwenden.',
+            UPLOAD_ERR_FORM_SIZE  => $label . '-Datei überschreitet die Formularbegrenzung.',
+            UPLOAD_ERR_PARTIAL    => $label . '-Datei wurde nur teilweise hochgeladen. Bitte erneut versuchen.',
+            UPLOAD_ERR_NO_TMP_DIR => 'Server-Konfigurationsfehler: Kein temporäres Verzeichnis.',
+            UPLOAD_ERR_CANT_WRITE => 'Server-Konfigurationsfehler: Datei konnte nicht geschrieben werden.',
+            UPLOAD_ERR_EXTENSION  => 'Upload durch Server-Konfiguration blockiert.',
+        ];
+        return $messages[$code] ?? $label . '-Upload fehlgeschlagen (Code: ' . $code . ')';
     }
 
     private function handleUpload($fileField, $type) {
