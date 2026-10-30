@@ -42,7 +42,7 @@ aufgerufen, **nachdem** Session, Login und CSRF-Prüfung gelaufen sind.
 
 ## 011 · Upload- und Eingabe-Härtung
 
-Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`handleUpload()`, `handleSaveEpisode()`, Metadaten-Helfer) · Issue: [#12](https://github.com/larsauswsw/bludit-podcast-plugin/issues/12)
+Status: done · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`handleUpload()`, `handleSaveEpisode()`, Metadaten-Helfer) · Issue: [#12](https://github.com/larsauswsw/bludit-podcast-plugin/issues/12)
 
 **Beschreibung**
 
@@ -60,14 +60,21 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`hand
 
 **Akzeptanzkriterien**
 
-- [ ] MIME-Prüfung per `finfo` (Audio: `audio/*`; Bilder: `image/jpeg`, `image/png`).
+- [x] MIME-Prüfung per `finfo` je Endung (`Podcast::UPLOAD_TYPES`; m4a auch
+      `video/mp4`), Bilder zusätzlich per `getimagesize()`; ohne `fileinfo` wird
+      der Upload abgelehnt.
 - [x] Nur `http(s)://`-URLs werden akzeptiert.
-- [ ] Episode/Staffel sind positive Ganzzahlen, Typ ∈ `full|trailer|bonus`,
-      Explicit ∈ `true|false`, Dauer im Format `HH:MM:SS`, `MM:SS` oder Sekunden.
-- [ ] Schreiben der Metadaten mit `LOCK_EX` (bzw. entfällt mit 012).
-- [ ] Upload-Ordner enthalten eine `.htaccess`, die Skriptausführung verbietet;
-      README nennt das Nginx-Äquivalent.
-- [ ] Hochgeladene Dateien bekommen einen zufälligen Namensanteil
+- [x] Episode/Staffel sind Ganzzahlen ab 0, Typ ∈ `full|trailer|bonus`,
+      Explicit als Ja/Nein (gespeichert als bool), Dauer im Format `HH:MM:SS`,
+      `MM:SS` oder Sekunden — beim Speichern geprüft und beim Lesen
+      normalisiert (Werte aus dem Bludit-Editor).
+- [x] ~~Schreiben der Metadaten mit `LOCK_EX`~~ — entfällt mit 012 (Metadaten
+      in Bludits Seiten-Datenbank).
+- [x] Upload-Ordner enthalten eine `.htaccess` (nur FileInfo-Direktiven:
+      `RemoveHandler`, `RewriteRule … [F]` für Skripte/HTML/SVG, `nosniff`) und
+      eine `index.php`; angelegt bei Installation und vor jedem Upload. README
+      nennt das Nginx-Äquivalent.
+- [x] Hochgeladene Dateien bekommen einen zufälligen Namensanteil
       (`bin2hex(random_bytes(8))`), damit Audio unveröffentlichter Episoden nicht
       über den Dateinamen erraten werden kann.
 - [x] Alle Request-Parameter werden auf Typ `string` geprüft; Arrays

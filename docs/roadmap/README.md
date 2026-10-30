@@ -72,7 +72,7 @@ dokumentiert.
 | 008 | Upload-Fehler klar melden statt stumm verwerfen | mittel | S | [#9](https://github.com/larsauswsw/bludit-podcast-plugin/issues/9) |
 | 009 | Datum/Zeitzone im Episodenformular korrigieren | niedrig | S | [#10](https://github.com/larsauswsw/bludit-podcast-plugin/issues/10) |
 | 010 | CSRF-Schutz: Episoden-API in `adminController()` verlagern | hoch | M | [#11](https://github.com/larsauswsw/bludit-podcast-plugin/issues/11) |
-| 011 | Upload- und Eingabe-Härtung | mittel | S | [#12](https://github.com/larsauswsw/bludit-podcast-plugin/issues/12) |
+| 011 | Upload- und Eingabe-Härtung | mittel | S | [#12](https://github.com/larsauswsw/bludit-podcast-plugin/issues/12) ✅ |
 | 012 | Episoden-Metadaten als Bludit Custom Fields speichern | mittel | L | [#13](https://github.com/larsauswsw/bludit-podcast-plugin/issues/13) ✅ |
 | 013 | Feed cachen, HTTP-Caching & Performance | mittel | M | [#14](https://github.com/larsauswsw/bludit-podcast-plugin/issues/14) |
 | 014 | Mehrsprachigkeit der Admin-UI (de_DE/en über `$L`) | mittel | M | [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15) |
@@ -108,7 +108,8 @@ Alle Einträge starten mit `Status: idea` — priorisieren/verwerfen ist bewusst
 der nächste Schritt für dich.
 
 Bereits umgesetzt (`Status: done`): 039 (Sicherheitsfix, #41); 012 Custom Fields
-mit 005 und 006 (behebt S3); 028 lokal gehosteter Player (behebt S4) mit 040 (S8, #45). Teilweise
+mit 005 und 006 (behebt S3); 028 lokal gehosteter Player (behebt S4) mit 040 (S8, #45); 011 Upload-Härtung
+(behebt S5). Teilweise
 vorgezogen: CSRF-Prüfung aus 010, URL-/Typprüfung aus 011, `CLAUDE.md` aus 037.
 
 ## Vorschlag für die Reihenfolge

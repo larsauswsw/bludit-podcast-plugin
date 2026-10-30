@@ -135,7 +135,7 @@ brechen bei Unterordner-Installationen:
 
 - [ ] JS über `$this->includeJS('podcast-admin.js')` bzw. `$this->domainPath()`
       einbinden (inkl. Cache-Busting über `?version=`).
-- [ ] Upload-URLs aus `DOMAIN_UPLOADS` bilden.
+- [x] Upload-URLs aus `DOMAIN_UPLOADS` bilden (mit 011).
 - [ ] Feed über `$this->webhook($feedSlug)` erkennen (wie `bl-plugins/rss`).
 - [ ] API-URL aus `DOMAIN_BASE` bzw. (nach 010) `DOMAIN_ADMIN . 'plugin/podcast'`.
 - [ ] Getestet mit einer Installation unter `/blog/`: Feed, Speichern, Upload
@@ -271,8 +271,8 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`befo
 
 **Akzeptanzkriterien**
 
-- [ ] Größen- und Typfehler liefern eine eigene, verständliche Fehlermeldung
-      (inkl. erlaubter Endungen und Limit).
+- [x] Größen- und Typfehler liefern eine eigene, verständliche Fehlermeldung
+      (inkl. erlaubter Endungen und Limit) — mit 011 umgesetzt.
 - [ ] Die `post_max_size`-Erkennung greift nur für Podcast-API-Requests
       (z. B. Erkennung über URL/Query-Parameter, da `$_POST` dann leer ist),
       antwortet erst nach der Login-Prüfung und behandelt `post_max_size = 0`

@@ -15,8 +15,8 @@ A full-featured podcast management plugin for [Bludit](https://www.bludit.com/) 
 
 ## Requirements
 
-- **Bludit** 3.19 or newer
-- **PHP** 7.4 or newer
+- **Bludit** 3.19 or newer (tested up to 3.22)
+- **PHP** 8.0 or newer (required by Bludit 3.22) with the **fileinfo** extension (enabled by default; needed to check uploaded files)
 - A web server with PHP support (Apache with mod_php or PHP-FPM, Nginx with PHP-FPM)
 
 ---
@@ -79,6 +79,26 @@ Then restart PHP-FPM: `sudo systemctl restart php8.x-fpm`
 upload_max_filesize = 512M
 post_max_size = 520M
 ```
+
+### 5. Upload folder protection
+
+Uploaded files are stored in `bl-content/uploads/podcast/audio/` and `bl-content/uploads/podcast/images/`.
+
+- Every upload is checked by extension **and** by its actual content (PHP `fileinfo`; images additionally via `getimagesize`). Allowed: MP3, M4A, OGG, WAV for audio; JPG, PNG for images. SVG and HTML are never accepted.
+- File names get a random part (e.g. `episode-1-3f9c0a7b12de4e5f.mp3`), so files of unpublished episodes cannot be guessed. Files uploaded with earlier versions keep their names.
+- The plugin places an `index.php` (no directory listing) and an `.htaccess` in each upload folder. On **Apache** the `.htaccess` blocks scripts and HTML/SVG files and sends `X-Content-Type-Options: nosniff`.
+- On **Nginx**, `.htaccess` files are ignored. Add an equivalent rule to your server block:
+
+```nginx
+location ^~ /bl-content/uploads/podcast/ {
+    add_header X-Content-Type-Options "nosniff" always;
+    location ~* \.(?:php\d*|phtml|phar|pht|phps|pl|py|cgi|sh|shtml|html?|svgz?|xml)$ {
+        deny all;
+    }
+}
+```
+
+(Adjust the path if Bludit runs in a subdirectory.)
 
 ---
 
