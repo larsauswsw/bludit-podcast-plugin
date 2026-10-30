@@ -54,8 +54,9 @@ API-Abgleich: `docs/review/2026-10-30-code-review.md`.
 - Podlove Web Player liegt lokal in `bl-plugins/podcast/player/`
   (`Podcast::PODLOVE_VERSION`, Herkunft und Prüfsummen in `player/SOURCE.md`).
   Aktualisieren nur über `scripts/update-podlove-player.sh`; keine
-  HTML-Seiten aus dem Paket (z. B. `share.html`) übernehmen. Daten an den
-  Player wie jede andere Ausgabe kontextgerecht escapen (Regel 4).
+  HTML-Seiten aus dem Paket (z. B. `share.html`) übernehmen. Der Player rendert
+  `summary` per `innerHTML` — nur HTML-escapten Text übergeben; Entities nie
+  nach `strip_tags()` dekodieren (Regel 4).
 
 ## Sicherheitsregeln (verbindlich für jede Änderung)
 
