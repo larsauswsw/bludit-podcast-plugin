@@ -163,11 +163,11 @@ Podcast-Apps laden die Episode doppelt. Bludit vergibt pro Seite eine stabile
 
 **Akzeptanzkriterien**
 
-- [ ] Metadaten werden nach `$page->uuid()` indiziert; bestehende Einträge werden
-      beim ersten Laden migriert.
-- [ ] Die GUID wird beim Anlegen einmalig festgelegt und in den Metadaten
-      gespeichert; für bestehende Episoden wird der bisherige Key als GUID
-      übernommen (keine Duplikate in Podcast-Apps).
+- [ ] Metadaten werden nach `$page->uuid()` indiziert; Einträge aus eigenen
+      Testinstallationen werden beim ersten Laden übernommen.
+- [ ] Die GUID ist die Seiten-UUID und wird beim Anlegen in den Metadaten
+      festgehalten. Da noch kein Feed veröffentlicht ist, braucht es keinen
+      Übergang für bestehende Abonnenten.
 - [ ] Slug-Änderung im Bludit-Editor: Episode bleibt im Feed, GUID bleibt gleich.
 
 **Betroffene Dateien**
@@ -196,7 +196,8 @@ Achtung: `Plugin::uninstall()` löscht den Workspace beim Deaktivieren.
 
 - [ ] Metadaten liegen in `bl-content/` (Workspace), `metadata/episodes.json`
       wird aus dem Repo entfernt und ignoriert.
-- [ ] Beim ersten Start wird eine vorhandene alte Datei automatisch übernommen.
+- [ ] Eine vorhandene alte Datei (eigene Testinstallation) wird beim ersten
+      Start übernommen.
 - [ ] `uninstall()` löscht die Episoden-Metadaten **nicht** (überschreiben,
       dokumentieren), damit Deaktivieren/Reaktivieren keine Daten vernichtet.
 - [ ] README beschreibt den sicheren Update-Weg.

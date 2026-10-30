@@ -31,8 +31,10 @@ dass jedes übergebene Feld in `$site->customFields()` definiert ist.
       Podcast-Felder (bestehende Felder bleiben unverändert) und ruft
       `$pages->setCustomFields()` auf.
 - [ ] Speichern, Feed und Player lesen/schreiben über `custom` bzw. `$page->custom()`.
-- [ ] Einmalige, idempotente Migration aus `episodes.json` (alter Plugin-Ordner
-      und Workspace), danach wird die Datei umbenannt statt gelöscht.
+- [ ] Vorhandene Daten aus `episodes.json` (eigene Testinstallationen) werden
+      einmalig übernommen, danach wird die Datei umbenannt statt gelöscht. Wird
+      012 vor dem 1.0-Release umgesetzt, braucht das Plugin keine dauerhafte
+      Migrationslogik.
 - [ ] Deaktivieren des Plugins löscht keine Episoden-Daten.
 - [ ] README dokumentiert die Felder und die Pflege über den Bludit-Editor.
 

@@ -97,19 +97,23 @@ der nächste Schritt für dich.
 
 ## Vorschlag für die Reihenfolge
 
-1. **1.0.1 – Bugfix-Release** (alles `S`, kein Datenmodell-Umbau):
-   001, 002, 003, 004, 006, 034 — danach liefert der Feed korrekte Titel und
-   Kategorien, Episoden mit mehreren Tags tauchen wieder auf, und ein
-   Plugin-Update löscht keine Metadaten mehr.
-2. **1.1 – Sicherheit & Verzeichnis-Tauglichkeit:** 010, 011, 005, 007, 008,
-   016, 028, 029.
-3. **1.2 – Komfort:** 020, 021, 022, 023, 013, 014, 017.
-4. **2.0 – Bludit-native Datenhaltung:** 012 (Custom Fields) mit Migration;
-   macht 005/006 langfristig überflüssig und öffnet die Episoden für den
-   Bludit-Editor und die Bludit-REST-API.
+Es gibt noch kein veröffentlichtes Release. Alles Folgende fließt in das erste
+Release **1.0**; die Version bleibt bis zur ersten Veröffentlichung `1.0.0`.
 
-**Verwandte Features:** 005 und 006 sind die kleinen, sofort umsetzbaren
-Gegenmittel gegen Datenverlust; 012 ist die saubere Langfristlösung. Wer 012
-direkt angeht, kann 005/006 als Teil der Migration erledigen. 010 (API in
-`adminController()`) löst nebenbei auch den Unterverzeichnis-Teil von 004 für
-die API-URL.
+1. **Pflicht vor dem 1.0-Release** — Fehler, die Feed oder Daten beschädigen,
+   plus Sicherheit: 001, 002, 003, 004, 005, 006, 010, 034. Danach liefert der
+   Feed korrekte Titel und Kategorien, Episoden mit mehreren Tags tauchen auf,
+   und weder Plugin-Update noch Slug-Änderung lassen Episoden verschwinden.
+2. **Für 1.0 empfohlen** — Verzeichnis-Tauglichkeit und Datenschutz:
+   007, 008, 011, 016, 028, 029, 035, 037.
+3. **Nach 1.0 (1.x) – Komfort:** 020, 021, 022, 023, 013, 014, 017, danach der Rest.
+
+**Datenhaltung vor 1.0 entscheiden:** Solange nichts veröffentlicht ist, gibt es
+keine fremden Installationen, deren Daten übernommen werden müssten — ein
+Wechsel auf Bludit Custom Fields (012) ist jetzt so günstig wie nie wieder.
+Entweder 012 direkt vor 1.0 umsetzen (dann entfallen 005/006 als
+Zwischenlösung weitgehend), oder 005/006 als kleine Lösung für 1.0 und 012
+später mit Datenübernahme.
+
+**Verwandte Features:** 010 (API in `adminController()`) löst nebenbei auch den
+Unterverzeichnis-Teil von 004 für die API-URL.

@@ -28,7 +28,8 @@ Status: idea · Priorität: hoch · Aufwand: S · Bereich: `metadata.json`, `plu
 - [ ] `compatible` listet die getesteten Versionen, z. B. `"3.19,3.20,3.21,3.22"`.
 - [ ] `metadata.json` enthält echte Werte für `author`, `email`, `website`,
       `version`, `releaseDate`, `license`.
-- [ ] `init()` setzt nur noch `dbFields`; Version wird nur in `metadata.json` gepflegt.
+- [ ] `init()` setzt nur noch `dbFields`; Version wird nur in `metadata.json` gepflegt
+      und bleibt bis zur ersten Veröffentlichung `1.0.0`.
 - [ ] Mit `error_reporting=E_ALL` unter PHP 8.2+ keine Deprecation-Meldungen.
 - [ ] README: Voraussetzungen „Bludit 3.19+ (getestet bis 3.22), PHP 8.0+“.
 
@@ -139,7 +140,8 @@ Bludit-Plugin-Verzeichnis.
 
 **Akzeptanzkriterien**
 
-- [ ] `CHANGELOG.md` nach „Keep a Changelog“, Version in `metadata.json` synchron.
+- [ ] `CHANGELOG.md` nach „Keep a Changelog“, Version in `metadata.json` synchron;
+      erster Eintrag ist `1.0.0` (erstes Release).
 - [ ] GitHub Action baut bei Tag `v*` ein `podcast-<version>.zip` und hängt es an
       das Release.
 - [ ] README verlinkt auf die Releases als bevorzugten Installationsweg.
