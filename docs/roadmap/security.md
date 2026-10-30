@@ -77,3 +77,45 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`hand
 **Betroffene Dateien**
 
 - `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/README.md`
+
+---
+
+## 039 · Pfad-Manipulation über ungeprüften Seitenschlüssel
+
+Status: done · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`beforeAll()`, `handleSaveEpisode()`) · Issue: [#42](https://github.com/larsauswsw/bludit-podcast-plugin/issues/42)
+
+**Beschreibung**
+
+Gefunden bei der Sicherheitsprüfung am 2026-10-30, behoben in
+[#41](https://github.com/larsauswsw/bludit-podcast-plugin/pull/41) vor dem
+ersten Release.
+
+`handleSaveEpisode()` reichte den Parameter `key` nur HTML-escaped an
+`$pages->edit()` weiter (`plugin.php:770`, `837–843` im Stand `7e71b6f`).
+`Pages::edit()` prüft die Existenz des Schlüssels nicht — das macht erst der
+Helfer `editPage()` — und verschiebt bei geändertem Schlüssel das
+Seitenverzeichnis per `Filesystem::mv(PATH_PAGES . $key, PATH_PAGES . $newKey)`.
+Mit `../` im Schlüssel ließen sich so beliebige vom Webserver beschreibbare
+Dateien verschieben, z. B. `bl-content/databases/site.php`. Fehlt diese Datei,
+leitet Bludits `index.php` auf `install.php` um, und die Website kann von
+jedem neu eingerichtet werden (inkl. neuem Admin-Passwort).
+
+Voraussetzung: angemeldeter Nutzer mit Rolle `editor` oder `admin`. Da das
+CSRF-Token nicht geprüft wurde, reichte auch eine Anfrage von derselben Site
+im Browser eines solchen Nutzers (Cross-Site-Anfragen blockierte das
+`SameSite=Lax`-Cookie).
+
+**Akzeptanzkriterien**
+
+- [x] Bearbeiten nur, wenn `$pages->exists($key)` und die Seite den Tag
+      `podcast` hat; geprüft vor jedem Upload.
+- [x] Speichern über `editPage()`; schlägt es fehl, gibt es eine Fehlermeldung
+      und keine Metadaten-Änderung.
+- [x] CSRF-Token wird für alle API-Aktionen geprüft.
+- [x] Parameter werden nur als String akzeptiert, URLs nur mit `http(s)`.
+- [x] Gegenprobe: Der alte Code reicht `../databases/site.php` auch ohne Token
+      an `$pages->edit()` durch, der neue lehnt ihn ab (Stub-Harness).
+
+**Betroffene Dateien**
+
+- `bl-plugins/podcast/plugin.php`
