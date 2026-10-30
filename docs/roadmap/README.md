@@ -51,7 +51,7 @@ dokumentiert.
 | Datei | Thema | Features |
 |---|---|---|
 | [fixes.md](./fixes.md) | Fehler & Bludit-API-Konformität | 001–009 |
-| [security.md](./security.md) | Sicherheit | 010–011 |
+| [security.md](./security.md) | Sicherheit | 010–011, 039 |
 | [architecture.md](./architecture.md) | Architektur & Datenhaltung | 012–015 |
 | [feed.md](./feed.md) | RSS-Feed & Podcast-Verzeichnisse | 016–019 |
 | [admin-ux.md](./admin-ux.md) | Admin-Oberfläche & Workflow | 020–027 |
@@ -100,9 +100,13 @@ dokumentiert.
 | 036 | Automatisierte Tests & CI | mittel | M | [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37) |
 | 037 | README, Specs & CLAUDE.md aktualisieren | niedrig | S | [#38](https://github.com/larsauswsw/bludit-podcast-plugin/issues/38) |
 | 038 | Release-Prozess: CHANGELOG & ZIP-Paket | niedrig | S | [#39](https://github.com/larsauswsw/bludit-podcast-plugin/issues/39) |
+| 039 | Pfad-Manipulation über ungeprüften Seitenschlüssel | hoch | S | [#42](https://github.com/larsauswsw/bludit-podcast-plugin/issues/42) ✅ |
 
 Alle Einträge starten mit `Status: idea` — priorisieren/verwerfen ist bewusst
 der nächste Schritt für dich.
+
+Bereits umgesetzt (`Status: done`): 039 (Sicherheitsfix, #41). Teilweise
+vorgezogen: CSRF-Prüfung aus 010, URL-/Typprüfung aus 011, `CLAUDE.md` aus 037.
 
 ## Vorschlag für die Reihenfolge
 

@@ -109,3 +109,23 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
 - Upload-Dateinamen werden bereinigt, Kollisionen hochgezählt, Endungen per
   Whitelist begrenzt; Upload-Fehlercodes werden verständlich übersetzt.
 - Feed liefert die wichtigsten iTunes-Elemente und überspringt Episoden ohne Audio.
+
+## Nachtrag: Sicherheitsprüfung (2026-10-30)
+
+Gezielte Prüfung auf Schwachstellen nach dem Review. Seitdem gelten die
+verbindlichen Sicherheitsregeln in [`CLAUDE.md`](../../CLAUDE.md) für jede
+Änderung. Geprüft wurde wieder gegen den Kernel-Code von Bludit 3.22.0; S1
+wurde zusätzlich mit einem Stub-Harness gegen alten und neuen Code geprüft.
+
+| # | Schwere | Befund | Stand |
+|---|---|---|---|
+| S1 | kritisch | Ungeprüfter Seitenschlüssel beim Speichern → `Pages::edit()` verschiebt Dateien außerhalb von `bl-content/pages/` (z. B. `databases/site.php` → Bludit startet den Installer → Übernahme der Website). Benötigt Rolle `editor`/`admin`. | **behoben** in #41 (039, #42) |
+| S2 | hoch | CSRF-Token wurde im Frontend-Hook nicht geprüft; nur `SameSite=Lax` schützte. Verstärkte S1. | **behoben** in #41; Umbau auf `adminController()` offen (010) |
+| S3 | mittel | `bl-plugins/podcast/metadata/episodes.json` ist per HTTP abrufbar (Bludits `.htaccess` sperrt nur `bl-content/{databases,workspaces,pages,tmp}`) — Entwürfe und geplante Episoden inkl. Audio-URL einsehbar. | offen (006) |
+| S4 | mittel | Podlove-Skript vom CDN mit wandernder Version `5.x`, ohne SRI, im selben Origin wie der Admin-Bereich. | offen (028) |
+| S5 | niedrig–mittel | Uploads nur per Endung geprüft; vorhersagbare Dateinamen (Audio unveröffentlichter Episoden erratbar). | offen (011); URL-Schema-Prüfung in #41 erledigt |
+| S6 | niedrig | Server-Pfade in Fehlermeldungen, Fatal Error bei Array-Parametern; `post_max_size`-Antwort auch für Nicht-Angemeldete, bei `post_max_size = 0` werden alle Frontend-POSTs abgewiesen. | Pfade/Arrays **behoben** in #41; Rest offen (008) |
+| S7 | vorbeugend | Geplante `HEAD`-Requests auf externe Audio-URLs brauchen SSRF-Schutz. | als Kriterium in 016/021 |
+
+Nicht als Schwachstelle gewertet: Rollen `admin`/`editor` dürfen in Bludit
+HTML/JavaScript in Seiteninhalte schreiben (Bludit-Verhalten).
