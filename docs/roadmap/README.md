@@ -55,7 +55,7 @@ dokumentiert.
 | [architecture.md](./architecture.md) | Architektur & Datenhaltung | 012–015 |
 | [feed.md](./feed.md) | RSS-Feed & Podcast-Verzeichnisse | 016–019 |
 | [admin-ux.md](./admin-ux.md) | Admin-Oberfläche & Workflow | 020–027 |
-| [frontend.md](./frontend.md) | Frontend & Player | 028–033 |
+| [frontend.md](./frontend.md) | Frontend & Player | 028–033, 041 |
 | [polish-and-debt.md](./polish-and-debt.md) | Sonstiges & technische Schulden | 034–038 |
 
 ## Alle Features im Überblick
@@ -102,6 +102,7 @@ dokumentiert.
 | 038 | Release-Prozess: CHANGELOG & ZIP-Paket | niedrig | S | [#39](https://github.com/larsauswsw/bludit-podcast-plugin/issues/39) |
 | 039 | Pfad-Manipulation über ungeprüften Seitenschlüssel | hoch | S | [#42](https://github.com/larsauswsw/bludit-podcast-plugin/issues/42) ✅ |
 | 040 | Episodenbeschreibung im Player als HTML ausgeführt | mittel | S | [#46](https://github.com/larsauswsw/bludit-podcast-plugin/issues/46) ✅ |
+| 041 | Podlove Subscribe Button frei platzieren | mittel | M | [#48](https://github.com/larsauswsw/bludit-podcast-plugin/issues/48) |
 
 Alle Einträge starten mit `Status: idea` — priorisieren/verwerfen ist bewusst
 der nächste Schritt für dich.

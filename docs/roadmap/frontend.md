@@ -171,3 +171,60 @@ gehashte IP + User-Agent, Bots raus), ohne Klar-IP zu speichern.
 **Betroffene Dateien**
 
 - `bl-plugins/podcast/plugin.php`, neue Datei für Statistik-Speicherung im Workspace
+
+---
+
+## 041 · Podlove Subscribe Button frei platzieren
+
+Status: idea · Priorität: mittel · Aufwand: M · Bereich: `plugin.php` (`siteHead()`, Platzhalter bzw. `siteSidebar()`), Einstellungen · Issue: [#48](https://github.com/larsauswsw/bludit-podcast-plugin/issues/48)
+
+**Beschreibung**
+
+Der Abo-Button erscheint bisher nur im Podlove-Player auf Episodenseiten
+(Option `subscribe-button`, sobald eine Feed-URL gesetzt ist). Zusätzlich soll
+der Podlove Subscribe Button eigenständig an einer Stelle der Website stehen
+können — z. B. auf einer Seite „Über den Podcast“, auf der Startseite oder in
+der Sidebar. Er öffnet eine Auswahl gängiger Podcast-Apps und bietet die
+Feed-URL zum Kopieren an.
+
+Das mit 028 mitgelieferte Podlove-Paket enthält den Button bereits lokal:
+`player/5.13.0/button/embed.js` stellt `window.podloveSubscribeButton` bereit
+und lädt seine Skripte, Styles und App-Icons aus `player/5.13.0/button/`. Es
+braucht also keinen neuen Drittanbieter-Code und kein CDN. Die genaue
+Aufruf-Signatur und die Konfiguration (Feed, Client-Liste, Theme) sind bei der
+Umsetzung am Bundle zu prüfen.
+
+**Offene Entscheidung: Position**
+
+1. **Platzhalter im Seiteninhalt** (Vorschlag), z. B. `{{ podcast-subscribe }}`
+   — funktioniert in jedem Theme und auf jeder Seite; Ersetzung beim Rendern
+   (`beforeSiteLoad`, wie in der Bludit-Doku „Plugins and pages“ bzw. dem
+   Core-Plugin „Custom fields parser“).
+2. **Sidebar-Widget** über `siteSidebar` — nur in Themes mit Sidebar (von den
+   Core-Themes ruft nur „blogx“ den Hook auf); passt zu 031.
+3. **Automatisch auf Episodenseiten** unter dem Player (`pageEnd`, siehe 029).
+
+**Akzeptanzkriterien**
+
+- [ ] Position(en) gemäß Entscheidung oben; per Einstellung ein-/ausschaltbar.
+- [ ] Der Button nutzt ausschließlich das lokal mitgelieferte Bundle
+      (`player/`, `Podcast::PODLOVE_VERSION`); `embed.js` des Buttons wird nur
+      auf Seiten geladen, die den Button tatsächlich enthalten.
+- [ ] Feed-URL aus den Kanaleinstellungen (bzw. automatisch nach 017);
+      ohne gültige `http(s)`-Feed-URL wird kein Button ausgegeben.
+- [ ] Optional: Podcast-Titel, Cover und Client-Liste/IDs (z. B. Apple-Podcasts-
+      oder Spotify-Link aus 017) werden an den Button übergeben.
+- [ ] Fallback ohne JavaScript: einfacher Link „Podcast abonnieren“ auf die
+      Feed-URL.
+- [ ] Sicherheit (`CLAUDE.md`): Konfiguration nur aus Plugin-Einstellungen,
+      nicht aus dem Seiteninhalt; Ausgabe per
+      `json_encode(…, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)`;
+      der Platzhalter wird nur als feste Zeichenkette erkannt.
+- [ ] Datenschutz: Beim Seitenaufruf entstehen nur Anfragen an die eigene
+      Domain (im Netzwerk-Tab geprüft); App-Links öffnen erst nach Klick.
+- [ ] Funktioniert auch, wenn auf derselben Seite der Podlove-Player läuft.
+- [ ] README dokumentiert Platzhalter bzw. Widget und die Einstellungen.
+
+**Betroffene Dateien**
+
+- `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/README.md`
