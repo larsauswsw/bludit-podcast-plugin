@@ -65,6 +65,12 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`hand
 - [ ] Schreiben der Metadaten mit `LOCK_EX` (bzw. entfällt mit 012).
 - [ ] Upload-Ordner enthalten eine `.htaccess`, die Skriptausführung verbietet;
       README nennt das Nginx-Äquivalent.
+- [ ] Hochgeladene Dateien bekommen einen zufälligen Namensanteil
+      (`bin2hex(random_bytes(8))`), damit Audio unveröffentlichter Episoden nicht
+      über den Dateinamen erraten werden kann.
+- [ ] Alle Request-Parameter werden auf Typ `string` geprüft; Arrays
+      (`title[]=…`) führen zu einer sauberen Fehlermeldung statt zu einem
+      PHP-Fatal-Error.
 
 **Betroffene Dateien**
 

@@ -27,6 +27,15 @@ Entwickler-Doku (`bludit/documentation-english`).
 - **Als erledigt markieren:** `Status` in der `.md`-Datei auf `done` setzen und das
   zugehörige GitHub Issue schließen.
 
+## Sicherheit als Definition of Done
+
+Ein Feature gilt erst als `done`, wenn der Diff gegen die Sicherheitsregeln in
+[`CLAUDE.md`](../../CLAUDE.md#sicherheitsregeln-verbindlich-für-jede-änderung)
+geprüft ist und keine bekannte Schwachstelle enthält. Wird dabei eine Lücke im
+bestehenden Code gefunden, wird sie im selben Change behoben. Das Repository
+ist öffentlich: Schwachstellen werden erst nach dem Fix mit Details
+dokumentiert.
+
 ## Legende
 
 **Status:** `idea` (Vorschlag, noch nicht bewertet) · `planned` (priorisiert, als Nächstes dran) ·
