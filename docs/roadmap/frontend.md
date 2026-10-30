@@ -17,6 +17,12 @@ Rechtsgrundlage problematisch und muss mindestens in der Datenschutzerklärung
 stehen. Zudem fehlt eine Fallback-Wiedergabe, wenn das CDN blockiert oder nicht
 erreichbar ist.
 
+Sicherheitsaspekt: Das Skript wird mit wandernder Version (`5.x`) und ohne
+Subresource Integrity geladen und läuft im selben Origin wie die Website
+**und** der Admin-Bereich. Ein kompromittiertes oder manipuliertes CDN-Skript
+könnte im Browser eines angemeldeten Admins, der eine Episodenseite öffnet,
+Admin-Aktionen ausführen.
+
 **Akzeptanzkriterien**
 
 - [ ] Einstellung „Player-Quelle“: lokal (Assets im Plugin-Ordner bzw.
@@ -24,6 +30,8 @@ erreichbar ist.
 - [ ] Bei „CDN“ optional 2-Klick-Lösung: Platzhalter mit Hinweis, Player lädt
       erst nach Klick.
 - [ ] `<noscript>`/Fallback: HTML5-`<audio controls>` mit Download-Link.
+- [ ] Standard ist „lokal“; bei „CDN“ wird eine feste Version mit
+      `integrity`- und `crossorigin`-Attribut eingebunden (keine `5.x`-URL).
 - [ ] README enthält einen Hinweistext für die Datenschutzerklärung.
 
 **Betroffene Dateien**

@@ -198,6 +198,9 @@ Achtung: `Plugin::uninstall()` löscht den Workspace beim Deaktivieren.
       wird aus dem Repo entfernt und ignoriert.
 - [ ] Eine vorhandene alte Datei (eigene Testinstallation) wird beim ersten
       Start übernommen.
+- [ ] Der neue Speicherort ist per Webserver nicht abrufbar (Bludits
+      `.htaccess` sperrt `bl-content/workspaces/`); für Nginx steht die nötige
+      Regel im README.
 - [ ] `uninstall()` löscht die Episoden-Metadaten **nicht** (überschreiben,
       dokumentieren), damit Deaktivieren/Reaktivieren keine Daten vernichtet.
 - [ ] README beschreibt den sicheren Update-Weg.
@@ -266,7 +269,9 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`befo
 - [ ] Größen- und Typfehler liefern eine eigene, verständliche Fehlermeldung
       (inkl. erlaubter Endungen und Limit).
 - [ ] Die `post_max_size`-Erkennung greift nur für Podcast-API-Requests
-      (z. B. Erkennung über URL/Query-Parameter, da `$_POST` dann leer ist).
+      (z. B. Erkennung über URL/Query-Parameter, da `$_POST` dann leer ist),
+      antwortet erst nach der Login-Prüfung und behandelt `post_max_size = 0`
+      (unbegrenzt) korrekt — derzeit würde dann jeder Frontend-POST abgewiesen.
 - [ ] Das JS prüft `response.ok`/Content-Type und zeigt bei Nicht-JSON eine
       sinnvolle Meldung.
 - [ ] Das Upload-Limit im Formular zeigt das Minimum aus Plugin-Einstellung,

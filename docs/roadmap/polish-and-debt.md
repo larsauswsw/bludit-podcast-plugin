@@ -89,6 +89,11 @@ Deprecations) wären mit einfachen Checks früh aufgefallen.
 - [ ] Integrationstest: Bludit 3.22 im Container installieren, Plugin aktivieren,
       Episode anlegen, Feed abrufen und gegen das RSS-/iTunes-Schema prüfen.
 - [ ] ESLint für `podcast-admin.js`.
+- [ ] Sicherheitsprüfung in CI: Psalm-Taint-Analyse (`--taint-analysis`) für
+      `plugin.php`, Secret-Scan; ein Fund lässt den Build fehlschlagen.
+- [ ] Sicherheits-Tests für die Regeln aus `CLAUDE.md`: manipulierte
+      Seitenschlüssel, fehlender CSRF-Token, falsche Rolle, Upload mit falschem
+      MIME-Typ, Array-Parameter, SSRF-Ziele (`127.0.0.1`, `169.254.169.254`).
 
 **Betroffene Dateien**
 
@@ -118,8 +123,8 @@ Status: idea · Priorität: niedrig · Aufwand: S · Bereich: `README.md`, `docs
 
 - [ ] README entspricht dem tatsächlichen Verhalten; Google Podcasts entfernt.
 - [ ] Specs mit Hinweis „umgesetzt abweichend: …“ oder aktualisiert.
-- [ ] Neue `CLAUDE.md` mit verifizierter API-Übersicht (siehe
-      `docs/review/2026-10-30-code-review.md`) und Verweis auf diese Roadmap.
+- [x] Neue `CLAUDE.md` mit verifizierter API-Übersicht, Sicherheitsregeln und
+      Verweis auf diese Roadmap (angelegt 2026-10-30).
 
 **Betroffene Dateien**
 

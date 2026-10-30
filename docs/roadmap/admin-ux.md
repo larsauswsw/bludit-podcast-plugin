@@ -45,7 +45,10 @@ ermitteln: im Browser über ein `<audio>`-Element (`loadedmetadata` →
       vorgeschlagen (überschreibbar).
 - [ ] Dauer wird validiert und einheitlich gespeichert.
 - [ ] Bei lokalen Dateien wird `audio_length` immer aus `filesize()` gesetzt,
-      bei externen per `HEAD`-Request.
+      bei externen per `HEAD`-Request — mit demselben SSRF-Schutz wie in 016
+      (gemeinsame Hilfsfunktion).
+- [ ] Serverseitige Analyse (z. B. getID3) läuft nur auf bereits validierten
+      Uploads; die Bibliothek ist in fester, aktueller Version eingebunden.
 
 **Betroffene Dateien**
 

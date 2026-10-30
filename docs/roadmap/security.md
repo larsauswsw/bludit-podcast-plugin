@@ -26,11 +26,13 @@ aufgerufen, **nachdem** Session, Login und CSRF-Prüfung gelaufen sind.
 
 - [ ] Speichern/Löschen/Upload laufen als POST auf `DOMAIN_ADMIN . 'plugin/podcast'`
       und werden in `adminController()` verarbeitet (JSON-Antwort + `exit`).
-- [ ] Ohne gültigen `tokenCSRF` wird nichts geändert (geprüft per manuellem POST).
+- [x] Ohne gültigen `tokenCSRF` wird nichts geändert (vorgezogen: Prüfung per
+      `$security->validateTokenCSRF()` in `beforeAll()`, getestet).
 - [ ] Die Rollenprüfung (`admin`, `editor`) bleibt erhalten, nutzt
       `checkRole(['admin','editor'], false)`.
 - [ ] `beforeAll()` enthält nur noch die Feed-Auslieferung.
-- [ ] Fehlermeldungen geben keine Server-Pfade preis (`plugin.php:947`).
+- [x] Fehlermeldungen geben keine Server-Pfade preis; unerwartete Fehler landen
+      im Bludit-Log.
 
 **Betroffene Dateien**
 
@@ -59,12 +61,18 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`hand
 **Akzeptanzkriterien**
 
 - [ ] MIME-Prüfung per `finfo` (Audio: `audio/*`; Bilder: `image/jpeg`, `image/png`).
-- [ ] Nur `http(s)://`-URLs werden akzeptiert.
+- [x] Nur `http(s)://`-URLs werden akzeptiert.
 - [ ] Episode/Staffel sind positive Ganzzahlen, Typ ∈ `full|trailer|bonus`,
       Explicit ∈ `true|false`, Dauer im Format `HH:MM:SS`, `MM:SS` oder Sekunden.
 - [ ] Schreiben der Metadaten mit `LOCK_EX` (bzw. entfällt mit 012).
 - [ ] Upload-Ordner enthalten eine `.htaccess`, die Skriptausführung verbietet;
       README nennt das Nginx-Äquivalent.
+- [ ] Hochgeladene Dateien bekommen einen zufälligen Namensanteil
+      (`bin2hex(random_bytes(8))`), damit Audio unveröffentlichter Episoden nicht
+      über den Dateinamen erraten werden kann.
+- [x] Alle Request-Parameter werden auf Typ `string` geprüft; Arrays
+      (`title[]=…`) führen zu einer sauberen Fehlermeldung statt zu einem
+      PHP-Fatal-Error.
 
 **Betroffene Dateien**
 

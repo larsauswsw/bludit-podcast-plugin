@@ -38,6 +38,9 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
       `<description>` als Klartext-Kurzfassung; `<itunes:summary>` entfällt.
 - [ ] Bei externer Audio-URL wird die Dateigröße beim Speichern per
       `HEAD`-Request (`Content-Length`) ermittelt, Fehler werden angezeigt.
+      Der Request ist gegen SSRF abgesichert (CLAUDE.md, Sicherheitsregel 8):
+      nur `http`/`https`, keine privaten/Loopback-/Link-Local-Ziele nach
+      DNS-Auflösung, Redirects werden erneut geprüft, kurzer Timeout.
 - [ ] Hinweis/Warnung beim Upload von `wav`/`ogg`.
 - [ ] Feed besteht den Podbase- bzw. Cast-Feed-Validator ohne Fehler.
 
