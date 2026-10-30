@@ -149,7 +149,7 @@ brechen bei Unterordner-Installationen:
 
 ## 005 · Episoden-Metadaten an UUID statt Page-Key binden (Slug-Änderung, GUID)
 
-Status: idea · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (Metadaten-Helfer, `outputFeed()`) · Issue: [#6](https://github.com/larsauswsw/bludit-podcast-plugin/issues/6)
+Status: done · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (Metadaten-Helfer, `outputFeed()`) · Issue: [#6](https://github.com/larsauswsw/bludit-podcast-plugin/issues/6)
 
 **Beschreibung**
 
@@ -163,12 +163,16 @@ Podcast-Apps laden die Episode doppelt. Bludit vergibt pro Seite eine stabile
 
 **Akzeptanzkriterien**
 
-- [ ] Metadaten werden nach `$page->uuid()` indiziert; Einträge aus eigenen
-      Testinstallationen werden beim ersten Laden übernommen.
-- [ ] Die GUID ist die Seiten-UUID und wird beim Anlegen in den Metadaten
-      festgehalten. Da noch kein Feed veröffentlicht ist, braucht es keinen
-      Übergang für bestehende Abonnenten.
-- [ ] Slug-Änderung im Bludit-Editor: Episode bleibt im Feed, GUID bleibt gleich.
+Umgesetzt zusammen mit 012: Die Metadaten liegen als Custom Fields in der Seite
+und wandern bei einer Slug-Änderung automatisch mit — ein eigener Index nach
+UUID ist damit überflüssig.
+
+- [x] ~~Metadaten werden nach `$page->uuid()` indiziert~~ — ersetzt durch Custom
+      Fields (012); Altdaten werden beim ersten Öffnen der Podcast-Seite übernommen.
+- [x] Die GUID im Feed ist die Seiten-UUID (`$page->uuid()`, von Bludit beim
+      Anlegen vergeben und unveränderlich). Da noch kein Feed veröffentlicht ist,
+      braucht es keinen Übergang für bestehende Abonnenten.
+- [x] Slug-Änderung im Bludit-Editor: Episode bleibt im Feed, GUID bleibt gleich.
 
 **Betroffene Dateien**
 
@@ -178,7 +182,7 @@ Podcast-Apps laden die Episode doppelt. Bludit vergibt pro Seite eine stabile
 
 ## 006 · Datenverlust bei Plugin-Update: `episodes.json` aus dem Plugin-Ordner verlagern
 
-Status: idea · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`install()`, `episodesFile()`), Repo · Issue: [#7](https://github.com/larsauswsw/bludit-podcast-plugin/issues/7)
+Status: done · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`install()`, `episodesFile()`), Repo · Issue: [#7](https://github.com/larsauswsw/bludit-podcast-plugin/issues/7)
 
 **Beschreibung**
 
@@ -194,17 +198,18 @@ Achtung: `Plugin::uninstall()` löscht den Workspace beim Deaktivieren.
 
 **Akzeptanzkriterien**
 
-- [ ] Metadaten liegen in `bl-content/` (Workspace), `metadata/episodes.json`
-      wird aus dem Repo entfernt und ignoriert.
-- [ ] Eine vorhandene alte Datei (eigene Testinstallation) wird beim ersten
-      Start übernommen.
-- [ ] Der neue Speicherort ist per Webserver nicht abrufbar (Bludits
-      `.htaccess` sperrt `bl-content/workspaces/`); für Nginx steht die nötige
-      Regel im README.
-- [ ] `uninstall()` löscht die Episoden-Metadaten **nicht** (überschreiben,
-      dokumentieren), damit Deaktivieren/Reaktivieren keine Daten vernichtet.
-- [ ] README beschreibt den sicheren Update-Weg.
-- [ ] Langfristig durch 012 (Custom Fields) ersetzt.
+Umgesetzt zusammen mit 012 (statt Workspace direkt Custom Fields).
+
+- [x] Metadaten liegen in `bl-content/` (Custom Fields in der Seiten-Datenbank),
+      `metadata/episodes.json` ist aus dem Repo entfernt und in `.gitignore`.
+- [x] Eine vorhandene alte Datei (eigene Testinstallation) wird beim ersten
+      Öffnen der Podcast-Seite übernommen und danach gelöscht.
+- [x] Der neue Speicherort ist per Webserver nicht abrufbar: Seiten-Datenbank
+      und Backup sind `.php`-Dateien mit Bludits Schutzzeile — unabhängig von
+      `.htaccess`, also auch unter Nginx.
+- [x] Deaktivieren/Reaktivieren vernichtet keine Daten (sie liegen in den Seiten).
+- [x] README beschreibt den sicheren Update-Weg.
+- [x] Durch 012 (Custom Fields) ersetzt.
 
 **Betroffene Dateien**
 

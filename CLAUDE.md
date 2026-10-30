@@ -5,8 +5,11 @@ Projektkontext für Claude Code in diesem Repository.
 ## Projekt
 
 Podcast-Plugin für das Flat-File-CMS **Bludit** (PHP). Episoden sind
-Bludit-Seiten mit dem Tag `podcast`; das Plugin bietet eine Admin-Oberfläche,
-einen iTunes-kompatiblen RSS-Feed und bindet den Podlove Web Player ein.
+Bludit-Seiten mit dem Tag `podcast`; ihre Metadaten liegen als Bludit Custom
+Fields `podcast_*` in der Seite (Zuordnung: `Podcast::CUSTOM_FIELDS`, Lesen nur
+über `getEpisodeMeta()`, das dekodiert und per `normalizeMeta()` prüft). Das
+Plugin bietet eine Admin-Oberfläche, einen iTunes-kompatiblen RSS-Feed und
+bindet den Podlove Web Player ein.
 
 - Ziel: Bludit **3.19–3.22**, PHP **≥ 8.0** (Bludit 3.22 verlangt 8.0).
 - Code: `bl-plugins/podcast/` (`plugin.php`, `js/podcast-admin.js`,
@@ -35,8 +38,15 @@ API-Abgleich: `docs/review/2026-10-30-code-review.md`.
   HTML-escapten Werten (`Sanitize::html`); Rohwert: `getValue($f, false)`.
 - URLs: `DOMAIN_BASE`, `DOMAIN_UPLOADS`, `$this->domainPath()`,
   `$this->includeJS()`; Routing: `$this->webhook()` — nie `DOMAIN` + Pfad.
-- Plugin-Daten: `$this->workspace()` (per `.htaccess` gesperrt) oder Custom
-  Fields; `Plugin::uninstall()` löscht den Workspace.
+- Plugin-Daten: Custom Fields oder `$this->workspace()` (per `.htaccess`
+  gesperrt; `Plugin::uninstall()` löscht ihn). Dateien im Workspace als `.php`
+  mit Schutzzeile `<?php defined('BLUDIT') or die('Bludit CMS.'); ?>` anlegen.
+- Custom Fields: Definition per `$pages->setCustomFields($json)` +
+  `$site->set(['customFields' => $json])`. `Pages::add/edit` mit `custom`
+  ersetzt **alle** Custom-Werte der Seite und wirft bei undefiniertem Feld
+  (`settype`) — daher immer alle Site-Felder mitgeben (`customFieldArgs()`).
+  `Pages::edit()` ohne `parent` verschiebt Unterseiten an die oberste Ebene;
+  für reine Wertänderungen `$pages->setField()` nutzen.
 - Admin-Seiten: `adminController()`/`adminView()` unter `/admin/plugin/podcast`;
   dort sind Session, Login und CSRF-Prüfung (`99.security.php`) schon gelaufen.
   Im Frontend (`beforeAll()`) wird **kein** CSRF-Token geprüft.
@@ -49,7 +59,8 @@ eine Schwachstelle entdeckt — auch in unverändertem Code —, wird sie gemeld
 und möglichst im selben Change behoben, nicht nur notiert.
 
 1. **Eingaben sind nicht vertrauenswürdig.** Alles aus `$_POST`, `$_GET`,
-   `$_FILES`, `$_SERVER` und `episodes.json` auf Typ prüfen (`is_string`,
+   `$_FILES`, `$_SERVER`, Custom-Field-Werten (auch über den Bludit-Editor
+   änderbar) und Altdaten auf Typ prüfen (`is_string`,
    Arrays ablehnen), Aufzählungen per Whitelist, Zahlen per `filter_var`.
 2. **Keine Benutzereingaben in Dateipfaden.** Seitenschlüssel nur verwenden,
    wenn `$pages->exists($key)` und die Seite eine Podcast-Episode ist.

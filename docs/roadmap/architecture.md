@@ -5,7 +5,7 @@ Siehe [README.md](./README.md) für Status-/Prioritäts-Legende.
 
 ## 012 · Episoden-Metadaten als Bludit Custom Fields speichern
 
-Status: idea · Priorität: mittel · Aufwand: L · Bereich: `plugin.php` (Install, Speichern, Feed, Player), Migration · Issue: [#13](https://github.com/larsauswsw/bludit-podcast-plugin/issues/13)
+Status: done · Priorität: mittel · Aufwand: L · Bereich: `plugin.php` (Install, Speichern, Feed, Player), Migration · Issue: [#13](https://github.com/larsauswsw/bludit-podcast-plugin/issues/13)
 
 **Beschreibung**
 
@@ -27,16 +27,22 @@ dass jedes übergebene Feld in `$site->customFields()` definiert ist.
 
 **Akzeptanzkriterien**
 
-- [ ] `install()` ergänzt die vorhandene Custom-Fields-Definition der Site um die
-      Podcast-Felder (bestehende Felder bleiben unverändert) und ruft
-      `$pages->setCustomFields()` auf.
-- [ ] Speichern, Feed und Player lesen/schreiben über `custom` bzw. `$page->custom()`.
-- [ ] Vorhandene Daten aus `episodes.json` (eigene Testinstallationen) werden
-      einmalig übernommen, danach wird die Datei umbenannt statt gelöscht. Wird
-      012 vor dem 1.0-Release umgesetzt, braucht das Plugin keine dauerhafte
-      Migrationslogik.
-- [ ] Deaktivieren des Plugins löscht keine Episoden-Daten.
-- [ ] README dokumentiert die Felder und die Pflege über den Bludit-Editor.
+- [x] `install()` und `adminController()` ergänzen die vorhandene
+      Custom-Fields-Definition der Site um die acht `podcast_*`-Felder
+      (bestehende Felder bleiben unverändert) und rufen `$pages->setCustomFields()` auf.
+- [x] Speichern, Feed und Player lesen/schreiben über `custom` bzw. `$page->custom()`;
+      beim Lesen werden Werte dekodiert und geprüft (`normalizeMeta()`), da sie
+      auch über den Bludit-Editor kommen können.
+- [x] Vorhandene Daten aus `episodes.json` werden einmalig übernommen. Statt die
+      Datei umzubenennen (sie läge dann weiter öffentlich im Plugin-Ordner), wird
+      sie als geschütztes `.php`-Backup in den Workspace verschoben und gelöscht.
+- [x] Deaktivieren des Plugins löscht keine Episoden-Daten.
+- [x] README dokumentiert die Felder, die Pflege über den Bludit-Editor und den
+      Update-Weg.
+
+Hinweis: Über die Custom Fields kann jeder, der eine Seite im Bludit-Editor
+bearbeiten darf, auch deren Podcast-Felder setzen (bisher nur `admin`/`editor`
+über die Plugin-Oberfläche). Das entspricht Bludits Rollenmodell für Inhalte.
 
 **Betroffene Dateien**
 
