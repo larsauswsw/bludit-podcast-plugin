@@ -137,7 +137,7 @@ brechen bei Unterordner-Installationen:
       einbinden (inkl. Cache-Busting über `?version=`).
 - [x] Upload-URLs aus `DOMAIN_UPLOADS` bilden (mit 011).
 - [ ] Feed über `$this->webhook($feedSlug)` erkennen (wie `bl-plugins/rss`).
-- [ ] API-URL aus `DOMAIN_BASE` bzw. (nach 010) `DOMAIN_ADMIN . 'plugin/podcast'`.
+- [x] API-URL aus `DOMAIN_BASE` (mit S6; nach 010 ggf. `DOMAIN_ADMIN . 'plugin/podcast'`).
 - [ ] Getestet mit einer Installation unter `/blog/`: Feed, Speichern, Upload
       und Player funktionieren.
 
@@ -273,10 +273,11 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`befo
 
 - [x] Größen- und Typfehler liefern eine eigene, verständliche Fehlermeldung
       (inkl. erlaubter Endungen und Limit) — mit 011 umgesetzt.
-- [ ] Die `post_max_size`-Erkennung greift nur für Podcast-API-Requests
+- [x] Die `post_max_size`-Erkennung greift nur für Podcast-API-Requests
       (z. B. Erkennung über URL/Query-Parameter, da `$_POST` dann leer ist),
       antwortet erst nach der Login-Prüfung und behandelt `post_max_size = 0`
-      (unbegrenzt) korrekt — derzeit würde dann jeder Frontend-POST abgewiesen.
+      (unbegrenzt) korrekt (vorher wurde dann jeder Frontend-POST abgewiesen).
+      Umgesetzt mit S6: Kennung `?podcast_api=1` in der API-URL, nur bei POST.
 - [ ] Das JS prüft `response.ok`/Content-Type und zeigt bei Nicht-JSON eine
       sinnvolle Meldung.
 - [ ] Das Upload-Limit im Formular zeigt das Minimum aus Plugin-Einstellung,

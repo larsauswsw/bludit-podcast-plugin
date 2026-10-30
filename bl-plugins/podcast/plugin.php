@@ -104,7 +104,8 @@ class Podcast extends Plugin {
           </div>
 
           <?php
-          $apiUrl = DOMAIN;
+          // Kennung in der URL, damit auch zu große Uploads als API-Anfrage erkannt werden
+          $apiUrl = DOMAIN_BASE . '?podcast_api=1';
           try {
               echo $this->renderEpisodeSection();
               echo $this->renderEpisodeForm($apiUrl);
@@ -115,7 +116,7 @@ class Podcast extends Plugin {
           ?>
         </div>
 
-        <script>var PODCAST_API_URL = <?php echo json_encode($apiUrl) ?>;</script>
+        <script>var PODCAST_API_URL = <?php echo json_encode($apiUrl, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
         <script src="<?php echo DOMAIN ?>/bl-plugins/podcast/js/podcast-admin.js"></script>
         <?php
         return ob_get_clean();
@@ -225,18 +226,12 @@ class Podcast extends Plugin {
         $requestPath = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 
         // ── AJAX API ─────────────────────────────────────────────────
-        // Detect post_max_size exceeded: PHP empties $_POST but Content-Length > 0
-        $postMaxBytes = $this->parseBytes(ini_get('post_max_size'));
-        $contentLen   = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
-        if ($contentLen > $postMaxBytes && $contentLen > 0) {
-            while (ob_get_level() > 0) ob_end_clean();
-            header('Content-Type: application/json; charset=utf-8');
-            $limitMB = round($postMaxBytes / 1024 / 1024, 0);
-            echo json_encode(['error' => 'Upload zu groß: Gesamtgröße überschreitet das Server-Limit von ' . $limitMB . ' MB. Bitte kleinere Dateien wählen oder Audio-URL verwenden.']);
-            exit;
-        }
+        // Erkennung auch über ?podcast_api=1 in der URL: Bei überschrittenem
+        // post_max_size verwirft PHP den POST-Body samt podcast_api_action.
+        $method       = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '';
+        $isApiRequest = $method === 'POST' && (isset($_GET['podcast_api']) || !empty($_POST['podcast_api_action']));
 
-        if (!empty($_POST['podcast_api_action'])) {
+        if ($isApiRequest) {
             while (ob_get_level() > 0) {
                 ob_end_clean();
             }
@@ -248,6 +243,15 @@ class Podcast extends Plugin {
             if (!$loginCheck->isLogged() || !in_array($loginCheck->role(), ['admin', 'editor'], true)) {
                 ob_end_clean();
                 echo json_encode(['error' => 'Unauthorized']);
+                exit;
+            }
+            // post_max_size überschritten: $_POST und $_FILES sind leer (0 = unbegrenzt)
+            $postMaxBytes = $this->parseBytes(ini_get('post_max_size'));
+            $contentLen   = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+            if ($postMaxBytes > 0 && $contentLen > $postMaxBytes) {
+                ob_end_clean();
+                $limitMB = round($postMaxBytes / 1024 / 1024, 0);
+                echo json_encode(['error' => 'Upload zu groß: Gesamtgröße überschreitet das Server-Limit von ' . $limitMB . ' MB. Bitte kleinere Dateien wählen oder Audio-URL verwenden.']);
                 exit;
             }
             // Im Frontend prüft Bludit kein CSRF-Token — daher hier selbst
