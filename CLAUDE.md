@@ -51,6 +51,11 @@ API-Abgleich: `docs/review/2026-10-30-code-review.md`.
   dort sind Session, Login und CSRF-Prüfung (`99.security.php`) schon gelaufen.
   Im Frontend (`beforeAll()`) wird **kein** CSRF-Token geprüft.
 - Player-Position: Hooks `pageBegin`/`pageEnd`.
+- Podlove Web Player liegt lokal in `bl-plugins/podcast/player/`
+  (`Podcast::PODLOVE_VERSION`, Herkunft und Prüfsummen in `player/SOURCE.md`).
+  Aktualisieren nur über `scripts/update-podlove-player.sh`; keine
+  HTML-Seiten aus dem Paket (z. B. `share.html`) übernehmen. Daten an den
+  Player wie jede andere Ausgabe kontextgerecht escapen (Regel 4).
 
 ## Sicherheitsregeln (verbindlich für jede Änderung)
 

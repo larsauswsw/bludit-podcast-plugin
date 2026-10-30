@@ -30,6 +30,7 @@ class Podcast extends Plugin {
             'cover'       => '',
             'explicit'    => 'no',
             'maxUploadMB' => '512',
+            'playerMode'  => 'podlove',
         ];
     }
 
@@ -200,6 +201,13 @@ class Podcast extends Plugin {
                 </select>
             </div>
             <div class="form-group">
+                <label>Player auf Episodenseiten</label>
+                <select class="form-control" name="playerMode">
+                    <option value="podlove" <?php echo $this->playerMode() === 'podlove' ? 'selected' : '' ?>>Podlove Web Player (lokal gehostet, ohne Drittanbieter)</option>
+                    <option value="html5"   <?php echo $this->playerMode() === 'html5'   ? 'selected' : '' ?>>Einfacher HTML5-Player</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label>Max. Upload-Größe (MB)</label>
                 <input type="number" class="form-control" name="maxUploadMB"
                        value="<?php echo (int) ($this->getValue('maxUploadMB') ?: 512) ?>">
@@ -298,8 +306,11 @@ class Podcast extends Plugin {
 
         $meta = $this->getEpisodeMeta($page);
         if (empty($meta['audio_url'])) return;
+        if ($this->playerMode() !== 'podlove') return;
 
-        echo '<script src="https://cdn.podlove.org/web-player/5.x/embed.js"></script>' . "\n";
+        // Lokal ausgelieferter Player (player/SOURCE.md) — keine Verbindung zu einem CDN
+        $src = $this->playerBaseUrl() . 'embed.js?version=' . self::PODLOVE_VERSION;
+        echo '<script src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . '"></script>' . "\n";
     }
 
     public function siteBodyEnd() {
@@ -319,6 +330,10 @@ class Podcast extends Plugin {
         $mime        = $this->audioMimeType($audioExt);
         $duration    = $get('itunes_duration');
         $poster      = $get('itunes_image') ?: $this->getValue('cover');
+        $mode        = $this->playerMode();
+        // Podlove rendert die Beschreibung als HTML — daher als escapten Text übergeben
+        $summary     = trim(html_entity_decode(strip_tags($page->content()), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        $summaryHtml = nl2br(htmlspecialchars($summary, ENT_QUOTES | ENT_HTML5, 'UTF-8'), false);
 
         $episodeConfig = [
             'show' => [
@@ -330,7 +345,7 @@ class Podcast extends Plugin {
             ],
             'title'           => $page->title(),
             'subtitle'        => '',
-            'summary'         => html_entity_decode(strip_tags($page->content()), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            'summary'         => $summaryHtml,
             'publicationDate' => ($ts = strtotime($page->dateRaw())) !== false ? date('c', $ts) : '',
             'duration'        => $duration,
             'poster'          => $poster,
@@ -344,7 +359,8 @@ class Podcast extends Plugin {
             ],
         ];
 
-        $playerConfig = [];
+        // Assets (Layouts, Player-Bundle, Abo-Button) aus dem Plugin-Ordner laden
+        $playerConfig = ['base' => $this->playerBaseUrl()];
         $feedUrl = $this->getValue('feedUrl');
         if ($feedUrl) {
             $playerConfig['subscribe-button'] = ['feed' => $feedUrl];
@@ -355,11 +371,20 @@ class Podcast extends Plugin {
         $playerJson  = json_encode($playerConfig,  $flags);
         if ($episodeJson === false || $playerJson === false) return;
 
+        $audioAttr = htmlspecialchars($audioUrl, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         ?>
-        <div id="podlove-episode-player"></div>
+        <div id="podcast-episode-player">
+          <?php if ($mode === 'podlove'): ?>
+          <div id="podlove-episode-player"></div>
+          <?php endif ?>
+          <div class="podcast-audio-fallback">
+            <audio controls preload="none" src="<?php echo $audioAttr ?>" style="width:100%"></audio>
+            <p><a href="<?php echo $audioAttr ?>" download>Episode herunterladen</a></p>
+          </div>
+        </div>
         <script>
         (function () {
-            var playerDiv = document.getElementById('podlove-episode-player');
+            var playerDiv = document.getElementById('podcast-episode-player');
             var selectors = [
                 'article .post-content',
                 'article .entry-content',
@@ -378,13 +403,21 @@ class Podcast extends Plugin {
             if (container) {
                 container.insertBefore(playerDiv, container.firstChild);
             }
+            <?php if ($mode === 'podlove'): ?>
+            // HTML5-Fallback bleibt sichtbar, bis der Podlove-Player geladen ist
             if (typeof window.podlovePlayer === 'function') {
-                window.podlovePlayer(
+                var fallback = playerDiv.querySelector('.podcast-audio-fallback');
+                Promise.resolve(window.podlovePlayer(
                     '#podlove-episode-player',
                     <?php echo $episodeJson ?>,
                     <?php echo $playerJson ?>
-                );
+                )).then(function () {
+                    if (fallback && fallback.parentNode) {
+                        fallback.parentNode.removeChild(fallback);
+                    }
+                }, function () {});
             }
+            <?php endif ?>
         }());
         </script>
         <?php
@@ -1074,6 +1107,20 @@ class Podcast extends Plugin {
         $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
         $host   = (string) parse_url($url, PHP_URL_HOST);
         return in_array($scheme, ['http', 'https'], true) && $host !== '';
+    }
+
+    // Version des mitgelieferten Podlove Web Players (player/SOURCE.md)
+    private const PODLOVE_VERSION = '5.13.0';
+
+    /**
+     * Gewählter Player; unbekannte Werte fallen auf den lokalen Podlove-Player zurück.
+     */
+    private function playerMode() {
+        return $this->getValue('playerMode') === 'html5' ? 'html5' : 'podlove';
+    }
+
+    private function playerBaseUrl() {
+        return $this->domainPath() . 'player/';
     }
 
     // ═══════════════════════════════════════════════════════════════════
