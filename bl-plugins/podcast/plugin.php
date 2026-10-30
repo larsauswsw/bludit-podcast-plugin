@@ -235,16 +235,28 @@ class Podcast extends Plugin {
             header('Content-Type: application/json; charset=utf-8');
             // Login aus Session lesen (funktioniert auch im Frontend-Kontext)
             $loginCheck = new Login();
-            if (!$loginCheck->isLogged() || !in_array($loginCheck->role(), ['admin', 'editor'])) {
+            if (!$loginCheck->isLogged() || !in_array($loginCheck->role(), ['admin', 'editor'], true)) {
                 ob_end_clean();
                 echo json_encode(['error' => 'Unauthorized']);
                 exit;
             }
-            $action = htmlspecialchars(strip_tags($_POST['podcast_api_action']), ENT_QUOTES, 'UTF-8');
+            // Im Frontend prüft Bludit kein CSRF-Token — daher hier selbst
+            global $security;
+            if (!$security->validateTokenCSRF($this->postString($_POST, 'tokenCSRF'))) {
+                ob_end_clean();
+                Log::set(__METHOD__ . LOG_SEP . 'Invalid tokenCSRF for podcast API request.');
+                echo json_encode(['error' => 'Sicherheits-Token ungültig. Bitte die Seite neu laden.']);
+                exit;
+            }
+            $action = $this->postString($_POST, 'podcast_api_action');
             try {
                 $this->handleApiRequest($action);
-            } catch (Throwable $e) {
+            } catch (RuntimeException $e) {
+                // Eigene, für Nutzer formulierte Fehlermeldungen
                 echo json_encode(['error' => $e->getMessage()]);
+            } catch (Throwable $e) {
+                Log::set(__METHOD__ . LOG_SEP . $e->getMessage());
+                echo json_encode(['error' => 'Interner Fehler. Details stehen im Bludit-Log.']);
             }
             ob_end_flush();
             exit;
@@ -752,28 +764,46 @@ class Podcast extends Plugin {
                 echo json_encode($this->handleSaveEpisode($_POST, $_FILES));
                 break;
             case 'delete_episode':
-                $key = isset($_POST['episode_key']) ? htmlspecialchars(strip_tags($_POST['episode_key']), ENT_QUOTES, 'UTF-8') : '';
-                echo json_encode($this->handleDeleteEpisode($key));
+                echo json_encode($this->handleDeleteEpisode($this->postString($_POST, 'episode_key')));
                 break;
             default:
-                echo json_encode(['error' => 'Unknown action: ' . $action]);
+                echo json_encode(['error' => 'Unbekannte Aktion']);
         }
     }
 
     private function handleSaveEpisode($post, $files = []) {
         global $pages;
 
-        $title   = isset($post['title'])   ? trim(Sanitize::html($post['title']))  : '';
-        $content = isset($post['content']) ? trim($post['content'])                : '';
-        $status  = (isset($post['status']) && $post['status'] === 'draft') ? 'draft' : 'published';
-        $rawDate = isset($post['date'])    ? trim($post['date'])                   : date('Y-m-d\TH:i');
-        $key     = isset($post['key'])     ? trim(Sanitize::html($post['key']))    : '';
+        $title   = trim(Sanitize::html($this->postString($post, 'title')));
+        $content = $this->postString($post, 'content');
+        $status  = $this->postString($post, 'status') === 'draft' ? 'draft' : 'published';
+        $rawDate = $this->postString($post, 'date') ?: date('Y-m-d\TH:i');
+        $key     = $this->postString($post, 'key');
 
         // datetime-local → Bludit-kompatibles Format
         $date = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $rawDate)));
 
         if (!$title) {
             return ['error' => 'Titel ist erforderlich'];
+        }
+
+        // Nur bestehende Podcast-Episoden dürfen bearbeitet werden — vor jedem Upload prüfen
+        if ($key !== '') {
+            if (!$pages->exists($key)) {
+                return ['error' => 'Episode nicht gefunden'];
+            }
+            if (!$this->pageHasPodcastTag(new Page($key))) {
+                return ['error' => 'Seite gehört nicht zum Podcast'];
+            }
+        }
+
+        $imageUrlInput = $this->postString($post, 'image_url');
+        $audioUrlInput = $this->postString($post, 'audio_url');
+        if ($imageUrlInput !== '' && !$this->isHttpUrl($imageUrlInput)) {
+            return ['error' => 'Bild-URL muss mit http:// oder https:// beginnen'];
+        }
+        if ($audioUrlInput !== '' && !$this->isHttpUrl($audioUrlInput)) {
+            return ['error' => 'Audio-URL muss mit http:// oder https:// beginnen'];
         }
 
         // Episodenbild
@@ -786,8 +816,8 @@ class Podcast extends Plugin {
                 return ['error' => $this->uploadErrorMessage($imgErr, 'Bild')];
             }
         }
-        if (!$imageUrl && !empty($post['image_url'])) {
-            $imageUrl = trim($post['image_url']);
+        if (!$imageUrl) {
+            $imageUrl = $imageUrlInput;
         }
 
         // Audio
@@ -807,20 +837,29 @@ class Podcast extends Plugin {
                 return ['error' => $this->uploadErrorMessage($audErr, 'Audio')];
             }
         }
-        if (!$audioUrl && !empty($post['audio_url'])) {
-            $audioUrl = trim($post['audio_url']);
+        if (!$audioUrl) {
+            $audioUrl = $audioUrlInput;
         }
 
         if (!$audioUrl) {
             return ['error' => 'Audio-URL oder -Datei ist erforderlich'];
         }
 
+        $episodeNum = $this->postString($post, 'episode');
+        $seasonNum  = $this->postString($post, 'season');
+        foreach ([$episodeNum, $seasonNum] as $number) {
+            if ($number !== '' && filter_var($number, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
+                return ['error' => 'Episode und Staffel müssen ganze Zahlen ab 0 sein'];
+            }
+        }
+        $type = $this->postString($post, 'type');
+
         $meta = [
-            'itunes_episode'  => isset($post['episode'])  ? Sanitize::html($post['episode'])  : '',
-            'itunes_season'   => isset($post['season'])   ? Sanitize::html($post['season'])   : '',
-            'itunes_type'     => isset($post['type'])     ? Sanitize::html($post['type'])     : 'full',
-            'itunes_explicit' => isset($post['explicit']) ? Sanitize::html($post['explicit']) : 'no',
-            'itunes_duration' => isset($post['duration']) ? Sanitize::html($post['duration']) : '',
+            'itunes_episode'  => $episodeNum,
+            'itunes_season'   => $seasonNum,
+            'itunes_type'     => in_array($type, ['full', 'trailer', 'bonus'], true) ? $type : 'full',
+            'itunes_explicit' => $this->postString($post, 'explicit') === 'yes' ? 'yes' : 'no',
+            'itunes_duration' => Sanitize::html($this->postString($post, 'duration')),
             'itunes_image'    => $imageUrl,
             'audio_url'       => $audioUrl,
             'audio_length'    => (string) $audioLength,
@@ -834,13 +873,15 @@ class Podcast extends Plugin {
             'date'    => $date,
         ];
 
-        if ($key) {
-            // Bestehende Episode bearbeiten
+        if ($key !== '') {
+            // Bestehende Episode bearbeiten (Key wurde oben geprüft)
             $pageArgs['key'] = $key;
-            $newKey = $pages->edit($pageArgs);
-            $saveKey = $newKey ?: $key;
-            $this->setEpisodeMeta($saveKey, $meta);
-            return ['success' => true, 'key' => $saveKey];
+            $newKey = editPage($pageArgs);
+            if (!$newKey) {
+                return ['error' => 'Episode konnte nicht gespeichert werden'];
+            }
+            $this->setEpisodeMeta($newKey, $meta);
+            return ['success' => true, 'key' => $newKey];
         } else {
             // Neue Episode anlegen
             $newKey = $pages->add($pageArgs);
@@ -944,7 +985,8 @@ class Podcast extends Plugin {
         }
 
         if (!move_uploaded_file($file['tmp_name'], $dir . $filename)) {
-            throw new RuntimeException('Upload fehlgeschlagen: Datei konnte nicht gespeichert werden (' . $dir . $filename . ')');
+            Log::set(__METHOD__ . LOG_SEP . 'move_uploaded_file failed: ' . $dir . $filename);
+            throw new RuntimeException('Upload fehlgeschlagen: Datei konnte nicht gespeichert werden.');
         }
 
         return $urlBase . $filename;
@@ -1000,6 +1042,23 @@ class Podcast extends Plugin {
             }
         }
         return false;
+    }
+
+    /**
+     * Liefert einen Request-Parameter als getrimmten String.
+     * Fehlende Werte und Arrays (z. B. title[]=…) ergeben ''.
+     */
+    private function postString(array $post, $field) {
+        return (isset($post[$field]) && is_string($post[$field])) ? trim($post[$field]) : '';
+    }
+
+    /**
+     * Akzeptiert nur absolute http(s)-URLs mit Host.
+     */
+    private function isHttpUrl($url) {
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+        $host   = (string) parse_url($url, PHP_URL_HOST);
+        return in_array($scheme, ['http', 'https'], true) && $host !== '';
     }
 
     private function pluginPath() {
