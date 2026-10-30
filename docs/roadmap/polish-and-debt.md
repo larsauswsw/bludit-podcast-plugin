@@ -31,7 +31,7 @@ Status: idea · Priorität: hoch · Aufwand: S · Bereich: `metadata.json`, `plu
 - [ ] `init()` setzt nur noch `dbFields`; Version wird nur in `metadata.json` gepflegt
       und bleibt bis zur ersten Veröffentlichung `1.0.0`.
 - [ ] Mit `error_reporting=E_ALL` unter PHP 8.2+ keine Deprecation-Meldungen.
-- [ ] README: Voraussetzungen „Bludit 3.19+ (getestet bis 3.22), PHP 8.0+“.
+- [x] README: Voraussetzungen „Bludit 3.19+ (getestet bis 3.22), PHP 8.0+“ (mit 011).
 
 **Betroffene Dateien**
 

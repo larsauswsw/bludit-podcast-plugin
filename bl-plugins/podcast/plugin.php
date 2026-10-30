@@ -37,21 +37,9 @@ class Podcast extends Plugin {
     public function install($position = 0) {
         parent::install($position);
 
-        // Verzeichnisse anlegen
-        $dirs = [
-            PATH_UPLOADS . 'podcast' . DS,
-            PATH_UPLOADS . 'podcast' . DS . 'audio' . DS,
-            PATH_UPLOADS . 'podcast' . DS . 'images' . DS,
-        ];
-        foreach ($dirs as $dir) {
-            if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
-            }
-            // Directory listing verhindern
-            $guard = $dir . 'index.php';
-            if (!file_exists($guard)) {
-                file_put_contents($guard, '<?php // silence');
-            }
+        // Upload-Verzeichnisse anlegen und absichern
+        foreach (['', 'audio' . DS, 'images' . DS] as $sub) {
+            $this->prepareUploadDir(PATH_UPLOADS . 'podcast' . DS . $sub);
         }
 
         // Episoden-Metadaten liegen als Custom Fields in den Seiten
@@ -859,10 +847,18 @@ class Podcast extends Plugin {
             return ['error' => 'Audio-URL muss mit http:// oder https:// beginnen'];
         }
 
+        $duration = $this->postString($post, 'duration');
+        if ($duration !== '' && !$this->isValidDuration($duration)) {
+            return ['error' => 'Dauer bitte als HH:MM:SS, MM:SS oder in Sekunden angeben'];
+        }
+
         // Episodenbild
         $imageUrl = '';
         if (!empty($files['image_file'])) {
-            $imgErr = $files['image_file']['error'];
+            $imgErr = $files['image_file']['error'] ?? UPLOAD_ERR_NO_FILE;
+            if (!is_int($imgErr)) {
+                return ['error' => 'Ungültiger Bild-Upload'];
+            }
             if ($imgErr === UPLOAD_ERR_OK) {
                 $imageUrl = $this->handleUpload('image_file', 'image');
             } elseif ($imgErr !== UPLOAD_ERR_NO_FILE) {
@@ -877,14 +873,15 @@ class Podcast extends Plugin {
         $audioUrl    = '';
         $audioLength = 0;
         if (!empty($files['audio_file'])) {
-            $audErr = $files['audio_file']['error'];
+            $audErr = $files['audio_file']['error'] ?? UPLOAD_ERR_NO_FILE;
+            if (!is_int($audErr)) {
+                return ['error' => 'Ungültiger Audio-Upload'];
+            }
             if ($audErr === UPLOAD_ERR_OK) {
                 $audioUrl = $this->handleUpload('audio_file', 'audio');
-                if ($audioUrl) {
-                    $localPath = PATH_UPLOADS . 'podcast' . DS . 'audio' . DS . basename($audioUrl);
-                    if (file_exists($localPath)) {
-                        $audioLength = (int) filesize($localPath);
-                    }
+                $localPath = PATH_UPLOADS . 'podcast' . DS . 'audio' . DS . basename($audioUrl);
+                if ($audioUrl !== '' && is_file($localPath)) {
+                    $audioLength = (int) filesize($localPath);
                 }
             } elseif ($audErr !== UPLOAD_ERR_NO_FILE) {
                 return ['error' => $this->uploadErrorMessage($audErr, 'Audio')];
@@ -912,7 +909,7 @@ class Podcast extends Plugin {
             'itunes_season'   => $seasonNum,
             'itunes_type'     => in_array($type, ['full', 'trailer', 'bonus'], true) ? $type : 'full',
             'itunes_explicit' => $this->postString($post, 'explicit') === 'yes' ? 'yes' : 'no',
-            'itunes_duration' => $this->postString($post, 'duration'),
+            'itunes_duration' => $duration,
             'itunes_image'    => $imageUrl,
             'audio_url'       => $audioUrl,
             'audio_length'    => (string) $audioLength,
@@ -988,56 +985,121 @@ class Podcast extends Plugin {
         return $messages[$code] ?? $label . '-Upload fehlgeschlagen (Code: ' . $code . ')';
     }
 
+    // Erlaubte Upload-Endungen je Typ und die per finfo akzeptierten MIME-Typen
+    private const UPLOAD_TYPES = [
+        'audio' => [
+            'mp3' => ['audio/mpeg'],
+            'm4a' => ['audio/x-m4a', 'audio/mp4', 'video/mp4'],
+            'ogg' => ['audio/ogg', 'application/ogg'],
+            'wav' => ['audio/x-wav', 'audio/wav', 'audio/vnd.wave'],
+        ],
+        'image' => [
+            'jpg'  => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'png'  => ['image/png'],
+        ],
+    ];
+
+    /**
+     * Speichert einen geprüften Upload und liefert seine URL.
+     * Fehler werden als RuntimeException mit Nutzer-Meldung gemeldet.
+     */
     private function handleUpload($fileField, $type) {
         if (!isset($_FILES[$fileField]) || $_FILES[$fileField]['error'] !== UPLOAD_ERR_OK) {
             return '';
         }
 
-        $file     = $_FILES[$fileField];
-        $maxMB    = (int) ($this->getValue('maxUploadMB') ?: 512);
-        $maxBytes = $maxMB * 1024 * 1024;
+        $file  = $_FILES[$fileField];
+        $label = $type === 'audio' ? 'Audio' : 'Bild';
+        $ext   = $this->validateUpload($file, $type);
 
-        if ($file['size'] > $maxBytes) {
-            return '';
+        $dir = PATH_UPLOADS . 'podcast' . DS . ($type === 'audio' ? 'audio' : 'images') . DS;
+        if (!$this->prepareUploadDir($dir)) {
+            throw new RuntimeException($label . '-Upload fehlgeschlagen: Upload-Ordner nicht beschreibbar.');
         }
 
-        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-        if ($type === 'audio') {
-            $allowed = ['mp3', 'm4a', 'ogg', 'wav'];
-            $dir     = PATH_UPLOADS . 'podcast' . DS . 'audio' . DS;
-            $urlBase = DOMAIN . '/bl-content/uploads/podcast/audio/';
-        } else {
-            $allowed = ['jpg', 'jpeg', 'png'];
-            $dir     = PATH_UPLOADS . 'podcast' . DS . 'images' . DS;
-            $urlBase = DOMAIN . '/bl-content/uploads/podcast/images/';
-        }
-
-        if (!in_array($ext, $allowed)) {
-            return '';
-        }
-
-        // Verzeichnis anlegen falls es nicht existiert
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $baseName = $this->sanitizeFilename(pathinfo($file['name'], PATHINFO_FILENAME));
-        $filename = $baseName . '.' . $ext;
-
-        // Doppelte Dateinamen verhindern
-        $i = 1;
-        while (file_exists($dir . $filename)) {
-            $filename = $baseName . '-' . $i . '.' . $ext;
-            $i++;
-        }
+        // Zufälliger Namensanteil: Dateien unveröffentlichter Episoden sind nicht erratbar
+        $baseName = substr($this->sanitizeFilename(pathinfo($file['name'], PATHINFO_FILENAME)), 0, 80);
+        do {
+            $filename = $baseName . '-' . bin2hex(random_bytes(8)) . '.' . $ext;
+        } while (file_exists($dir . $filename));
 
         if (!move_uploaded_file($file['tmp_name'], $dir . $filename)) {
             Log::set(__METHOD__ . LOG_SEP . 'move_uploaded_file failed: ' . $dir . $filename);
             throw new RuntimeException('Upload fehlgeschlagen: Datei konnte nicht gespeichert werden.');
         }
 
-        return $urlBase . $filename;
+        return DOMAIN_UPLOADS . 'podcast/' . ($type === 'audio' ? 'audio' : 'images') . '/' . $filename;
+    }
+
+    /**
+     * Prüft Größe, Endung und tatsächlichen Inhalt (finfo) eines Uploads.
+     * Liefert die normalisierte Endung oder wirft eine RuntimeException.
+     */
+    private function validateUpload(array $file, $type) {
+        $label   = $type === 'audio' ? 'Audio' : 'Bild';
+        $allowed = self::UPLOAD_TYPES[$type];
+        $maxMB   = (int) ($this->getValue('maxUploadMB') ?: 512);
+
+        if (!is_string($file['name'] ?? null) || !is_string($file['tmp_name'] ?? null) || !is_int($file['size'] ?? null)) {
+            throw new RuntimeException('Ungültiger ' . $label . '-Upload.');
+        }
+        if ($file['size'] > $maxMB * 1024 * 1024) {
+            throw new RuntimeException($label . '-Datei ist größer als ' . $maxMB . ' MB (Einstellung „Max. Upload-Größe“).');
+        }
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!isset($allowed[$ext])) {
+            throw new RuntimeException($label . '-Datei hat eine nicht erlaubte Endung. Erlaubt: ' . implode(', ', array_keys($allowed)) . '.');
+        }
+
+        if (!class_exists('finfo')) {
+            Log::set(__METHOD__ . LOG_SEP . 'PHP extension fileinfo missing, upload rejected.');
+            throw new RuntimeException('Upload nicht möglich: Die PHP-Erweiterung „fileinfo“ fehlt auf dem Server.');
+        }
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+        $isImage = $type !== 'image' || in_array(@getimagesize($file['tmp_name'])[2] ?? null, [IMAGETYPE_JPEG, IMAGETYPE_PNG], true);
+        if (!in_array($mime, $allowed[$ext], true) || !$isImage) {
+            Log::set(__METHOD__ . LOG_SEP . 'Rejected upload, extension ' . $ext . ', detected ' . $mime);
+            throw new RuntimeException($label . '-Datei passt inhaltlich nicht zur Endung .' . $ext . '.');
+        }
+
+        return $ext;
+    }
+
+    /**
+     * Legt ein Upload-Verzeichnis an und sichert es ab: index.php gegen
+     * Directory-Listing, .htaccess gegen Skriptausführung (Apache).
+     * Vorhandene Dateien werden nicht überschrieben.
+     */
+    private function prepareUploadDir($dir) {
+        if (!is_dir($dir) && !mkdir($dir, DIR_PERMISSIONS, true)) {
+            return false;
+        }
+        $files = [
+            'index.php' => '<?php // silence',
+            '.htaccess' => implode("\n", [
+                '# Podcast-Plugin: keine Skriptausführung im Upload-Ordner',
+                '<IfModule mod_mime.c>',
+                '    RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar .pht .phps',
+                '    RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phar .pht .phps',
+                '</IfModule>',
+                '<IfModule mod_rewrite.c>',
+                '    RewriteEngine On',
+                '    RewriteRule \.(?:php\d*|phtml|phar|pht|phps|pl|py|cgi|sh|shtml|html?|svgz?|xml)$ - [F,NC]',
+                '</IfModule>',
+                '<IfModule mod_headers.c>',
+                '    Header set X-Content-Type-Options "nosniff"',
+                '</IfModule>',
+                '',
+            ]),
+        ];
+        foreach ($files as $name => $content) {
+            if (!file_exists($dir . $name) && file_put_contents($dir . $name, $content, LOCK_EX) === false) {
+                Log::set(__METHOD__ . LOG_SEP . 'Could not write ' . $name . ' in upload directory.');
+            }
+        }
+        return is_writable($dir);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1107,6 +1169,13 @@ class Podcast extends Plugin {
         $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
         $host   = (string) parse_url($url, PHP_URL_HOST);
         return in_array($scheme, ['http', 'https'], true) && $host !== '';
+    }
+
+    /**
+     * Dauer im iTunes-Format: Sekunden, MM:SS oder HH:MM:SS.
+     */
+    private function isValidDuration($value) {
+        return is_string($value) && preg_match('/^(?:\d{1,6}|\d{1,3}:[0-5]\d|\d{1,3}:[0-5]\d:[0-5]\d)$/D', $value) === 1;
     }
 
     // Version des mitgelieferten Podlove Web Players (player/SOURCE.md)
@@ -1221,7 +1290,7 @@ class Podcast extends Plugin {
         return [
             'audio_url'       => $url($value('audio_url')),
             'audio_length'    => $number($value('audio_length')) ?: '0',
-            'itunes_duration' => $value('itunes_duration'),
+            'itunes_duration' => $this->isValidDuration($value('itunes_duration')) ? $value('itunes_duration') : '',
             'itunes_episode'  => $number($value('itunes_episode')),
             'itunes_season'   => $number($value('itunes_season')),
             'itunes_type'     => in_array($type, ['full', 'trailer', 'bonus'], true) ? $type : 'full',

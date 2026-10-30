@@ -50,6 +50,10 @@ API-Abgleich: `docs/review/2026-10-30-code-review.md`.
 - Admin-Seiten: `adminController()`/`adminView()` unter `/admin/plugin/podcast`;
   dort sind Session, Login und CSRF-Prüfung (`99.security.php`) schon gelaufen.
   Im Frontend (`beforeAll()`) wird **kein** CSRF-Token geprüft.
+- Uploads nur über `handleUpload()`: prüft per `validateUpload()` Größe,
+  Endung und Inhalt (`finfo`, `Podcast::UPLOAD_TYPES`), vergibt einen
+  Zufallsnamen und sichert den Ordner per `prepareUploadDir()` (`index.php`,
+  `.htaccess` nur mit FileInfo-Direktiven, sonst droht Fehler 500).
 - Player-Position: Hooks `pageBegin`/`pageEnd`.
 - Podlove Web Player liegt lokal in `bl-plugins/podcast/player/`
   (`Podcast::PODLOVE_VERSION`, Herkunft und Prüfsummen in `player/SOURCE.md`).
