@@ -53,10 +53,9 @@ class Podcast extends Plugin {
             }
         }
 
-        // episodes.json initialisieren
-        $mapFile = $this->pluginPath() . 'metadata' . DS . 'episodes.json';
-        if (!file_exists($mapFile)) {
-            file_put_contents($mapFile, '[]');
+        // Episoden-Metadaten liegen als Custom Fields in den Seiten
+        if ($this->ensureCustomFields()) {
+            $this->migrateLegacyMeta();
         }
     }
 
@@ -72,6 +71,21 @@ class Podcast extends Plugin {
         // URL-Format: /admin/plugin/podcast → Bludit ruft adminView() auf
         $url = HTML_PATH_ADMIN_ROOT . 'plugin/podcast';
         return '<a class="nav-link" href="' . $url . '"><span class="fa fa-microphone"></span> Podcast</a>';
+    }
+
+    /**
+     * Läuft für /admin/plugin/podcast vor adminView(), nur für angemeldete Nutzer.
+     * Richtet nach einem Plugin-Update die Custom Fields ein und übernimmt Altdaten.
+     */
+    public function adminController() {
+        global $login;
+
+        if (!in_array($login->role(), ['admin', 'editor'], true)) {
+            return;
+        }
+        if ($this->ensureCustomFields()) {
+            $this->migrateLegacyMeta();
+        }
     }
 
     /**
@@ -282,7 +296,7 @@ class Podcast extends Plugin {
         if ($url->whereAmI() !== 'page') return;
         if (!$page instanceof Page || !$this->pageHasPodcastTag($page)) return;
 
-        $meta = $this->getEpisodeMeta($page->key());
+        $meta = $this->getEpisodeMeta($page);
         if (empty($meta['audio_url'])) return;
 
         echo '<script src="https://cdn.podlove.org/web-player/5.x/embed.js"></script>' . "\n";
@@ -294,7 +308,7 @@ class Podcast extends Plugin {
         if ($url->whereAmI() !== 'page') return;
         if (!$page instanceof Page || !$this->pageHasPodcastTag($page)) return;
 
-        $meta = $this->getEpisodeMeta($page->key());
+        $meta = $this->getEpisodeMeta($page);
         if (empty($meta['audio_url'])) return;
 
         $get = function ($k) use ($meta) { return isset($meta[$k]) ? $meta[$k] : ''; };
@@ -336,7 +350,7 @@ class Podcast extends Plugin {
             $playerConfig['subscribe-button'] = ['feed' => $feedUrl];
         }
 
-        $flags       = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG;
+        $flags       = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
         $episodeJson = json_encode($episodeConfig, $flags);
         $playerJson  = json_encode($playerConfig,  $flags);
         if ($episodeJson === false || $playerJson === false) return;
@@ -449,7 +463,7 @@ class Podcast extends Plugin {
         echo '  <itunes:explicit>' . $explicit . '</itunes:explicit>' . "\n";
 
         foreach ($episodes as $page) {
-            $meta = $this->getEpisodeMeta($page->key());
+            $meta = $this->getEpisodeMeta($page);
             $get  = function ($k) use ($meta) { return isset($meta[$k]) ? $meta[$k] : ''; };
 
             $audioUrl    = $get('audio_url');
@@ -463,7 +477,7 @@ class Podcast extends Plugin {
             $epDesc     = htmlspecialchars(strip_tags($page->content()),                          ENT_XML1, 'UTF-8');
             $epLink     = htmlspecialchars($page->permalink(),                                    ENT_XML1, 'UTF-8');
             $epAudioUrl = htmlspecialchars($audioUrl,                                             ENT_XML1, 'UTF-8');
-            $epGuid     = htmlspecialchars($page->key(),                                          ENT_XML1, 'UTF-8');
+            $epGuid     = htmlspecialchars($page->uuid(),                                         ENT_XML1, 'UTF-8');
             $epDate     = $page->date('r');
             $epNum      = htmlspecialchars($get('itunes_episode'),                                ENT_XML1, 'UTF-8');
             $epSeason   = htmlspecialchars($get('itunes_season'),                                 ENT_XML1, 'UTF-8');
@@ -579,7 +593,7 @@ class Podcast extends Plugin {
                 </thead>
                 <tbody>
                   <?php foreach ($episodes as $ep):
-                      $meta = $this->getEpisodeMeta($ep->key());
+                      $meta = $this->getEpisodeMeta($ep);
                       $get  = function ($k) use ($meta) { return isset($meta[$k]) ? $meta[$k] : ''; };
                   ?>
                   <tr>
@@ -788,13 +802,19 @@ class Podcast extends Plugin {
         }
 
         // Nur bestehende Podcast-Episoden dürfen bearbeitet werden — vor jedem Upload prüfen
+        $page = null;
         if ($key !== '') {
             if (!$pages->exists($key)) {
                 return ['error' => 'Episode nicht gefunden'];
             }
-            if (!$this->pageHasPodcastTag(new Page($key))) {
+            $page = new Page($key);
+            if (!$this->pageHasPodcastTag($page)) {
                 return ['error' => 'Seite gehört nicht zum Podcast'];
             }
+        }
+
+        if (!$this->ensureCustomFields()) {
+            return ['error' => 'Podcast-Felder konnten nicht eingerichtet werden. Details stehen im Bludit-Log.'];
         }
 
         $imageUrlInput = $this->postString($post, 'image_url');
@@ -859,7 +879,7 @@ class Podcast extends Plugin {
             'itunes_season'   => $seasonNum,
             'itunes_type'     => in_array($type, ['full', 'trailer', 'bonus'], true) ? $type : 'full',
             'itunes_explicit' => $this->postString($post, 'explicit') === 'yes' ? 'yes' : 'no',
-            'itunes_duration' => Sanitize::html($this->postString($post, 'duration')),
+            'itunes_duration' => $this->postString($post, 'duration'),
             'itunes_image'    => $imageUrl,
             'audio_url'       => $audioUrl,
             'audio_length'    => (string) $audioLength,
@@ -871,25 +891,21 @@ class Podcast extends Plugin {
             'type'    => $status,
             'tags'    => 'podcast',
             'date'    => $date,
+            'custom'  => $this->customFieldArgs($page, $meta),
         ];
 
         if ($key !== '') {
             // Bestehende Episode bearbeiten (Key wurde oben geprüft)
             $pageArgs['key'] = $key;
             $newKey = editPage($pageArgs);
-            if (!$newKey) {
-                return ['error' => 'Episode konnte nicht gespeichert werden'];
-            }
-            $this->setEpisodeMeta($newKey, $meta);
-            return ['success' => true, 'key' => $newKey];
         } else {
             // Neue Episode anlegen
             $newKey = $pages->add($pageArgs);
-            if ($newKey) {
-                $this->setEpisodeMeta($newKey, $meta);
-            }
-            return ['success' => true, 'key' => $newKey];
         }
+        if (!$newKey) {
+            return ['error' => 'Episode konnte nicht gespeichert werden'];
+        }
+        return ['success' => true, 'key' => $newKey];
     }
 
     private function handleDeleteEpisode($key) {
@@ -911,7 +927,6 @@ class Podcast extends Plugin {
         }
 
         $pages->delete($key);
-        $this->deleteEpisodeMeta($key);
 
         return ['success' => true];
     }
@@ -1011,8 +1026,8 @@ class Podcast extends Plugin {
 
         // Sortierung: Episodennummer absteigend, gleiche Nummer nach Datum
         usort($episodes, function ($a, $b) {
-            $metaA = $this->getEpisodeMeta($a->key());
-            $metaB = $this->getEpisodeMeta($b->key());
+            $metaA = $this->getEpisodeMeta($a);
+            $metaB = $this->getEpisodeMeta($b);
             $numA  = isset($metaA['itunes_episode']) ? (int) $metaA['itunes_episode'] : 0;
             $numB  = isset($metaB['itunes_episode']) ? (int) $metaB['itunes_episode'] : 0;
             if ($numA !== $numB) {
@@ -1061,46 +1076,208 @@ class Podcast extends Plugin {
         return in_array($scheme, ['http', 'https'], true) && $host !== '';
     }
 
-    private function pluginPath() {
-        return PATH_PLUGINS . 'podcast' . DS;
-    }
+    // ═══════════════════════════════════════════════════════════════════
+    // EPISODEN-METADATEN (Bludit Custom Fields)
+    // ═══════════════════════════════════════════════════════════════════
 
-    private function episodesFile() {
-        return $this->pluginPath() . 'metadata' . DS . 'episodes.json';
-    }
+    // Interner Metadaten-Schlüssel → Name des Custom Fields der Seite
+    private const CUSTOM_FIELDS = [
+        'audio_url'       => 'podcast_audio_url',
+        'audio_length'    => 'podcast_audio_length',
+        'itunes_duration' => 'podcast_duration',
+        'itunes_episode'  => 'podcast_episode',
+        'itunes_season'   => 'podcast_season',
+        'itunes_type'     => 'podcast_type',
+        'itunes_explicit' => 'podcast_explicit',
+        'itunes_image'    => 'podcast_image',
+    ];
 
-    private function loadAllMeta() {
-        $file = $this->episodesFile();
-        if (!file_exists($file)) {
-            return [];
+    /**
+     * Definitionen der Podcast-Felder für die Custom-Fields-Einstellung der Site.
+     */
+    private function customFieldDefinitions() {
+        $labels = [
+            'podcast_audio_url'    => 'Podcast: Audio-URL',
+            'podcast_audio_length' => 'Podcast: Dateigröße (Bytes)',
+            'podcast_duration'     => 'Podcast: Dauer (HH:MM:SS)',
+            'podcast_episode'      => 'Podcast: Episode #',
+            'podcast_season'       => 'Podcast: Staffel',
+            'podcast_type'         => 'Podcast: Typ (full/trailer/bonus)',
+            'podcast_explicit'     => 'Podcast: Explicit',
+            'podcast_image'        => 'Podcast: Episodenbild-URL',
+        ];
+        $definitions = [];
+        foreach ($labels as $field => $label) {
+            $definitions[$field] = [
+                'type'  => $field === 'podcast_explicit' ? 'bool' : 'string',
+                'label' => $label,
+                'tip'   => 'Wird vom Podcast-Plugin gepflegt (Admin → Podcast).',
+            ];
         }
-        $data = json_decode(file_get_contents($file), true);
-        // Migriere altes Format (Array von Keys) zu neuem Format (assoziatives Array)
-        if (isset($data[0]) || (is_array($data) && array_values($data) === $data && !empty($data))) {
-            return [];
+        return $definitions;
+    }
+
+    /**
+     * Ergänzt fehlende Podcast-Felder in der Custom-Fields-Definition der Site
+     * (wie Einstellungen → Allgemein → Custom fields). Vorhandene Felder bleiben unverändert.
+     */
+    private function ensureCustomFields() {
+        global $site, $pages;
+
+        $fields = $site->customFields();
+        if (!is_array($fields)) {
+            Log::set(__METHOD__ . LOG_SEP . 'Site custom fields are not valid JSON, podcast fields not added.');
+            return false;
         }
-        return is_array($data) ? $data : [];
+
+        $missing = array_diff_key($this->customFieldDefinitions(), $fields);
+        if (empty($missing)) {
+            return true;
+        }
+
+        $json = json_encode($fields + $missing, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false || !$pages->setCustomFields($json)) {
+            Log::set(__METHOD__ . LOG_SEP . 'Could not add podcast custom fields.');
+            return false;
+        }
+        return (bool) $site->set(['customFields' => $json]);
     }
 
-    private function saveAllMeta(array $meta) {
-        file_put_contents($this->episodesFile(), json_encode($meta, JSON_PRETTY_PRINT));
+    /**
+     * Liest die Metadaten einer Episode aus ihren Custom Fields (unescaped und geprüft).
+     */
+    private function getEpisodeMeta($page) {
+        $raw = [];
+        foreach (self::CUSTOM_FIELDS as $metaKey => $field) {
+            $value = $page->custom($field);
+            $raw[$metaKey] = is_string($value) ? Sanitize::htmlDecode($value) : $value;
+        }
+        return $this->normalizeMeta($raw);
     }
 
-    private function getEpisodeMeta($key) {
-        $all = $this->loadAllMeta();
-        return isset($all[$key]) ? $all[$key] : [];
+    /**
+     * Bringt Metadaten in eine gültige Form. Werte können auch über den
+     * Bludit-Editor oder aus Altdaten kommen — Ungültiges wird geleert.
+     */
+    private function normalizeMeta(array $raw) {
+        $value = function ($k) use ($raw) {
+            return (isset($raw[$k]) && is_scalar($raw[$k])) ? trim((string) $raw[$k]) : '';
+        };
+        $number = function ($v) {
+            return filter_var($v, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) !== false ? $v : '';
+        };
+        $url = function ($v) {
+            return $this->isHttpUrl($v) ? $v : '';
+        };
+        $type = $value('itunes_type');
+
+        return [
+            'audio_url'       => $url($value('audio_url')),
+            'audio_length'    => $number($value('audio_length')) ?: '0',
+            'itunes_duration' => $value('itunes_duration'),
+            'itunes_episode'  => $number($value('itunes_episode')),
+            'itunes_season'   => $number($value('itunes_season')),
+            'itunes_type'     => in_array($type, ['full', 'trailer', 'bonus'], true) ? $type : 'full',
+            'itunes_explicit' => in_array($value('itunes_explicit'), ['yes', '1', 'true'], true) ? 'yes' : 'no',
+            'itunes_image'    => $url($value('itunes_image')),
+        ];
     }
 
-    private function setEpisodeMeta($key, array $meta) {
-        $all        = $this->loadAllMeta();
-        $all[$key]  = $meta;
-        $this->saveAllMeta($all);
+    /**
+     * Baut das 'custom'-Argument für editPage()/Pages::add(). Bludit ersetzt dabei
+     * alle Custom Fields einer Seite, daher werden die übrigen Felder mit ihrem
+     * aktuellen Wert (bzw. Standardwert) mitgegeben.
+     */
+    private function customFieldArgs($page, array $meta) {
+        global $site;
+
+        $args = [];
+        foreach ((array) $site->customFields() as $field => $options) {
+            $value = $page ? $page->custom($field) : false;
+            if ($value === false) {
+                $value = isset($options['default']) ? $options['default'] : '';
+            }
+            // Gespeicherte Werte sind escaped, Bludit escaped beim Speichern erneut
+            $args[$field] = is_string($value) ? Sanitize::htmlDecode($value) : (is_scalar($value) ? $value : '');
+        }
+        foreach (self::CUSTOM_FIELDS as $metaKey => $field) {
+            $args[$field] = $metaKey === 'itunes_explicit'
+                ? ($meta[$metaKey] === 'yes' ? '1' : '')
+                : (string) $meta[$metaKey];
+        }
+        return $args;
     }
 
-    private function deleteEpisodeMeta($key) {
-        $all = $this->loadAllMeta();
-        unset($all[$key]);
-        $this->saveAllMeta($all);
+    /**
+     * Übernimmt Metadaten aus der früheren bl-plugins/podcast/metadata/episodes.json
+     * in die Custom Fields der Seiten. Die Datei lag per HTTP abrufbar im Plugin-Ordner;
+     * sie wird danach als geschütztes Backup in den Workspace verschoben.
+     * Mehrfaches Ausführen ist unschädlich, bereits gepflegte Episoden bleiben unverändert.
+     */
+    private function migrateLegacyMeta() {
+        global $pages;
+
+        $legacyFile = $this->phpPath() . 'metadata' . DS . 'episodes.json';
+        if (!file_exists($legacyFile)) {
+            return;
+        }
+
+        $raw      = (string) file_get_contents($legacyFile);
+        $data     = json_decode($raw, true);
+        $migrated = 0;
+        if (is_array($data)) {
+            foreach ($data as $key => $legacy) {
+                if (!is_string($key) || !is_array($legacy) || !$pages->exists($key)) {
+                    continue;
+                }
+                $page = new Page($key);
+                if (!$this->pageHasPodcastTag($page) || $this->getEpisodeMeta($page)['audio_url'] !== '') {
+                    continue;
+                }
+                // Altdaten speicherten Textfelder HTML-escaped, URLs roh
+                foreach (['itunes_episode', 'itunes_season', 'itunes_type', 'itunes_explicit', 'itunes_duration'] as $escaped) {
+                    if (isset($legacy[$escaped]) && is_string($legacy[$escaped])) {
+                        $legacy[$escaped] = Sanitize::htmlDecode($legacy[$escaped]);
+                    }
+                }
+                $meta   = $this->normalizeMeta($legacy);
+                $row    = $pages->getPageDB($key);
+                $custom = (isset($row['custom']) && is_array($row['custom'])) ? $row['custom'] : [];
+                foreach (self::CUSTOM_FIELDS as $metaKey => $field) {
+                    // Gleiches Format wie Pages::add(): escaped String bzw. bool
+                    $custom[$field] = ['value' => $metaKey === 'itunes_explicit'
+                        ? $meta[$metaKey] === 'yes'
+                        : Sanitize::html($meta[$metaKey])];
+                }
+                if ($pages->setField($key, 'custom', $custom)) {
+                    $migrated++;
+                }
+            }
+        }
+
+        // Backup als .php mit Bludit-Schutzzeile: auch ohne .htaccess nicht abrufbar.
+        // Neu kodiert mit JSON_HEX_TAG, damit kein "<?" aus den Altdaten in die Datei gelangt.
+        $payload   = is_array($data) ? $data : ['raw_base64' => base64_encode($raw)];
+        $json      = json_encode($payload, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $workspace = $this->workspace();
+        if (!is_dir($workspace)) {
+            mkdir($workspace, DIR_PERMISSIONS, true);
+        }
+        $backup = $workspace . 'episodes-legacy-' . date('YmdHis') . '.php';
+        if ($json === false || file_put_contents($backup, "<?php defined('BLUDIT') or die('Bludit CMS.'); ?>\n" . $json, LOCK_EX) === false) {
+            Log::set(__METHOD__ . LOG_SEP . 'Backup of legacy episodes.json failed, file kept.');
+            return;
+        }
+        if (!unlink($legacyFile)) {
+            Log::set(__METHOD__ . LOG_SEP . 'Could not delete legacy episodes.json.');
+            return;
+        }
+        $legacyDir = dirname($legacyFile);
+        $entries   = scandir($legacyDir);
+        if ($entries !== false && count($entries) === 2) {
+            rmdir($legacyDir);
+        }
+        Log::set(__METHOD__ . LOG_SEP . 'Migrated ' . $migrated . ' episodes from legacy episodes.json.');
     }
 
     private function sanitizeFilename($name) {

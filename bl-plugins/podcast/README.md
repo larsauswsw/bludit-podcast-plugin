@@ -142,6 +142,23 @@ Click the **edit icon** (pencil) next to the episode in the list. The form loads
 
 Click the **delete icon** (trash) next to the episode. You will be asked to confirm. Deleting an episode removes it from the feed and from your site.
 
+### Where episode data is stored
+
+Episode metadata (audio URL, file size, duration, episode/season number, type, explicit flag, episode image) is stored as **Bludit custom fields** directly in each page (`podcast_audio_url`, `podcast_audio_length`, `podcast_duration`, `podcast_episode`, `podcast_season`, `podcast_type`, `podcast_explicit`, `podcast_image`). The plugin registers these fields automatically under **Settings → General → Custom fields**; existing custom fields are left untouched.
+
+- The data lives in `bl-content/` together with your pages, so it is included in normal Bludit backups, survives plugin updates and follows the page when its slug changes.
+- The fields also appear in the Bludit editor under **Options → Custom** for every page. Pages only become episodes when they are tagged `podcast`; any user who can edit a page in Bludit can also edit these fields there. Invalid values (e.g. non-`http(s)` URLs) are ignored by the feed and the player.
+- Deactivating the plugin does **not** delete episode data.
+
+### Updating from a version with `metadata/episodes.json`
+
+Earlier development versions stored metadata in `bl-plugins/podcast/metadata/episodes.json`, a location that is reachable over HTTP. To migrate:
+
+1. Copy the new plugin files **over** the existing `podcast` folder — do not delete the old folder first, otherwise `episodes.json` is lost.
+2. Open **Admin → Podcast** once as admin or editor.
+
+The plugin then copies the data into the custom fields, moves the old file as a protected backup to `bl-content/workspaces/podcast/episodes-legacy-<date>.php` and deletes `metadata/episodes.json`. Episodes that already have an audio URL in their custom fields are not overwritten. Note: Bludit deletes the workspace folder (and with it this backup) when the plugin is deactivated.
+
 ---
 
 ## RSS Feed
@@ -188,7 +205,8 @@ Usually caused by the combined upload size (image + audio) exceeding PHP's `post
 
 **Player does not appear on episode pages**
 
-- The episode must have an audio URL set in its metadata.
+- The episode must have an `http(s)` audio URL in its custom field `podcast_audio_url`.
+- After updating from an older version, open **Admin → Podcast** once so existing data is migrated (see *Updating from a version with `metadata/episodes.json`*).
 - The page must be tagged `podcast` (this is done automatically when you create episodes through the plugin).
 - Check browser console for errors loading the Podlove CDN script.
 
