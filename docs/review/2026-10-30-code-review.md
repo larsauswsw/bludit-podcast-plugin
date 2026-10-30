@@ -126,6 +126,7 @@ wurde zusätzlich mit einem Stub-Harness gegen alten und neuen Code geprüft.
 | S5 | niedrig–mittel | Uploads nur per Endung geprüft; vorhersagbare Dateinamen (Audio unveröffentlichter Episoden erratbar). | offen (011); URL-Schema-Prüfung in #41 erledigt |
 | S6 | niedrig | Server-Pfade in Fehlermeldungen, Fatal Error bei Array-Parametern; `post_max_size`-Antwort auch für Nicht-Angemeldete, bei `post_max_size = 0` werden alle Frontend-POSTs abgewiesen. | Pfade/Arrays **behoben** in #41; Rest offen (008) |
 | S7 | vorbeugend | Geplante `HEAD`-Requests auf externe Audio-URLs brauchen SSRF-Schutz. | als Kriterium in 016/021 |
+| S8 | mittel | Podlove rendert die Episodenbeschreibung per `innerHTML`; das Plugin entfernte erst Tags und dekodierte dann Entities, sodass escapter Text (z. B. `&lt;img onerror=…&gt;`) zu aktivem HTML im Admin-Origin wurde. Gefunden bei 028. | **behoben** in #45 (040, #46) |
 
 Nicht als Schwachstelle gewertet: Rollen `admin`/`editor` dürfen in Bludit
 HTML/JavaScript in Seiteninhalte schreiben (Bludit-Verhalten).

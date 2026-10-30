@@ -119,3 +119,36 @@ im Browser eines solchen Nutzers (Cross-Site-Anfragen blockierte das
 **Betroffene Dateien**
 
 - `bl-plugins/podcast/plugin.php`
+
+---
+
+## 040 · Episodenbeschreibung im Player als HTML ausgeführt
+
+Status: done · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`siteBodyEnd()`) · Issue: [#46](https://github.com/larsauswsw/bludit-podcast-plugin/issues/46)
+
+**Beschreibung**
+
+Gefunden bei der Umsetzung von 028, behoben in
+[#45](https://github.com/larsauswsw/bludit-podcast-plugin/pull/45) vor dem
+ersten Release.
+
+Der Podlove Web Player rendert `summary` per `innerHTML` (im Player-Bundle:
+`createElementVNode("p", {innerHTML: state.summary})`). Das Plugin übergab
+`html_entity_decode(strip_tags($page->content()))`: Erst wurden Tags entfernt,
+danach Entities dekodiert. Escapter Text in der Beschreibung — etwa ein
+Code-Beispiel `&lt;img src=x onerror=…&gt;` — wurde so zu aktivem HTML und im
+Player ausgeführt, im selben Origin wie der Bludit-Admin. Voraussetzung: ein
+Nutzer, der Seiteninhalte schreiben darf. Bludit erlaubt diesen Rollen zwar
+HTML im Inhalt, aber nicht, dass sichtbarer Text unbemerkt zu Code wird.
+
+**Akzeptanzkriterien**
+
+- [x] Die Beschreibung wird als Text ermittelt und HTML-escaped übergeben
+      (`htmlspecialchars`, Zeilenumbrüche per `nl2br`).
+- [x] Gegenprobe: Der alte Code liefert `<img src=x onerror=alert(1)>`, der neue
+      `&lt;img src=x onerror=alert(1)&gt;` (Stub-Harness + Ausführung des
+      Inline-Skripts in Node).
+
+**Betroffene Dateien**
+
+- `bl-plugins/podcast/plugin.php`
