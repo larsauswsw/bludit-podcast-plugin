@@ -5,7 +5,7 @@ Status-/Prioritäts-Legende.
 
 ## 028 · DSGVO: Podlove-Player lokal hosten / 2-Klick-Lösung
 
-Status: idea · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`siteHead()`, `siteBodyEnd()`), Einstellungen · Issue: [#29](https://github.com/larsauswsw/bludit-podcast-plugin/issues/29)
+Status: done · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`siteHead()`, `siteBodyEnd()`), Einstellungen · Issue: [#29](https://github.com/larsauswsw/bludit-podcast-plugin/issues/29)
 
 **Beschreibung**
 
@@ -25,19 +25,26 @@ Admin-Aktionen ausführen.
 
 **Akzeptanzkriterien**
 
-- [ ] Einstellung „Player-Quelle“: lokal (Assets im Plugin-Ordner bzw.
-      `bl-content/`, Podlove-`base`-Option) / CDN / einfacher HTML5-Player.
-- [ ] Bei „CDN“ optional 2-Klick-Lösung: Platzhalter mit Hinweis, Player lädt
-      erst nach Klick.
-- [ ] `<noscript>`/Fallback: HTML5-`<audio controls>` mit Download-Link.
-- [ ] Standard ist „lokal“; bei „CDN“ wird eine feste Version mit
-      `integrity`- und `crossorigin`-Attribut eingebunden (keine `5.x`-URL).
-- [ ] README enthält einen Hinweistext für die Datenschutzerklärung.
+- [x] Einstellung „Player auf Episodenseiten“: Podlove Web Player lokal
+      (Standard; Podlove 5.13.0 in `player/`, geladen über die `base`-Option) /
+      einfacher HTML5-Player. Unbekannte Werte fallen auf „lokal“ zurück.
+- [x] ~~Option „CDN“ mit 2-Klick-Lösung und SRI~~ — bewusst verworfen: SRI
+      schützt nur `embed.js`, nicht die vom Player dynamisch nachgeladenen
+      Bundles; lokal ausgeliefert entfällt sowohl die Drittanbieter-Verbindung
+      als auch das Lieferketten-Risiko, damit braucht es keine 2-Klick-Lösung.
+- [x] Fallback: HTML5-`<audio controls preload="none">` mit Download-Link,
+      sichtbar ohne JavaScript, bis der Podlove-Player geladen ist, und dauerhaft,
+      wenn er nicht lädt.
+- [x] Mitgelieferter Player ist eine feste, per npm-Integritätshash geprüfte
+      Version; `player/SOURCE.md` dokumentiert Herkunft, Lizenz und weggelassene
+      Dateien (u. a. `share.html`), `player/CHECKSUMS.sha256` alle Prüfsummen;
+      `scripts/update-podlove-player.sh` aktualisiert reproduzierbar.
+- [x] README enthält einen Hinweistext für die Datenschutzerklärung.
 
 **Betroffene Dateien**
 
-- `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/README.md`, ggf. neuer
-  Ordner `bl-plugins/podcast/player/`
+- `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/README.md`, neu:
+  `bl-plugins/podcast/player/`, `scripts/update-podlove-player.sh`
 
 ---
 

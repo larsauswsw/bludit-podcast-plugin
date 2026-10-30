@@ -122,7 +122,7 @@ wurde zusätzlich mit einem Stub-Harness gegen alten und neuen Code geprüft.
 | S1 | kritisch | Ungeprüfter Seitenschlüssel beim Speichern → `Pages::edit()` verschiebt Dateien außerhalb von `bl-content/pages/` (z. B. `databases/site.php` → Bludit startet den Installer → Übernahme der Website). Benötigt Rolle `editor`/`admin`. | **behoben** in #41 (039, #42) |
 | S2 | hoch | CSRF-Token wurde im Frontend-Hook nicht geprüft; nur `SameSite=Lax` schützte. Verstärkte S1. | **behoben** in #41; Umbau auf `adminController()` offen (010) |
 | S3 | mittel | `bl-plugins/podcast/metadata/episodes.json` ist per HTTP abrufbar (Bludits `.htaccess` sperrt nur `bl-content/{databases,workspaces,pages,tmp}`) — Entwürfe und geplante Episoden inkl. Audio-URL einsehbar. | **behoben** mit 012 (Custom Fields; Altdatei wird als geschütztes Backup verschoben und gelöscht) |
-| S4 | mittel | Podlove-Skript vom CDN mit wandernder Version `5.x`, ohne SRI, im selben Origin wie der Admin-Bereich. | offen (028) |
+| S4 | mittel | Podlove-Skript vom CDN mit wandernder Version `5.x`, ohne SRI, im selben Origin wie der Admin-Bereich. | **behoben** mit 028 (Player 5.13.0 lokal, per npm-Integritätshash geprüft) |
 | S5 | niedrig–mittel | Uploads nur per Endung geprüft; vorhersagbare Dateinamen (Audio unveröffentlichter Episoden erratbar). | offen (011); URL-Schema-Prüfung in #41 erledigt |
 | S6 | niedrig | Server-Pfade in Fehlermeldungen, Fatal Error bei Array-Parametern; `post_max_size`-Antwort auch für Nicht-Angemeldete, bei `post_max_size = 0` werden alle Frontend-POSTs abgewiesen. | Pfade/Arrays **behoben** in #41; Rest offen (008) |
 | S7 | vorbeugend | Geplante `HEAD`-Requests auf externe Audio-URLs brauchen SSRF-Schutz. | als Kriterium in 016/021 |

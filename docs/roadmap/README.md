@@ -89,7 +89,7 @@ dokumentiert.
 | 025 | Medienverwaltung: Dateien aufräumen und wiederverwenden | niedrig | M | [#26](https://github.com/larsauswsw/bludit-podcast-plugin/issues/26) |
 | 026 | Shownotes-Editor mit Markdown & Vorschau | niedrig | M | [#27](https://github.com/larsauswsw/bludit-podcast-plugin/issues/27) |
 | 027 | Einreichung durch Autoren mit Freigabe-Workflow | niedrig | L | [#28](https://github.com/larsauswsw/bludit-podcast-plugin/issues/28) |
-| 028 | DSGVO: Podlove-Player lokal hosten / 2-Klick-Lösung | hoch | M | [#29](https://github.com/larsauswsw/bludit-podcast-plugin/issues/29) |
+| 028 | DSGVO: Podlove-Player lokal hosten / 2-Klick-Lösung | hoch | M | [#29](https://github.com/larsauswsw/bludit-podcast-plugin/issues/29) ✅ |
 | 029 | Player über `pageBegin`-Hook statt DOM-Selektoren einbinden | mittel | S | [#30](https://github.com/larsauswsw/bludit-podcast-plugin/issues/30) |
 | 030 | Kapitelmarken & Transkripte | niedrig | M | [#31](https://github.com/larsauswsw/bludit-podcast-plugin/issues/31) |
 | 031 | Episodenarchiv & Sidebar-Widget „Neueste Episoden“ | niedrig | M | [#32](https://github.com/larsauswsw/bludit-podcast-plugin/issues/32) |
@@ -106,7 +106,7 @@ Alle Einträge starten mit `Status: idea` — priorisieren/verwerfen ist bewusst
 der nächste Schritt für dich.
 
 Bereits umgesetzt (`Status: done`): 039 (Sicherheitsfix, #41); 012 Custom Fields
-mit 005 und 006 (behebt S3). Teilweise
+mit 005 und 006 (behebt S3); 028 lokal gehosteter Player (behebt S4). Teilweise
 vorgezogen: CSRF-Prüfung aus 010, URL-/Typprüfung aus 011, `CLAUDE.md` aus 037.
 
 ## Vorschlag für die Reihenfolge

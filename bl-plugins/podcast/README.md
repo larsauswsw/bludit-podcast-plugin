@@ -8,7 +8,7 @@ A full-featured podcast management plugin for [Bludit](https://www.bludit.com/) 
 - **File upload or URL** — upload audio files (MP3, M4A, OGG, WAV) directly or link to an external URL
 - **Episode cover images** — upload an image per episode or use an external URL
 - **iTunes-compatible RSS feed** — includes all required `<itunes:*>` tags for Apple Podcasts, Spotify, and other directories
-- **Embedded audio player** — [Podlove Web Player 5](https://podlove.org/podlove-web-player/) is injected automatically on every episode page, no theme changes needed
+- **Embedded audio player** — [Podlove Web Player 5](https://podlove.org/podlove-web-player/), served from your own server (no CDN), is injected automatically on every episode page; a plain HTML5 player is available as an alternative and as fallback
 - **Role-based access** — both admins and editors can manage episodes; channel settings are admin-only
 
 ---
@@ -99,6 +99,7 @@ Before publishing any episodes, configure your podcast channel. Go to **Admin �
 | **iTunes category** | Apple Podcasts category | `Society & Culture` |
 | **Cover image URL** | URL to your podcast artwork (1400×1400 px JPG/PNG recommended) | `https://example.com/cover.jpg` |
 | **Explicit** | Whether the podcast contains explicit content | `No` |
+| **Player on episode pages** | Podlove Web Player (served locally) or a plain HTML5 player | Podlove |
 | **Max upload size (MB)** | Plugin-level upload limit (must not exceed your server's PHP limits) | `512` |
 
 Click **Save** after making changes.
@@ -181,9 +182,20 @@ The feed includes:
 
 ## Frontend Player
 
-The [Podlove Web Player](https://podlove.org/podlove-web-player/) is embedded automatically at the top of every episode page — no changes to your theme are required. The player loads from the Podlove CDN and requires an internet connection.
+The [Podlove Web Player](https://podlove.org/podlove-web-player/) is embedded automatically at the top of every episode page — no changes to your theme are required.
 
-If you have a subscribe button configured (Feed URL is set in channel settings), a subscribe button will appear in the player.
+- **Served locally:** the plugin ships Podlove Web Player 5.13.0 in `bl-plugins/podcast/player/` (MIT license, unmodified subset of the npm package; provenance and checksums in `player/SOURCE.md`). Visitors' browsers do **not** connect to a Podlove CDN.
+- **Fallback:** a plain HTML5 `<audio>` player with a download link is shown until the Podlove player has loaded, and stays visible if JavaScript is disabled or the player cannot load.
+- **Plain HTML5 player:** choose *Player on episode pages → Plain HTML5 player* in the channel settings to skip the Podlove player entirely.
+- If a Feed URL is set in the channel settings, a subscribe button appears in the player.
+
+To update the bundled player, run `scripts/update-podlove-player.sh <version>` (verifies the npm integrity hash and copies only the needed files).
+
+### Privacy policy note
+
+The player itself sends no data to third parties. The audio file is loaded from wherever its URL points when a visitor presses play (the HTML5 player uses `preload="none"`). If your audio files are hosted on another server (e.g. a podcast hoster or CDN), mention that host in your privacy policy. Example text (German):
+
+> Auf Episodenseiten binden wir den Podlove Web Player ein, der von unserem eigenen Server ausgeliefert wird; dabei werden keine Daten an Dritte übertragen. Beim Abspielen wird die Audiodatei von [Anbieter / unser Server] geladen; dabei wird Ihre IP-Adresse an diesen Server übermittelt, soweit dies für die Auslieferung technisch erforderlich ist.
 
 ---
 
@@ -208,7 +220,7 @@ Usually caused by the combined upload size (image + audio) exceeding PHP's `post
 - The episode must have an `http(s)` audio URL in its custom field `podcast_audio_url`.
 - After updating from an older version, open **Admin → Podcast** once so existing data is migrated (see *Updating from a version with `metadata/episodes.json`*).
 - The page must be tagged `podcast` (this is done automatically when you create episodes through the plugin).
-- Check browser console for errors loading the Podlove CDN script.
+- Check the browser console for errors loading `bl-plugins/podcast/player/embed.js`; if it fails, the HTML5 fallback player is shown instead.
 
 ---
 
