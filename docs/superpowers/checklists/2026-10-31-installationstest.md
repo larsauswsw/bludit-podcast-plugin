@@ -2,8 +2,8 @@
 
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
-Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 — Ergebnis unten
-abgehakt.
+Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
+Ergebnis unten abgehakt.
 
 ## Vorbereitung (SSH)
 
@@ -94,8 +94,9 @@ Medienverwaltung (Roadmap 025) da ist.
 - [x] E17 Kanaleinstellungen → „Player auf Episodenseiten“ → **Einfacher HTML5-Player**: schlichter Player mit „Episode herunterladen“; `curl -s "$EP" | grep -cE "embed\.js|podlovePlayer\("` ergibt `0`. Danach zurück auf Podlove.
 
 ## F · Zu großer Upload
-- [ ] F18 Unter dem Audio-Feld steht das tatsächliche Limit, z. B. „Max. 2 MB pro Datei — vom Server begrenzt (upload_max_filesize = 2M, post_max_size = 8M …)“ — nicht einfach die Plugin-Einstellung.
-- [ ] F19 Datei über dem Limit wählen und speichern → sofort „Die Datei „…“ (X MB) ist größer als das Upload-Limit von Y MB.“, ohne dass hochgeladen wird. (Die serverseitige Meldung „Upload zu groß …“ bleibt als Rückfallebene, im Harness getestet.)
+- [x] F18 Unter dem Audio-Feld steht das tatsächliche Limit, z. B. „Max. 2 MB pro Datei — vom Server begrenzt (upload_max_filesize = 2M, post_max_size = 8M …)“ — nicht einfach die Plugin-Einstellung. *(Live geprüft: nach Erhöhen auf 512M/520M „Max. 512 MB pro Datei“ ohne Server-Hinweis. Die Anzeige im begrenzten Fall nur im Harness getestet.)*
+- [ ] F19 Datei über dem Limit wählen und speichern → sofort „Die Datei „…“ (X MB) ist größer als das Upload-Limit von Y MB.“, ohne dass hochgeladen wird. *(Nicht live geprüft, Limits waren schon erhöht; in Node mit 7 Fällen getestet.)*
+- [x] F20 Rückfallebene ohne Prüfung im Browser (Version vor #55, Limits 2M/8M): zu große Datei → serverseitige Meldung „zu groß“ statt „Netzwerkfehler“. *(Live geprüft.)*
 
 Die PHP-Limits der Website (nicht der Kommandozeile) prüfen:
 ```sh
