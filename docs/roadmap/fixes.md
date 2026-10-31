@@ -243,8 +243,8 @@ Bludit-Editor gemacht wurden:
 - [ ] Bestehende Tags bleiben erhalten, `podcast` wird nur ergänzt.
 - [ ] Der Status bildet `published`, `draft`, `scheduled` (und unverändert
       `sticky`/`static`) korrekt ab und wird korrekt angezeigt.
-- [ ] Das Formular nutzt `contentRaw()`; Markdown bleibt nach mehrfachem Speichern
-      unverändert.
+- [x] Das Formular nutzt `contentRaw()`; Markdown bleibt nach mehrfachem Speichern
+      unverändert (vorgezogen nach Test auf echter Installation).
 - [ ] Verhalten bei leerer Beschreibung ist definiert (Pflichtfeld laut Spec).
 
 **Betroffene Dateien**

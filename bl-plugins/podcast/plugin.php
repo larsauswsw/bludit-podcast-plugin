@@ -638,7 +638,7 @@ class Podcast extends Plugin {
                       <button type="button" class="btn btn-xs btn-default podcast-edit-btn"
                         data-key="<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>"
                         data-title="<?php echo htmlspecialchars($ep->title(), ENT_QUOTES) ?>"
-                        data-content="<?php echo htmlspecialchars($ep->content(), ENT_QUOTES) ?>"
+                        data-content="<?php echo htmlspecialchars($ep->contentRaw(), ENT_QUOTES) ?>"
                         data-episode="<?php echo htmlspecialchars($get('itunes_episode'), ENT_QUOTES) ?>"
                         data-season="<?php echo htmlspecialchars($get('itunes_season'), ENT_QUOTES) ?>"
                         data-type="<?php echo htmlspecialchars($get('itunes_type') ?: 'full', ENT_QUOTES) ?>"
