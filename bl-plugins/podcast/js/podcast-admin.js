@@ -90,6 +90,31 @@
         errorBox.style.display = 'block';
     }
 
+    function formatMB(bytes) {
+        return (bytes / 1048576).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' MB';
+    }
+
+    // Liefert eine Fehlermeldung, wenn eine Datei oder alle zusammen zu groß sind
+    function checkUploadLimits(files) {
+        var limitEl = document.getElementById('pe-upload-limit');
+        if (!limitEl || !files.length) return '';
+        var maxFile = parseInt(limitEl.dataset.maxFile, 10) || 0;
+        var maxPost = parseInt(limitEl.dataset.maxPost, 10) || 0;
+        var total   = 0;
+        for (var i = 0; i < files.length; i++) {
+            if (maxFile && files[i].size > maxFile) {
+                return 'Die Datei „' + files[i].name + '“ (' + formatMB(files[i].size) +
+                    ') ist größer als das Upload-Limit von ' + formatMB(maxFile) + '.';
+            }
+            total += files[i].size;
+        }
+        if (maxPost && total > maxPost) {
+            return 'Audio und Bild zusammen (' + formatMB(total) + ') überschreiten das Server-Limit von ' +
+                formatMB(maxPost) + '. Bitte einzeln hochladen oder eine URL verwenden.';
+        }
+        return '';
+    }
+
     function setSaving(on) {
         saveBtn.disabled     = on;
         saving.style.display = on ? 'inline' : 'none';
@@ -186,6 +211,16 @@
         }
         if (audioMode === 'file' && !audioFile) {
             showError('Bitte eine Audiodatei auswählen.');
+            return;
+        }
+
+        // Upload-Limits vor dem Hochladen prüfen (Werte vom Server, 0 = unbegrenzt)
+        var uploads = [];
+        if (audioMode === 'file' && audioFile) uploads.push(audioFile);
+        if (imageMode === 'file' && peImageFile.files[0]) uploads.push(peImageFile.files[0]);
+        var limitMsg = checkUploadLimits(uploads);
+        if (limitMsg) {
+            showError(limitMsg);
             return;
         }
 

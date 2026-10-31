@@ -280,8 +280,10 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`befo
       Umgesetzt mit S6: Kennung `?podcast_api=1` in der API-URL, nur bei POST.
 - [ ] Das JS prüft `response.ok`/Content-Type und zeigt bei Nicht-JSON eine
       sinnvolle Meldung.
-- [ ] Das Upload-Limit im Formular zeigt das Minimum aus Plugin-Einstellung,
+- [x] Das Upload-Limit im Formular zeigt das Minimum aus Plugin-Einstellung,
       `upload_max_filesize` und `post_max_size`.
+      Umgesetzt nach Test auf echter Installation; dazu Prüfung im Browser vor dem
+      Hochladen (einzeln und Summe gegen `post_max_size`).
 
 **Betroffene Dateien**
 
