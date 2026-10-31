@@ -86,7 +86,7 @@ dokumentiert.
 | 022 | Kanal-Cover per Upload & Bildvalidierung | mittel | S | [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23) |
 | 023 | Nächste Episodennummer automatisch vorschlagen | niedrig | S | [#24](https://github.com/larsauswsw/bludit-podcast-plugin/issues/24) |
 | 024 | Episodenliste: Status, Suche, Filter, Warnungen | niedrig | M | [#25](https://github.com/larsauswsw/bludit-podcast-plugin/issues/25) |
-| 025 | Medienverwaltung: Dateien aufräumen und wiederverwenden | niedrig | M | [#26](https://github.com/larsauswsw/bludit-podcast-plugin/issues/26) |
+| 025 | Medienverwaltung im Admin: Übersicht, aufräumen, wiederverwenden | mittel | M | [#26](https://github.com/larsauswsw/bludit-podcast-plugin/issues/26) |
 | 026 | Shownotes-Editor mit Markdown & Vorschau | niedrig | M | [#27](https://github.com/larsauswsw/bludit-podcast-plugin/issues/27) |
 | 027 | Einreichung durch Autoren mit Freigabe-Workflow | niedrig | L | [#28](https://github.com/larsauswsw/bludit-podcast-plugin/issues/28) |
 | 028 | DSGVO: Podlove-Player lokal hosten / 2-Klick-Lösung | hoch | M | [#29](https://github.com/larsauswsw/bludit-podcast-plugin/issues/29) ✅ |
