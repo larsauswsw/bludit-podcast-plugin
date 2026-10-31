@@ -24,7 +24,10 @@ bindet den Podlove Web Player ein.
 Geplante Arbeit liegt in `docs/roadmap/` (Index: `docs/roadmap/README.md`),
 jede Aufgabe mit stabiler ID, Akzeptanzkriterien und GitHub-Issue. Wird
 „Feature NNN“ verlangt, zuerst den passenden Abschnitt dort lesen. Befunde und
-API-Abgleich: `docs/review/2026-10-30-code-review.md`.
+API-Abgleich: `docs/review/2026-10-30-code-review.md`. Test auf einer echten
+Installation (vor Releases bzw. nach größeren Änderungen):
+`docs/superpowers/checklists/2026-10-31-installationstest.md` — neue Funktionen
+dort um passende Schritte ergänzen.
 
 ## Bludit-API (verifiziert gegen 3.22.0)
 

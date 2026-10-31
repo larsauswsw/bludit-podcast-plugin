@@ -26,6 +26,9 @@ Entwickler-Doku (`bludit/documentation-english`).
   das Issue kommentieren/schließen (`state_reason: not_planned` für Ablehnung).
 - **Als erledigt markieren:** `Status` in der `.md`-Datei auf `done` setzen und das
   zugehörige GitHub Issue schließen.
+- **Auf echter Installation testen:** Checkliste
+  [`../superpowers/checklists/2026-10-31-installationstest.md`](../superpowers/checklists/2026-10-31-installationstest.md)
+  (Browser + SSH, auch vom Handy aus).
 
 ## Sicherheit als Definition of Done
 
