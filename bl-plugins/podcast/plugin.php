@@ -618,8 +618,11 @@ class Podcast extends Plugin {
                 </thead>
                 <tbody>
                   <?php foreach ($episodes as $ep):
-                      $meta = $this->getEpisodeMeta($ep);
-                      $get  = function ($k) use ($meta) { return isset($meta[$k]) ? $meta[$k] : ''; };
+                      $meta   = $this->getEpisodeMeta($ep);
+                      $get    = function ($k) use ($meta) { return isset($meta[$k]) ? $meta[$k] : ''; };
+                      // Formular mit den gespeicherten Werten vorbelegen, auch wenn sie ungültig sind
+                      $stored = $this->getStoredEpisodeMeta($ep);
+                      $raw    = function ($k) use ($stored) { return isset($stored[$k]) ? $stored[$k] : ''; };
                   ?>
                   <tr>
                     <td><?php echo htmlspecialchars($get('itunes_episode')) ?></td>
@@ -639,13 +642,13 @@ class Podcast extends Plugin {
                         data-key="<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>"
                         data-title="<?php echo htmlspecialchars($ep->title(), ENT_QUOTES) ?>"
                         data-content="<?php echo htmlspecialchars($ep->contentRaw(), ENT_QUOTES) ?>"
-                        data-episode="<?php echo htmlspecialchars($get('itunes_episode'), ENT_QUOTES) ?>"
-                        data-season="<?php echo htmlspecialchars($get('itunes_season'), ENT_QUOTES) ?>"
+                        data-episode="<?php echo htmlspecialchars($raw('itunes_episode'), ENT_QUOTES) ?>"
+                        data-season="<?php echo htmlspecialchars($raw('itunes_season'), ENT_QUOTES) ?>"
                         data-type="<?php echo htmlspecialchars($get('itunes_type') ?: 'full', ENT_QUOTES) ?>"
                         data-explicit="<?php echo htmlspecialchars($get('itunes_explicit') ?: 'no', ENT_QUOTES) ?>"
-                        data-duration="<?php echo htmlspecialchars($get('itunes_duration'), ENT_QUOTES) ?>"
-                        data-image="<?php echo htmlspecialchars($get('itunes_image'), ENT_QUOTES) ?>"
-                        data-audio-url="<?php echo htmlspecialchars($get('audio_url'), ENT_QUOTES) ?>"
+                        data-duration="<?php echo htmlspecialchars($raw('itunes_duration'), ENT_QUOTES) ?>"
+                        data-image="<?php echo htmlspecialchars($raw('itunes_image'), ENT_QUOTES) ?>"
+                        data-audio-url="<?php echo htmlspecialchars($raw('audio_url'), ENT_QUOTES) ?>"
                         data-status="<?php echo htmlspecialchars($ep->type(), ENT_QUOTES) ?>"
                         data-date="<?php echo $ep->date('Y-m-d\TH:i') ?>">
                         Bearbeiten
@@ -1267,12 +1270,25 @@ class Podcast extends Plugin {
      * Liest die Metadaten einer Episode aus ihren Custom Fields (unescaped und geprüft).
      */
     private function getEpisodeMeta($page) {
-        $raw = [];
+        return $this->normalizeMeta($this->getStoredEpisodeMeta($page));
+    }
+
+    /**
+     * Gespeicherte Werte dekodiert, aber ungeprüft — nur zum Vorbelegen des
+     * Bearbeiten-Formulars, damit ungültige Werte aus dem Bludit-Editor sichtbar
+     * bleiben und beim Speichern gemeldet werden. Für Feed/Player getEpisodeMeta().
+     */
+    private function getStoredEpisodeMeta($page) {
+        $stored = [];
         foreach (self::CUSTOM_FIELDS as $metaKey => $field) {
+            // custom() liefert false für nicht gesetzte Felder; bool nur bei Explicit
             $value = $page->custom($field);
-            $raw[$metaKey] = is_string($value) ? Sanitize::htmlDecode($value) : $value;
+            if ($metaKey === 'itunes_explicit' && is_bool($value)) {
+                $value = $value ? 'yes' : 'no';
+            }
+            $stored[$metaKey] = is_string($value) ? Sanitize::htmlDecode($value) : '';
         }
-        return $this->normalizeMeta($raw);
+        return $stored;
     }
 
     /**

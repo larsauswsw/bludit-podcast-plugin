@@ -168,7 +168,7 @@ Click the **delete icon** (trash) next to the episode. You will be asked to conf
 Episode metadata (audio URL, file size, duration, episode/season number, type, explicit flag, episode image) is stored as **Bludit custom fields** directly in each page (`podcast_audio_url`, `podcast_audio_length`, `podcast_duration`, `podcast_episode`, `podcast_season`, `podcast_type`, `podcast_explicit`, `podcast_image`). The plugin registers these fields automatically under **Settings → General → Custom fields**; existing custom fields are left untouched.
 
 - The data lives in `bl-content/` together with your pages, so it is included in normal Bludit backups, survives plugin updates and follows the page when its slug changes.
-- The fields also appear in the Bludit editor under **Options → Custom** for every page. Pages only become episodes when they are tagged `podcast`; any user who can edit a page in Bludit can also edit these fields there. Invalid values (e.g. non-`http(s)` URLs) are ignored by the feed and the player.
+- The fields also appear in the Bludit editor under **Options → Custom** for every page. Pages only become episodes when they are tagged `podcast`; any user who can edit a page in Bludit can also edit these fields there. Bludit does not validate custom fields in its editor: invalid values (e.g. a duration like `47:99` or a non-`http(s)` URL) are saved there, but ignored by the feed and the player. The plugin's edit form shows the stored value and asks for a valid one when you save.
 - Deactivating the plugin does **not** delete episode data.
 
 ### Updating from a version with `metadata/episodes.json`
