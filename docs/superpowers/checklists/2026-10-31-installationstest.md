@@ -94,7 +94,17 @@ Medienverwaltung (Roadmap 025) da ist.
 - [x] E17 Kanaleinstellungen → „Player auf Episodenseiten“ → **Einfacher HTML5-Player**: schlichter Player mit „Episode herunterladen“; `curl -s "$EP" | grep -cE "embed\.js|podlovePlayer\("` ergibt `0`. Danach zurück auf Podlove.
 
 ## F · Zu großer Upload
-- [ ] F18 *(optional, offen)* Datei größer als `post_max_size` hochladen → „Upload zu groß: … Server-Limit von X MB“ statt „Netzwerkfehler“. Nur sinnvoll bei kleinem Limit: `php -r 'echo ini_get("post_max_size"), PHP_EOL;'` (Apache kann abweichen).
+- [ ] F18 Unter dem Audio-Feld steht das tatsächliche Limit, z. B. „Max. 2 MB pro Datei — vom Server begrenzt (upload_max_filesize = 2M, post_max_size = 8M …)“ — nicht einfach die Plugin-Einstellung.
+- [ ] F19 Datei über dem Limit wählen und speichern → sofort „Die Datei „…“ (X MB) ist größer als das Upload-Limit von Y MB.“, ohne dass hochgeladen wird. (Die serverseitige Meldung „Upload zu groß …“ bleibt als Rückfallebene, im Harness getestet.)
+
+Die PHP-Limits der Website (nicht der Kommandozeile) prüfen:
+```sh
+F=limit-$RANDOM.php
+echo '<?php echo ini_get("post_max_size"), " / ", ini_get("upload_max_filesize");' > $BLUDIT/$F
+curl -s $SITE/$F; echo
+rm $BLUDIT/$F
+```
+Erhöhen bei PHP-FPM: in der Pool-Datei (z. B. `/etc/php/8.3/fpm/pool.d/www.conf`) `php_admin_value[upload_max_filesize] = 512M`, `php_admin_value[post_max_size] = 520M`, `php_admin_value[max_input_time] = 600`, dann `php-fpm8.3 -t && systemctl reload php8.3-fpm`. `php_value` in Apache-Konfiguration/`.htaccess` wirkt nur mit mod_php.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - „&“ in Titeln oder Kategorie im Feed doppelt escaped (001).

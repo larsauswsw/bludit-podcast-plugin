@@ -756,8 +756,19 @@ class Podcast extends Plugin {
                    placeholder="https://..." style="margin-top:6px">
             <input type="file" class="form-control" id="pe-audio-file"
                    accept=".mp3,.m4a,.ogg,.wav" style="display:none;margin-top:6px">
-            <small class="text-muted">
-              Max. <?php echo (int) ($this->getValue('maxUploadMB') ?: 512) ?> MB
+            <?php $limits = $this->uploadLimits(); ?>
+            <small class="text-muted" id="pe-upload-limit"
+                   data-max-file="<?php echo (int) $limits['file'] ?>"
+                   data-max-post="<?php echo (int) $limits['post'] ?>">
+              <?php if (!$limits['enabled']): ?>
+                Datei-Uploads sind auf dem Server deaktiviert (<code>file_uploads = Off</code>) — bitte Audio-URL verwenden.
+              <?php else: ?>
+                Max. <?php echo $this->formatMB($limits['file']) ?> MB pro Datei<?php if ($limits['server']): ?>
+                — vom Server begrenzt (<code>upload_max_filesize = <?php echo htmlspecialchars((string) ini_get('upload_max_filesize'), ENT_QUOTES) ?></code>,
+                <code>post_max_size = <?php echo htmlspecialchars((string) ini_get('post_max_size'), ENT_QUOTES) ?></code>;
+                Plugin-Einstellung: <?php echo $this->formatMB($limits['plugin']) ?> MB). Für größere Dateien die PHP-Limits erhöhen, siehe README.
+                <?php endif ?>
+              <?php endif ?>
             </small>
           </div>
 
@@ -966,6 +977,38 @@ class Podcast extends Plugin {
         $pages->delete($key);
 
         return ['success' => true];
+    }
+
+    /**
+     * Tatsächliches Upload-Limit: Minimum aus Plugin-Einstellung,
+     * upload_max_filesize (pro Datei) und post_max_size (ganze Anfrage).
+     * PHP-Werte von 0 bedeuten „unbegrenzt“.
+     */
+    private function uploadLimits() {
+        $plugin  = (int) ($this->getValue('maxUploadMB') ?: 512) * 1024 * 1024;
+        $file    = $this->parseBytes((string) ini_get('upload_max_filesize'));
+        $post    = $this->parseBytes((string) ini_get('post_max_size'));
+        $perFile = $plugin;
+        foreach ([$file, $post] as $serverLimit) {
+            if ($serverLimit > 0) {
+                $perFile = min($perFile, $serverLimit);
+            }
+        }
+        return [
+            'file'    => $perFile,
+            'post'    => max(0, $post),
+            'plugin'  => $plugin,
+            'server'  => $perFile < $plugin,
+            'enabled' => (bool) ini_get('file_uploads'),
+        ];
+    }
+
+    /**
+     * Bytes als MB mit höchstens einer Nachkommastelle, z. B. „2“ oder „0,5“.
+     */
+    private function formatMB($bytes) {
+        $mb = number_format($bytes / 1048576, 1, ',', '');
+        return substr($mb, -2) === ',0' ? substr($mb, 0, -2) : $mb;
     }
 
     private function parseBytes($val) {

@@ -53,7 +53,7 @@ PHP's default upload limits (`upload_max_filesize = 2M`, `post_max_size = 8M`) a
 
 The best place to configure this is in your **server configuration**, outside the Bludit directory, so the setting survives Bludit updates.
 
-**Option A — Apache VirtualHost** (recommended):
+**Option A — Apache VirtualHost** (only with **mod_php**; with PHP-FPM Apache rejects `php_value` — use Option B). Check with `apache2ctl -M | grep -E "php|proxy_fcgi"`:
 
 Add to your site's VirtualHost block:
 ```apache
@@ -65,12 +65,13 @@ Add to your site's VirtualHost block:
 ```
 Then reload Apache: `sudo systemctl reload apache2`
 
-**Option B — PHP-FPM pool config**:
+**Option B — PHP-FPM pool config** (recommended with PHP-FPM; `max_input_time` gives large uploads on slow connections enough time):
 
 Find your pool config (e.g. `/etc/php/8.x/fpm/pool.d/www.conf`) and add:
 ```ini
 php_admin_value[upload_max_filesize] = 512M
 php_admin_value[post_max_size] = 520M
+php_admin_value[max_input_time] = 600
 ```
 Then restart PHP-FPM: `sudo systemctl restart php8.x-fpm`
 
@@ -79,6 +80,8 @@ Then restart PHP-FPM: `sudo systemctl restart php8.x-fpm`
 upload_max_filesize = 512M
 post_max_size = 520M
 ```
+
+The episode form shows the effective limit (the smallest of the plugin setting, `upload_max_filesize` and `post_max_size`) and checks the file size in the browser before uploading.
 
 ### 5. Upload folder protection
 
