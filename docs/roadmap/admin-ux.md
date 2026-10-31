@@ -128,28 +128,51 @@ keinen Hinweis, ob eine Episode im Feed landet (z. B. fehlende Audio-URL,
 
 ---
 
-## 025 · Medienverwaltung: Dateien aufräumen und wiederverwenden
+## 025 · Medienverwaltung im Admin: Übersicht, aufräumen, wiederverwenden
 
-Status: idea · Priorität: niedrig · Aufwand: M · Bereich: `plugin.php` (`handleDeleteEpisode()`, `handleUpload()`) · Issue: [#26](https://github.com/larsauswsw/bludit-podcast-plugin/issues/26)
+Status: idea · Priorität: mittel · Aufwand: M · Bereich: `plugin.php` (Admin-View, `handleDeleteEpisode()`, `handleUpload()`), `podcast-admin.js` · Issue: [#26](https://github.com/larsauswsw/bludit-podcast-plugin/issues/26)
 
 **Beschreibung**
 
-Beim Löschen einer Episode bleiben hochgeladene Audio- und Bilddateien in
-`bl-content/uploads/podcast/` liegen; beim Ersetzen einer Datei ebenso. Bei
-Audiodateien summiert sich das schnell auf Gigabytes. Umgekehrt lässt sich eine
-schon hochgeladene Datei nicht erneut auswählen.
+Hochgeladene Audio- und Bilddateien bleiben in `bl-content/uploads/podcast/`
+liegen, wenn eine Episode gelöscht oder ihre Datei ersetzt wird — bei Audio
+summiert sich das schnell auf Gigabytes. Aufräumen geht bisher nur per Shell.
+Beim Test auf einer echten Installation (2026-10-31) wurden dabei mit
+`rm -rf *` auch die Schutzdateien (`index.php`, `.htaccess`) gelöscht; das
+Plugin legt sie zwar vor dem nächsten Upload neu an, bis dahin ist der Ordner
+aber ungeschützt. Umgekehrt lässt sich eine schon hochgeladene Datei nicht
+erneut auswählen.
+
+Idee: ein eigener Bereich „Medien“ unter Admin → Podcast.
 
 **Akzeptanzkriterien**
 
-- [ ] Beim Löschen/Ersetzen Rückfrage „Zugehörige Dateien ebenfalls löschen?“ —
-      nur für Dateien im Podcast-Upload-Ordner, die von keiner anderen Episode
-      genutzt werden.
-- [ ] Auswahl vorhandener Dateien aus dem Podcast-Upload-Ordner im Formular.
-- [ ] Übersicht „Verwaiste Dateien“ mit Größe und Lösch-Option.
+- [ ] Bereich „Medien“ (Rollen `admin`, `editor`): Liste aller Dateien in
+      `uploads/podcast/audio/` und `images/` mit Name, Typ, Größe, Datum und
+      Verwendung (welche Episode(n), ermittelt über die Custom Fields) sowie
+      die belegte Gesamtgröße.
+- [ ] Filter „Unbenutzt“; Einzel- und Sammel-Löschen für unbenutzte Dateien.
+      Benutzte Dateien lassen sich nicht löschen, ohne die Episode anzupassen.
+- [ ] Beim Löschen einer Episode oder beim Ersetzen ihrer Datei Rückfrage
+      „Zugehörige Dateien ebenfalls löschen?“ — nur für Dateien, die keine
+      andere Episode nutzt.
+- [ ] Im Episodenformular eine vorhandene Datei aus der Mediathek wählen (Audio
+      und Bild); Dateigröße und Dauer (sofern bekannt) werden übernommen.
+- [ ] Optional: Datei direkt in der Mediathek hochladen oder ersetzen.
+- [ ] Schutzdateien (`index.php`, `.htaccess`) werden nie angezeigt oder
+      gelöscht; fehlen sie, legt das Öffnen der Medienseite sie neu an
+      (`prepareUploadDir()`).
+- [ ] Sicherheit (`CLAUDE.md`): Löschen nur per POST mit CSRF-Token und
+      Rollenprüfung; Dateinamen nur über `basename()` und die Endungs-Allowlist
+      aus `UPLOAD_TYPES`, Pfade per `realpath()` gegen den Upload-Ordner geprüft;
+      Fehlermeldungen ohne Server-Pfade.
+- [ ] README empfiehlt, Dateien über die Medienverwaltung statt per Shell
+      aufzuräumen.
 
 **Betroffene Dateien**
 
-- `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/js/podcast-admin.js`
+- `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/js/podcast-admin.js`,
+  `bl-plugins/podcast/README.md`
 
 ---
 
