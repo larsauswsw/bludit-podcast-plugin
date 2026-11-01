@@ -146,6 +146,12 @@ BLUDIT_URL=http://127.0.0.1:8099 BLUDIT_ADMIN_PASSWORD=ci-test-12345 \
   vendor/bin/phpunit --testsuite integration
 ```
 
+In Claude-Code-Cloud-Sessions sperrt das Netz die Paket-Downloads von GitHub
+(Composer-`dist`) und `phar.phpunit.de`: PHPUnit dort per
+`apt-get install phpunit` (9.6), PHPStan und gitleaks laufen nur in der CI;
+`npm ci` funktioniert. Bludit-Quellen für Tests: Tag `3.22.0` von
+`bludit/bludit` (in der CI per `git clone`).
+
 Integrationstests (`tests/Integration/`) bauen per `@depends` aufeinander auf
 und brauchen eine leere Instanz. Bludit leitet mit HTTP 301 weiter und zeigt
 geschützte Admin-Seiten ohne Anmeldung mit HTTP 200 als Anmeldeformular.
