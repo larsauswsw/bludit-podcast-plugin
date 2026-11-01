@@ -558,6 +558,7 @@ class Podcast extends Plugin {
         echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         echo '<rss version="2.0"' . "\n";
         echo '    xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"' . "\n";
+        echo '    xmlns:content="http://purl.org/rss/1.0/modules/content/"' . "\n";
         echo '    xmlns:atom="http://www.w3.org/2005/Atom">' . "\n";
         echo '<channel>' . "\n";
         echo '  <title>' . $title . '</title>' . "\n";
@@ -614,9 +615,12 @@ class Podcast extends Plugin {
             $mime        = $this->audioMimeType($audioExt);
 
             $epTitle    = $this->xml($this->plainTitle($page));
-            // Beschreibung bleibt HTML-Text (Tags entfernt, Entities erhalten), wie es
-            // Podcast-Apps für <description> erwarten; Klartext/Shownotes folgen mit 016
-            $epDesc     = $this->xml(strip_tags($this->contentWithoutPlaceholder($page)));
+            // <description>: Text ohne Tags (Entities bleiben, Apple liest ihn als
+            // HTML), höchstens 4000 Zeichen; <content:encoded>: Shownotes als
+            // bereinigtes HTML (Absätze, Listen, Links)
+            $epHtml     = $this->contentWithoutPlaceholder($page);
+            $epNotes    = $this->shownotesHtml($epHtml);
+            $epDesc     = $this->xml($this->episodeTextSummary($epNotes !== '' ? $epNotes : $epHtml));
             $epLink     = $this->xml($page->permalink());
             $epAudioUrl = $this->xml($audioUrl);
             $epGuid     = $this->xml($page->uuid());
@@ -631,7 +635,9 @@ class Podcast extends Plugin {
             echo '  <item>' . "\n";
             echo '    <title>' . $epTitle . '</title>' . "\n";
             echo '    <description>' . $epDesc . '</description>' . "\n";
-            echo '    <itunes:summary>' . $epDesc . '</itunes:summary>' . "\n";
+            if ($epNotes !== '') {
+                echo '    <content:encoded>' . $this->cdata($epNotes) . '</content:encoded>' . "\n";
+            }
             if ($epNum)    echo '    <itunes:episode>'    . $epNum    . '</itunes:episode>'    . "\n";
             if ($epSeason) echo '    <itunes:season>'     . $epSeason . '</itunes:season>'     . "\n";
             if ($epDur)    echo '    <itunes:duration>'   . $epDur    . '</itunes:duration>'   . "\n";
@@ -879,6 +885,9 @@ class Podcast extends Plugin {
               <label class="custom-file-label" for="pe-audio-file" data-browse="Durchsuchen"
                      data-placeholder="Audiodatei auswählen …">Audiodatei auswählen …</label>
             </div>
+            <div class="alert alert-warning small py-2 px-3 mt-2 mb-0" id="pe-audio-format-hint" role="status" hidden>
+              Apple Podcasts spielt WAV- und OGG-Dateien nicht ab. Für Podcast-Verzeichnisse besser MP3 oder M4A verwenden.
+            </div>
             <small class="form-text text-muted" id="pe-upload-limit"
                    data-max-file="<?php echo (int) $limits['file'] ?>"
                    data-max-post="<?php echo (int) $limits['post'] ?>">
@@ -1103,6 +1112,28 @@ class Podcast extends Plugin {
             return ['error' => 'Audio-URL oder -Datei ist erforderlich'];
         }
 
+        // Dateigröße für <enclosure length>, wenn nicht gerade hochgeladen:
+        // unveränderte URL behält die gespeicherte Größe, eigene Uploads per
+        // filesize(), sonst Abfrage beim fremden Server (remoteAudioLength())
+        $warning = '';
+        if ($audioLength === 0) {
+            $stored       = $page ? $this->getEpisodeMeta($page) : [];
+            $storedLength = isset($stored['audio_length']) ? (int) $stored['audio_length'] : 0;
+            if ($storedLength > 0 && isset($stored['audio_url']) && $stored['audio_url'] === $audioUrl) {
+                $audioLength = $storedLength;
+            } elseif (($localLength = $this->localAudioLength($audioUrl)) > 0) {
+                $audioLength = $localLength;
+            } else {
+                $probe = $this->remoteAudioLength($audioUrl);
+                if (isset($probe['length'])) {
+                    $audioLength = $probe['length'];
+                } else {
+                    $warning = 'Episode gespeichert, aber die Dateigröße der Audio-URL ließ sich nicht ermitteln: '
+                        . $probe['error'] . ' Im Feed steht sie dann als 0; beim nächsten Speichern wird es erneut versucht.';
+                }
+            }
+        }
+
         $episodeNum = $this->postString($post, 'episode');
         $seasonNum  = $this->postString($post, 'season');
         foreach ([$episodeNum, $seasonNum] as $number) {
@@ -1155,7 +1186,11 @@ class Podcast extends Plugin {
         if (!$newKey) {
             return ['error' => 'Episode konnte nicht gespeichert werden. Details stehen im Bludit-Log.'];
         }
-        return ['success' => true, 'key' => $newKey];
+        $result = ['success' => true, 'key' => $newKey];
+        if ($warning !== '') {
+            $result['warning'] = $warning;
+        }
+        return $result;
     }
 
     private function handleDeleteEpisode($key) {
@@ -1551,6 +1586,419 @@ class Podcast extends Plugin {
     /** Position des Players im Inhalt; unbekannte Werte → am Anfang. */
     private function playerPosition() {
         return $this->getValue('playerPosition') === 'bottom' ? 'bottom' : 'top';
+    }
+
+    // ── Shownotes im Feed (Roadmap 016)
+
+    /** Elemente, die in <content:encoded> bleiben (Apple: p, ol, ul, li, a; dazu Hervorhebungen). */
+    private const SHOWNOTES_TAGS = ['p', 'br', 'a', 'ul', 'ol', 'li', 'strong', 'b', 'em', 'i',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'];
+
+    /** Elemente, die samt Inhalt entfallen. */
+    private const SHOWNOTES_DROP = ['script', 'style', 'iframe', 'object', 'embed', 'template', 'svg', 'math',
+        'noscript', 'form', 'button', 'select', 'textarea', 'input', 'audio', 'video', 'canvas', 'head', 'title'];
+
+    /**
+     * Shownotes für <content:encoded>: das HTML der Episode, reduziert auf
+     * SHOWNOTES_TAGS ohne Attribute; Links behalten nur href mit http(s) oder
+     * mailto (Pfade wie „/ueber“ werden zur vollen Adresse). Andere Elemente
+     * werden durch ihren Inhalt ersetzt, SHOWNOTES_DROP entfällt ganz.
+     */
+    private function shownotesHtml($html) {
+        $html = trim((string) $html);
+        if ($html === '' || !class_exists('DOMDocument')) {
+            return '';
+        }
+        $doc  = new DOMDocument();
+        $prev = libxml_use_internal_errors(true);
+        $ok   = $doc->loadHTML('<?xml encoding="UTF-8"?><div>' . $html . '</div>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NONET);
+        libxml_clear_errors();
+        libxml_use_internal_errors($prev);
+        $root = $ok ? $doc->getElementsByTagName('div')->item(0) : null;
+        if (!$root) {
+            return '';
+        }
+
+        $clean = function (DOMNode $node) use (&$clean) {
+            for ($child = $node->firstChild; $child !== null; $child = $next) {
+                $next = $child->nextSibling;
+                if ($child instanceof DOMText) {
+                    continue;
+                }
+                if (!($child instanceof DOMElement)) {
+                    $node->removeChild($child);  // Kommentare, Verarbeitungsanweisungen
+                    continue;
+                }
+                $tag = strtolower($child->nodeName);
+                if (in_array($tag, self::SHOWNOTES_DROP, true)) {
+                    $node->removeChild($child);
+                    continue;
+                }
+                $clean($child);
+                $href = $tag === 'a' ? $this->shownotesHref($child->getAttribute('href')) : '';
+                // Nicht erlaubte Elemente und Links ohne gültiges Ziel durch ihren Inhalt ersetzen
+                if (!in_array($tag, self::SHOWNOTES_TAGS, true) || ($tag === 'a' && $href === '')) {
+                    while ($child->firstChild !== null) {
+                        $node->insertBefore($child->firstChild, $child);
+                    }
+                    $node->removeChild($child);
+                    continue;
+                }
+                foreach (iterator_to_array($child->attributes) as $attribute) {
+                    $child->removeAttribute($attribute->nodeName);
+                }
+                if ($href !== '') {
+                    $child->setAttribute('href', $href);
+                }
+            }
+        };
+        $clean($root);
+
+        $out = '';
+        foreach ($root->childNodes as $child) {
+            $out .= $doc->saveHTML($child);
+        }
+        return trim($out);
+    }
+
+    /** Link-Ziel für die Shownotes: http(s) und mailto; Pfade ab „/“ mit Website-Adresse; sonst ''. */
+    private function shownotesHref($href) {
+        $href = trim((string) $href);
+        if ($href === '') {
+            return '';
+        }
+        if (strpos($href, '/') === 0 && strpos($href, '//') !== 0) {
+            $base = parse_url(DOMAIN_BASE);
+            if (!empty($base['scheme']) && !empty($base['host'])) {
+                $href = $base['scheme'] . '://' . $base['host'] . (isset($base['port']) ? ':' . $base['port'] : '') . $href;
+            }
+        }
+        if ($this->isHttpUrl($href)) {
+            return $href;
+        }
+        return preg_match('/^mailto:[^\s<>"]+$/iD', $href) === 1 ? $href : '';
+    }
+
+    /**
+     * Text der Episode für <description>: ohne Tags, Leerraum zusammengefasst,
+     * höchstens $max Zeichen (Apple-Grenze 4000). Entities bleiben erhalten —
+     * Apple und viele Apps lesen <description> als HTML.
+     */
+    private function episodeTextSummary($html, $max = 4000) {
+        // Skripte und Stile samt Inhalt entfernen, Blockgrenzen als Leerzeichen,
+        // damit Absätze nicht zusammenkleben
+        $html = preg_replace('~<(script|style)\b[^>]*>.*?</\1\s*>~is', ' ', (string) $html);
+        $html = preg_replace('~</?(?:p|br|li|ul|ol|h[1-6]|div|blockquote|pre|tr|td|th)\b[^>]*>~i', ' ', (string) $html);
+        $text = trim((string) preg_replace('/\s+/u', ' ', strip_tags((string) $html)));
+        if (mb_strlen($text, 'UTF-8') > $max) {
+            // Am Wortende kürzen, damit keine Entity zerschnitten wird
+            $cut  = mb_substr($text, 0, $max - 1, 'UTF-8');
+            $text = rtrim((string) preg_replace('/\s+\S*$/u', '', $cut)) . '…';
+        }
+        return $text;
+    }
+
+    /** HTML als CDATA-Abschnitt: ungültiges UTF-8 und in XML unzulässige Zeichen entfernt, „]]>“ geteilt. */
+    private function cdata($html) {
+        $html = mb_scrub((string) $html, 'UTF-8');
+        $html = (string) preg_replace('/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', $html);
+        return '<![CDATA[' . str_replace(']]>', ']]]]><![CDATA[>', $html) . ']]>';
+    }
+
+    // ── Dateigröße externer Audio-URLs (Roadmap 016, SSRF-Schutz nach Regel 8)
+
+    /** Weiterleitungen, denen gefolgt wird (jede wird neu geprüft). */
+    private const REMOTE_MAX_REDIRECTS = 3;
+
+    /** Gesamtzeit für die Abfrage in Sekunden. */
+    private const REMOTE_TIMEOUT = 10;
+
+    /** Größe einer hochgeladenen Audiodatei dieser Website anhand ihrer URL, sonst 0. */
+    private function localAudioLength($url) {
+        $prefix = DOMAIN_UPLOADS . 'podcast/audio/';
+        if (!is_string($url) || strpos($url, $prefix) !== 0) {
+            return 0;
+        }
+        $name = substr($url, strlen($prefix));
+        if (preg_match('/^[a-z0-9_-]+\.(?:mp3|m4a|ogg|wav)$/D', $name) !== 1) {
+            return 0;
+        }
+        $dir  = realpath(PATH_UPLOADS . 'podcast' . DS . 'audio');
+        $file = realpath(PATH_UPLOADS . 'podcast' . DS . 'audio' . DS . $name);
+        if ($dir === false || $file === false || strpos($file, $dir . DS) !== 0 || !is_file($file)) {
+            return 0;
+        }
+        return (int) filesize($file);
+    }
+
+    /**
+     * Dateigröße einer externen Audio-URL: HEAD (Content-Length), ersatzweise
+     * GET mit „Range: bytes=0-0“ (Content-Range). Liefert ['length' => int]
+     * oder ['error' => Text zum Anzeigen]. Schutz vor Anfragen ins interne
+     * Netz: nur http/https auf Port 80/443, alle Ziel-IPs nach DNS-Auflösung
+     * öffentlich, Verbindung an die geprüfte IP gebunden, Weiterleitungen
+     * einzeln geprüft, kein Proxy aus der Umgebung, kurze Zeitgrenze, vom
+     * Inhalt höchstens 1 KB gelesen.
+     */
+    private function remoteAudioLength($url) {
+        if (!function_exists('curl_init')) {
+            return ['error' => 'Die PHP-Erweiterung curl fehlt auf dem Server.'];
+        }
+        $deadline = microtime(true) + self::REMOTE_TIMEOUT;
+        for ($hop = 0; $hop <= self::REMOTE_MAX_REDIRECTS; $hop++) {
+            $target = $this->publicTarget($url);
+            if (isset($target['error'])) {
+                return $target;
+            }
+            $head = $this->httpProbe($url, $target, false, $deadline);
+            if (isset($head['error'])) {
+                return $head;
+            }
+            if ($head['location'] !== null) {
+                $url = $head['location'];
+                continue;
+            }
+            if ($head['length'] > 0) {
+                return ['length' => $head['length']];
+            }
+            // HEAD ohne Länge oder nicht erlaubt: ein Byte anfordern
+            $range = $this->httpProbe($url, $target, true, $deadline);
+            if (isset($range['error'])) {
+                return $range;
+            }
+            if ($range['location'] !== null) {
+                $url = $range['location'];
+                continue;
+            }
+            if ($range['length'] > 0) {
+                return ['length' => $range['length']];
+            }
+            $status = $range['status'] ?: $head['status'];
+            return ['error' => $status >= 400
+                ? 'Der Server antwortet mit HTTP ' . $status . '.'
+                : 'Der Server nennt keine Dateigröße.'];
+        }
+        return ['error' => 'Zu viele Weiterleitungen.'];
+    }
+
+    /**
+     * Prüft eine Adresse vor der Abfrage: Schema, Port, Servername und alle
+     * aufgelösten IPs. Liefert ['host', 'port', 'ip'] oder ['error' => Text].
+     */
+    private function publicTarget($url) {
+        if (!is_string($url) || !$this->isHttpUrl($url)) {
+            return ['error' => 'Die Adresse muss mit http:// oder https:// beginnen.'];
+        }
+        $parts  = parse_url($url);
+        $scheme = strtolower($parts['scheme']);
+        $host   = strtolower(rtrim($parts['host'], '.'));
+        $port   = isset($parts['port']) ? (int) $parts['port'] : ($scheme === 'https' ? 443 : 80);
+        if (isset($parts['user']) || isset($parts['pass'])) {
+            return ['error' => 'Adressen mit Zugangsdaten werden nicht abgefragt.'];
+        }
+        if (!in_array($port, [80, 443], true)) {
+            return ['error' => 'Abgefragt werden nur die Standard-Ports 80 und 443.'];
+        }
+        $literal = trim($host, '[]');
+        if (filter_var($literal, FILTER_VALIDATE_IP) !== false) {
+            $ips = [$literal];
+        } else {
+            // Nur echte Servernamen (Endung mit Buchstaben); Zahlenformen wie
+            // „2130706433“ oder „0x7f.1“ legen Programme unterschiedlich aus
+            if (preg_match('/^[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z][a-z0-9-]*$/D', $host) !== 1) {
+                return ['error' => 'Der Servername ist ungültig.'];
+            }
+            $ips     = [];
+            $records = @dns_get_record($host, DNS_A | DNS_AAAA);
+            if (is_array($records)) {
+                foreach ($records as $record) {
+                    if (isset($record['ip'])) {
+                        $ips[] = $record['ip'];
+                    }
+                    if (isset($record['ipv6'])) {
+                        $ips[] = $record['ipv6'];
+                    }
+                }
+            }
+            if (!$ips) {
+                $ips = gethostbynamel($host) ?: [];
+            }
+        }
+        if (!$ips) {
+            return ['error' => 'Der Servername lässt sich nicht auflösen.'];
+        }
+        foreach ($ips as $ip) {
+            if (!$this->isPublicIp($ip)) {
+                return ['error' => 'Die Adresse zeigt auf ein internes Netz und wird nicht abgefragt.'];
+            }
+        }
+        // IPv4 bevorzugen, wenn vorhanden
+        $ipv4 = array_values(array_filter($ips, function ($ip) { return strpos($ip, ':') === false; }));
+        return ['host' => $host, 'port' => $port, 'ip' => $ipv4 ? $ipv4[0] : $ips[0]];
+    }
+
+    /** Öffentliche Unicast-Adresse? Private, Loopback-, Link-Local- und Sonderbereiche: nein. */
+    private function isPublicIp($ip) {
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return false;
+        }
+        $flags = FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
+        if (defined('FILTER_FLAG_GLOBAL_RANGE')) {
+            $flags |= FILTER_FLAG_GLOBAL_RANGE;
+        }
+        if (filter_var($ip, FILTER_VALIDATE_IP, $flags) === false) {
+            return false;
+        }
+        // Ergänzend, da ältere PHP-Versionen nicht alle Bereiche kennen
+        $blocked = ['0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10', '127.0.0.0/8', '169.254.0.0/16', '172.16.0.0/12',
+            '192.0.0.0/24', '192.0.2.0/24', '192.168.0.0/16', '198.18.0.0/15', '198.51.100.0/24', '203.0.113.0/24',
+            '224.0.0.0/4', '240.0.0.0/4', '::/128', '::1/128', '::ffff:0:0/96', '64:ff9b::/96', '64:ff9b:1::/48',
+            '100::/64', '2001::/23', '2001:db8::/32', '2002::/16', 'fc00::/7', 'fe80::/10', 'fec0::/10', 'ff00::/8'];
+        foreach ($blocked as $cidr) {
+            if ($this->ipInRange($ip, $cidr)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Liegt die IP im Bereich (CIDR, IPv4 oder IPv6)? */
+    private function ipInRange($ip, $cidr) {
+        [$net, $bits] = explode('/', $cidr);
+        $ipBin  = @inet_pton($ip);
+        $netBin = @inet_pton($net);
+        if ($ipBin === false || $netBin === false || strlen($ipBin) !== strlen($netBin)) {
+            return false;
+        }
+        $bits  = (int) $bits;
+        $bytes = intdiv($bits, 8);
+        $rest  = $bits % 8;
+        if (substr($ipBin, 0, $bytes) !== substr($netBin, 0, $bytes)) {
+            return false;
+        }
+        if ($rest === 0) {
+            return true;
+        }
+        $mask = (0xFF << (8 - $rest)) & 0xFF;
+        return (ord($ipBin[$bytes]) & $mask) === (ord($netBin[$bytes]) & $mask);
+    }
+
+    /**
+     * Eine Anfrage an die geprüfte IP: HEAD oder GET mit „Range: bytes=0-0“.
+     * Liefert ['status', 'length', 'location'] oder ['error' => Text].
+     */
+    private function httpProbe($url, array $target, $range, $deadline) {
+        $timeout = (int) ceil($deadline - microtime(true));
+        if ($timeout < 1) {
+            return ['error' => 'Zeitüberschreitung.'];
+        }
+        $headers  = [];
+        $received = 0;
+        $options  = [
+            CURLOPT_NOBODY         => !$range,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_CONNECTTIMEOUT => min(4, $timeout),
+            CURLOPT_TIMEOUT        => $timeout,
+            CURLOPT_PROXY          => '',
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_USERAGENT      => 'Bludit-Podcast-Plugin',
+            CURLOPT_HEADERFUNCTION => function ($ch, $line) use (&$headers) {
+                if (count($headers) < 100) {
+                    $headers[] = $line;
+                }
+                return strlen($line);
+            },
+            // Inhalt nicht speichern; nach 1 KB abbrechen
+            CURLOPT_WRITEFUNCTION  => function ($ch, $data) use (&$received) {
+                $received += strlen($data);
+                return $received > 1024 ? 0 : strlen($data);
+            },
+        ];
+        if (defined('CURLOPT_PROTOCOLS_STR')) {
+            $options[CURLOPT_PROTOCOLS_STR] = 'http,https';
+        } else {
+            $options[CURLOPT_PROTOCOLS] = CURLPROTO_HTTP | CURLPROTO_HTTPS;
+        }
+        if (filter_var(trim($target['host'], '[]'), FILTER_VALIDATE_IP) === false) {
+            // Verbindung an die geprüfte IP binden (kein zweites, anderes DNS-Ergebnis)
+            $ip = strpos($target['ip'], ':') !== false ? '[' . $target['ip'] . ']' : $target['ip'];
+            $options[CURLOPT_RESOLVE] = [$target['host'] . ':' . $target['port'] . ':' . $ip];
+        }
+        if ($range) {
+            $options[CURLOPT_HTTPHEADER] = ['Range: bytes=0-0'];
+        }
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, $options);
+        curl_exec($ch);
+        $errno  = curl_errno($ch);
+        $error  = curl_error($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+        // Abbruch nach 1 KB (CURLE_WRITE_ERROR) ist gewollt, wenn eine Antwort da ist
+        if ($errno !== 0 && !($errno === 23 && $status > 0)) {
+            Log::set(__METHOD__ . LOG_SEP . 'curl ' . $errno . ': ' . $error);
+            return ['error' => 'Der Server ist nicht erreichbar (Verbindungsfehler oder Zeitüberschreitung).'];
+        }
+
+        $contentLength = null;
+        $contentRange  = null;
+        $location      = null;
+        foreach ($headers as $line) {
+            if (stripos($line, 'HTTP/') === 0) {
+                $contentLength = $contentRange = $location = null;  // neuer Antwortblock (z. B. nach 100 Continue)
+                continue;
+            }
+            $pos = strpos($line, ':');
+            if ($pos === false) {
+                continue;
+            }
+            $name  = strtolower(trim(substr($line, 0, $pos)));
+            $value = trim(substr($line, $pos + 1));
+            if ($name === 'content-length') {
+                $contentLength = $value;
+            } elseif ($name === 'content-range') {
+                $contentRange = $value;
+            } elseif ($name === 'location') {
+                $location = $value;
+            }
+        }
+
+        $toInt  = function ($v) {
+            $n = is_string($v) ? filter_var($v, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : false;
+            return $n === false ? 0 : $n;
+        };
+        $length = 0;
+        if ($range && $status === 206 && is_string($contentRange)
+            && preg_match('~^bytes\s+\d+-\d+/(\d+)$~iD', $contentRange, $m) === 1) {
+            $length = $toInt($m[1]);
+        } elseif ($status >= 200 && $status < 300 && $status !== 206) {
+            $length = $toInt($contentLength);
+        }
+        $next = null;
+        if ($status >= 300 && $status < 400 && is_string($location) && $location !== '') {
+            $next = $this->resolveLocation($url, $location);
+        }
+        return ['status' => $status, 'length' => $length, 'location' => $next];
+    }
+
+    /** Ziel einer Weiterleitung als absolute URL (wird danach erneut geprüft). */
+    private function resolveLocation($base, $location) {
+        if (preg_match('~^[a-z][a-z0-9+.-]*:~i', $location) === 1) {
+            return $location;
+        }
+        $parts  = parse_url($base);
+        $origin = $parts['scheme'] . '://' . $parts['host'] . (isset($parts['port']) ? ':' . $parts['port'] : '');
+        if (strpos($location, '//') === 0) {
+            return $parts['scheme'] . ':' . $location;
+        }
+        if (strpos($location, '/') === 0) {
+            return $origin . $location;
+        }
+        $dir = isset($parts['path']) ? (string) preg_replace('~[^/]*$~', '', $parts['path']) : '/';
+        return $origin . ($dir !== '' ? $dir : '/') . $location;
     }
 
     // ── Apple-Kanalangaben (Roadmap 016)

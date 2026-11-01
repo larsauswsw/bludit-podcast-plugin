@@ -6,7 +6,7 @@ Status-/Prioritäts-Legende.
 
 ## 016 · Apple-Podcasts-Konformität des Feeds
 
-Status: in-progress · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`outputFeed()`, `form()`, `handleSaveEpisode()`) · Issue: [#17](https://github.com/larsauswsw/bludit-podcast-plugin/issues/17)
+Status: done · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`outputFeed()`, `form()`, `handleSaveEpisode()`) · Issue: [#17](https://github.com/larsauswsw/bludit-podcast-plugin/issues/17)
 
 **Beschreibung**
 
@@ -47,15 +47,16 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
       entspricht, sonst fordert das Formular eine Auswahl.
 - [x] Neue Kanaleinstellungen: `itunes:type`, Copyright; RSS-`<image>` wird aus
       dem Cover erzeugt.
-- [ ] Shownotes als `<content:encoded><![CDATA[…]]></content:encoded>` mit HTML,
+- [x] Shownotes als `<content:encoded><![CDATA[…]]></content:encoded>` mit HTML,
       `<description>` als Klartext-Kurzfassung; `<itunes:summary>` entfällt.
-- [ ] Bei externer Audio-URL wird die Dateigröße beim Speichern per
+- [x] Bei externer Audio-URL wird die Dateigröße beim Speichern per
       `HEAD`-Request (`Content-Length`) ermittelt, Fehler werden angezeigt.
       Der Request ist gegen SSRF abgesichert (CLAUDE.md, Sicherheitsregel 8):
       nur `http`/`https`, keine privaten/Loopback-/Link-Local-Ziele nach
       DNS-Auflösung, Redirects werden erneut geprüft, kurzer Timeout.
-- [ ] Hinweis/Warnung beim Upload von `wav`/`ogg`.
-- [ ] Feed besteht den Podbase- bzw. Cast-Feed-Validator ohne Fehler.
+- [x] Hinweis/Warnung beim Upload von `wav`/`ogg`.
+- [ ] Feed besteht den Podbase- bzw. Cast-Feed-Validator ohne Fehler
+      (Prüfung auf der echten Installation: Installationstest R65).
 
 **Umsetzung Teil 1 (Kanal):** `APPLE_CATEGORIES` mit 19 Kategorien und 91
 Unterkategorien, abgeglichen mit Apples Seite „Apple Podcasts-Kategorien“
@@ -67,8 +68,25 @@ Freitexte (auch `Sports > Tennis`) ohne Umwandlung gelten; sonst Hinweis im
 Formular und keine Kategorie im Feed. Neue Felder `showType` und `copyright`,
 Cover nur mit `http(s)` (`coverUrl()`), auch für den Player. Die README-Angabe
 zur Sortierung passt bereits: Die Admin-Liste sortiert nach Folgennummer, der
-Feed nach Datum. Teil 2: Shownotes (`content:encoded`), Dateigröße externer
-Audio-URLs, Hinweis zu `wav`/`ogg`.
+Feed nach Datum.
+
+**Umsetzung Teil 2 (Episoden):** `<content:encoded>` aus `shownotesHtml()`
+(DOMDocument, Whitelist `SHOWNOTES_TAGS`, alle Attribute entfernt, `href` nur
+`http(s)`/`mailto`, Pfade ab „/“ mit Website-Adresse; Skripte, Stile, Einbettungen
+entfallen) als CDATA (`cdata()`: ungültiges UTF-8 und Steuerzeichen entfernt,
+„]]>“ geteilt). `<description>` aus `episodeTextSummary()`: Text ohne Tags,
+Entities bleiben (Apple liest das Feld als HTML), höchstens 4000 Zeichen.
+Dateigröße: hochgeladene Datei per `filesize()`, unveränderte URL behält die
+gespeicherte Größe (vorher setzte jedes Bearbeiten sie auf 0), sonst
+`remoteAudioLength()`: HEAD, ersatzweise GET mit `Range: bytes=0-0`; nur
+`http`/`https` auf Port 80/443, Servername mit Buchstaben-Endung oder IP, alle
+aufgelösten IPs öffentlich (`isPublicIp()`: PHP-Filter plus Sonderbereiche wie
+100.64/10, NAT64, 6to4), Verbindung per `CURLOPT_RESOLVE` an die geprüfte IP
+gebunden, höchstens drei Weiterleitungen, jede neu geprüft, kein Proxy aus der
+Umgebung, 10 s, vom Inhalt höchstens 1 KB. Schlägt das fehl, wird trotzdem
+gespeichert; der Hinweis erscheint über der Episodenliste (über
+`sessionStorage`, nur als Text). Hinweis zu `wav`/`ogg` im Formular für Datei
+und URL.
 
 **Betroffene Dateien**
 
