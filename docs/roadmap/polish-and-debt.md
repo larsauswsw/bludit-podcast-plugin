@@ -162,6 +162,14 @@ Bludit-Plugin-Verzeichnis.
   Screenshots, kein Code, kein Release. Ohne Lizenz gilt „alle Rechte
   vorbehalten“. Der mitgelieferte Podlove-Player bleibt MIT-lizenziert
   (`player/LICENSE` muss im Paket bleiben).
+- **Lizenzmodell (offen, später zu entscheiden):** (a) alles unter einer
+  offenen Lizenz wie MIT — Verkauf möglich, aber jeder Käufer darf
+  weitergeben; Einnahmen eher über Support/Updates; (b) eigene kommerzielle
+  Lizenz für das ganze Plugin; (c) kostenlose Grundversion (offen, im
+  öffentlichen Repo) plus kostenpflichtige Pro-Variante, z. B. als eigenes
+  Zusatz-Plugin mit eigener Lizenz, vertrieben außerhalb von GitHub. Für (c)
+  vorher festlegen, welche Funktionen in Pro gehören und welche Erweiterungs-
+  punkte die Grundversion dafür braucht.
 - **Quelle der öffentlichen Dateien:** `public/` in diesem Repository.
 - **Nach dem Privatstellen** lädt der Update-Befehl auf dem Server `main` nur
   noch mit Lesetoken (fine-grained, nur dieses Repository, nur „Contents: Read“);
