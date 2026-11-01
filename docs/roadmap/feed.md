@@ -172,7 +172,7 @@ vorübergehend versteckter `<itunes:block>`.
 
 ## 019 · Podcasting-2.0-Namespace (`podcast:*`)
 
-Status: idea · Priorität: niedrig · Aufwand: M · Bereich: `plugin.php` (`outputFeed()`, Einstellungen, Episodenformular) · Issue: [#20](https://github.com/larsauswsw/bludit-podcast-plugin/issues/20)
+Status: in-progress · Priorität: niedrig · Aufwand: M · Bereich: `plugin.php` (`outputFeed()`, Einstellungen, Episodenformular) · Issue: [#20](https://github.com/larsauswsw/bludit-podcast-plugin/issues/20)
 
 **Beschreibung**
 
@@ -191,6 +191,12 @@ Transkripte). Sinnvolle erste Elemente:
 - [x] Namespace `xmlns:podcast="https://podcastindex.org/namespace/1.0"` eingebunden
       (vorgezogen mit 016: PSP-1 verlangt ihn, Validator-Befund im Installationstest R65).
 - [ ] `podcast:guid`, `podcast:locked` und `podcast:funding` konfigurierbar.
+      Umgesetzt (vorgezogen, weil der PSP-1-Test einen unbenutzten Namespace
+      nicht erkennt): `podcast:guid` als UUIDv5 aus der Feed-Adresse ohne
+      Schema, beim ersten Speichern bzw. Öffnen der Episodenliste festgelegt und
+      danach unverändert (geprüft am Beispiel aus dem Standard);
+      `podcast:locked` als Einstellung, Standard „Nein“, `owner` aus der
+      E-Mail des Inhabers. Offen: `podcast:funding`.
 - [ ] Transkript- und Kapitel-URLs pro Episode (sobald 030 umgesetzt ist).
 - [ ] Feed validiert weiterhin bei Apple (unbekannte Namespaces werden ignoriert).
 

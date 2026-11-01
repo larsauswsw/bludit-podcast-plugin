@@ -125,11 +125,13 @@ The settings are grouped like Bludit's own settings pages.
 | **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category with optional subcategory, chosen from Apple's list (shown with Apple's German names plus the English name; the feed contains the English names, subcategory nested). A previous free-text entry is kept if it matches an Apple category | `Kinder und Familie → Kindererziehung (Parenting)` |
 | | **Art des Podcasts** | `<itunes:type>`: episodic (newest first) or serial (in order, oldest first) | Episodisch |
 | | **Explicit** | Whether the podcast contains explicit content (`true`/`false` in the feed) | `Nein` |
+| | **Feed gegen Übernahme sperren** | `<podcast:locked>`: *Ja* means other platforms only import the podcast after ownership is confirmed via the owner email. Set to *Nein* before moving to another host | `Nein` |
 | | **E-Mail des Inhabers** | Owner email (`itunes:owner`, `managingEditor`). Public in the feed; directories such as Apple Podcasts and Spotify use it to verify ownership | `jane@example.com` |
 | | **Apple Podcasts**, **Spotify**, **Pocket Casts**, **Deezer**, **Castbox** | Optional: the podcast's public link on that service (in the app: *Share → Copy link*). Shown in the player's subscribe button. The Apple link also adds Castro and – if no own link is set – Pocket Casts | `https://podcasts.apple.com/de/podcast/my-podcast/id1234567890` |
 | **Feed** | **Feed-Dateiname** | Path at which the RSS feed is served | `podcast.xml` |
 | | **Adresse des Feeds** | Read-only: the public feed URL to submit to Apple Podcasts, Spotify etc., with a link to open the feed | `https://example.com/podcast.xml` |
 | | **Abweichende Feed-URL (optional)** | Only if the feed is served from another address (e.g. a CDN); leave empty to use the site address | `https://cdn.example.com/podcast.xml` |
+| | **Podcast-GUID** | Read-only: permanent podcast ID (`<podcast:guid>`), generated once from the feed URL (UUIDv5 as defined by Podcasting 2.0) and kept when the feed moves | `5c3f1a80-…` |
 | | **Website-URL** | Your podcast website; leave empty for the Bludit site | `https://example.com` |
 | **Website & Player** | **Player auf Episodenseiten** | Podlove Web Player (served locally) or a plain HTML5 player | Podlove |
 | | **Position des Players** | At the start of the page content (below the title) or at the end | start |
@@ -201,7 +203,7 @@ The feed is served at the configured feed filename, e.g. `https://example.com/po
 
 The feed includes:
 - Standard RSS 2.0 channel and item elements with `<itunes:*>` tags (episode, season, type, duration, explicit, artwork)
-- The Podcasting 2.0 namespace (`xmlns:podcast`) is declared, as the PSP-1 standard requires
+- Podcasting 2.0: `<podcast:guid>` and `<podcast:locked>` (namespace `xmlns:podcast`, as the PSP-1 standard requires)
 - Apple Podcasts channel tags: category and subcategory from Apple's list, `<itunes:type>`, `<itunes:explicit>true|false</itunes:explicit>`, optional `<copyright>` and the RSS `<image>` from the cover
 - `<enclosure>` tags with file size and MIME type for each episode
 - Show notes: `<content:encoded>` with the episode text as HTML (paragraphs, lists, links, emphasis; scripts, styles, embeds and attributes are removed, links only `http(s)`/`mailto`), `<description>` with the text without tags (max. 4000 characters)
