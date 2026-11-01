@@ -86,7 +86,7 @@ gesehen). Umsetzung zusammen mit 016 und 043.
       `<atom:link rel="self">`.
 - [x] `siteHead()` gibt auf allen Seiten einen Discovery-Link mit Podcast-Titel aus.
 - [x] Einstellungsseite zeigt die fertige Feed-URL als Link zum Kopieren.
-- [ ] Optional (nicht umgesetzt, eigenes Feature bei Bedarf): Felder für Apple-/Spotify-/Podcast-Index-Links, die als
+- [x] Optional: Felder für Apple-/Spotify-/Podcast-Index-Links, die als
       Abo-Buttons im Player und im Widget (031) erscheinen.
 
 **Umsetzung:** `feedUrl()` liefert die abweichende Feed-URL, wenn sie mit
@@ -97,6 +97,17 @@ sonst Website-Titel). Die Einstellungsseite zeigt die Adresse in einem
 schreibgeschützten Feld mit Link „Feed öffnen“. Website-URL analog über
 `siteUrl()`; eine eingetragene URL ohne `http(s)://` wird nicht verwendet und
 im Formular markiert.
+
+Nachtrag Installationstest P55: Der Abo-Button braucht eine Liste `clients`,
+sonst bleibt sein Fenster leer. Übergeben werden Apps, die über die
+Feed-Adresse abonnieren (`Podcast::SUBSCRIBE_APPS`), plus Player.fm und RSS.
+Dienste, deren Link die ID des Podcasts beim Dienst braucht (optionaler Punkt
+oben): Felder für die öffentlichen Links zu Apple Podcasts, Spotify, Pocket
+Casts, Deezer und Castbox in der Gruppe „Apple Podcasts & Verzeichnisse“;
+`serviceId()` liest die ID per Muster (nur https und die Domain des Dienstes),
+ein unpassender Link wird markiert und nicht verwendet. Der Apple-Link bringt
+Castro mit und – ohne eigenen Link – Pocket Casts über `pca.st/itunes/<ID>`.
+Podcast Index (nicht im Podlove-Paket) und das Widget (031) stehen aus.
 
 **Betroffene Dateien**
 
