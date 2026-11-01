@@ -6,7 +6,7 @@ Status-/Prioritäts-Legende.
 
 ## 016 · Apple-Podcasts-Konformität des Feeds
 
-Status: idea · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`outputFeed()`, `form()`, `handleSaveEpisode()`) · Issue: [#17](https://github.com/larsauswsw/bludit-podcast-plugin/issues/17)
+Status: in-progress · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`outputFeed()`, `form()`, `handleSaveEpisode()`) · Issue: [#17](https://github.com/larsauswsw/bludit-podcast-plugin/issues/17)
 
 **Beschreibung**
 
@@ -38,14 +38,14 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
 
 **Akzeptanzkriterien**
 
-- [ ] `<itunes:explicit>true|false</itunes:explicit>` auf Kanal- und Episodenebene.
-- [ ] Kategorie + Unterkategorie als Auswahlliste nach Apple-Kategorieliste
+- [x] `<itunes:explicit>true|false</itunes:explicit>` auf Kanal- und Episodenebene.
+- [x] Kategorie + Unterkategorie als Auswahlliste nach Apple-Kategorieliste
       (vor der Umsetzung gegen Apples aktuelle Liste prüfen). Anzeige deutsch
       mit englischem Namen, z. B. „Kinder & Familie (Kids & Family) →
       Elternschaft (Parenting)“; gespeichert und im Feed nur der englische Name.
       Bisheriger Freitext wird übernommen, wenn er einer Apple-Kategorie
       entspricht, sonst fordert das Formular eine Auswahl.
-- [ ] Neue Kanaleinstellungen: `itunes:type`, Copyright; RSS-`<image>` wird aus
+- [x] Neue Kanaleinstellungen: `itunes:type`, Copyright; RSS-`<image>` wird aus
       dem Cover erzeugt.
 - [ ] Shownotes als `<content:encoded><![CDATA[…]]></content:encoded>` mit HTML,
       `<description>` als Klartext-Kurzfassung; `<itunes:summary>` entfällt.
@@ -56,6 +56,18 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
       DNS-Auflösung, Redirects werden erneut geprüft, kurzer Timeout.
 - [ ] Hinweis/Warnung beim Upload von `wav`/`ogg`.
 - [ ] Feed besteht den Podbase- bzw. Cast-Feed-Validator ohne Fehler.
+
+**Umsetzung Teil 1 (Kanal):** `APPLE_CATEGORIES` mit 19 Kategorien und 91
+Unterkategorien (Apple-Liste seit 2019; 2023 nur neun Unterkategorien mit
+eigenen Charts aufgewertet, keine neuen Namen — Apples Seite war aus der
+Arbeitsumgebung nicht abrufbar, Abgleich über Sekundärquellen). Gespeichert im
+bisherigen Feld `category` als „Kategorie > Unterkategorie“, damit passende
+Freitexte (auch `Sports > Tennis`) ohne Umwandlung gelten; sonst Hinweis im
+Formular und keine Kategorie im Feed. Neue Felder `showType` und `copyright`,
+Cover nur mit `http(s)` (`coverUrl()`), auch für den Player. Die README-Angabe
+zur Sortierung passt bereits: Die Admin-Liste sortiert nach Folgennummer, der
+Feed nach Datum. Teil 2: Shownotes (`content:encoded`), Dateigröße externer
+Audio-URLs, Hinweis zu `wav`/`ogg`.
 
 **Betroffene Dateien**
 

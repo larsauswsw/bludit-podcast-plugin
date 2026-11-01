@@ -89,6 +89,9 @@ dort um passende Schritte ergänzen.
   Plugin-Einstellungen (`form()`) ohne eigene Klassen, gestylt über
   `.plugin-form`, Gruppen per `Bootstrap::formTitle()`. Eigenes CSS nur in
   `css/podcast-admin.css`.
+- Apple-Kategorie nur über `appleCategory()` (Whitelist `APPLE_CATEGORIES`,
+  gespeichert als „Kategorie > Unterkategorie“, englische Namen), Cover über
+  `coverUrl()` (nur `http(s)`), `itunes:explicit` als `true`/`false`.
 - Feed-Adresse nur über `feedUrl()` (abweichende URL mit `http(s)://`, sonst
   `localFeedUrl()` = `DOMAIN_BASE` + `feedSlug()`), Website über `siteUrl()` —
   nie `setting('feedUrl')`/`setting('siteUrl')` direkt ausgeben.
