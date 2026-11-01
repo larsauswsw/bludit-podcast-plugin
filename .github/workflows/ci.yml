@@ -20,7 +20,7 @@ jobs:
       matrix:
         php: ['8.0', '8.1', '8.2', '8.3', '8.4']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Abhängigkeiten (Composer, auf PHP 8.0 festgelegt)
         run: composer install --no-interaction --no-progress --prefer-dist
       - name: Syntax und Tests mit PHP ${{ matrix.php }}
@@ -35,7 +35,7 @@ jobs:
     name: PHPStan (Stufe 5)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Abhängigkeiten
         run: composer install --no-interaction --no-progress --prefer-dist
       - name: Bludit 3.22 zum Lesen der Klassen
@@ -47,7 +47,7 @@ jobs:
     name: ESLint
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Abhängigkeiten (npm, aus package-lock.json)
         run: npm ci --no-audit --no-fund
       - name: Lint
@@ -57,7 +57,7 @@ jobs:
     name: Geheimnisse (gitleaks)
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
       - name: Gesamte Historie prüfen
