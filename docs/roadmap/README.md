@@ -66,8 +66,8 @@ dokumentiert.
 | ID | Feature | Priorität | Aufwand | Issue |
 |---|---|---|---|---|
 | 001 | Doppeltes HTML-Escaping in Feed, Formularen und Titeln | hoch | S | [#2](https://github.com/larsauswsw/bludit-podcast-plugin/issues/2) ✅ |
-| 002 | Episoden mit mehreren Tags werden nicht erkannt | hoch | S | [#3](https://github.com/larsauswsw/bludit-podcast-plugin/issues/3) |
-| 003 | Seiten über `createPage()`/`editPage()`/`deletePage()` verwalten | hoch | S | [#4](https://github.com/larsauswsw/bludit-podcast-plugin/issues/4) |
+| 002 | Episoden mit mehreren Tags werden nicht erkannt | hoch | S | [#3](https://github.com/larsauswsw/bludit-podcast-plugin/issues/3) ✅ |
+| 003 | Seiten über `createPage()`/`editPage()`/`deletePage()` verwalten | hoch | S | [#4](https://github.com/larsauswsw/bludit-podcast-plugin/issues/4) ✅ |
 | 004 | Unterverzeichnis-Installationen unterstützen (`DOMAIN` → `DOMAIN_BASE`/`webhook()`) | hoch | S | [#5](https://github.com/larsauswsw/bludit-podcast-plugin/issues/5) |
 | 005 | Episoden-Metadaten an UUID statt Page-Key binden (Slug-Änderung, GUID) | hoch | M | [#6](https://github.com/larsauswsw/bludit-podcast-plugin/issues/6) ✅ |
 | 006 | Datenverlust bei Plugin-Update: `episodes.json` aus dem Plugin-Ordner verlagern | hoch | S | [#7](https://github.com/larsauswsw/bludit-podcast-plugin/issues/7) ✅ |
@@ -113,7 +113,8 @@ der nächste Schritt für dich.
 
 Bereits umgesetzt (`Status: done`): 039 (Sicherheitsfix, #41); 012 Custom Fields
 mit 005 und 006 (behebt S3); 028 lokal gehosteter Player (behebt S4) mit 040 (S8, #45); 011 Upload-Härtung
-(behebt S5); 001 Escaping; 042 Admin-Oberfläche im Bludit-Look (übernimmt die Bootstrap-Punkte
+(behebt S5); 001 Escaping; 002 Tag-Erkennung; 003 Bludit-Seitenfunktionen (mit
+Tag-Erhalt aus 007); 042 Admin-Oberfläche im Bludit-Look (übernimmt die Bootstrap-Punkte
 aus 024 und 035). Teilweise vorgezogen: CSRF-Prüfung aus 010, URL-/Typprüfung
 aus 011, `CLAUDE.md` aus 037, Skript-Einbindung aus 004 (mit 042).
 

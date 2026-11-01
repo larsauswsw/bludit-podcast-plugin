@@ -68,7 +68,9 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
   **Behoben** mit 001 (#2).
 - **002 Tag-Erkennung** — `plugin.php:990`; `Page::tags()` gibt
   `"podcast,Technik"` zurück, `(array)` macht daraus ein Element.
+  **Behoben** mit 002 (#3).
 - **003 Low-Level-Pages-API** — `plugin.php:840`, `846`, `872`.
+  **Behoben** mit 003 (#4).
 - **004 Unterordner** — `plugin.php:104`, `115–116`, `215`/`254–260`, `920`, `924`.
 - **005 Slug als Schlüssel/GUID** — `plugin.php:454`, `1030–1045`.
 - **006 Daten im Plugin-Ordner** — `plugin.php:57–60`, `1009–1011`; das Repo

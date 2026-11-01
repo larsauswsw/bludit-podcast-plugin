@@ -70,7 +70,7 @@ formatierte Shownotes kommen mit 016.
 
 ## 002 · Episoden mit mehreren Tags werden nicht erkannt
 
-Status: idea · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`pageHasPodcastTag()`) · Issue: [#3](https://github.com/larsauswsw/bludit-podcast-plugin/issues/3)
+Status: done · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`pageHasPodcastTag()`) · Issue: [#3](https://github.com/larsauswsw/bludit-podcast-plugin/issues/3)
 
 **Beschreibung**
 
@@ -83,11 +83,12 @@ verschwindet aus Feed, Admin-Liste und Player.
 
 **Akzeptanzkriterien**
 
-- [ ] `pageHasPodcastTag()` nutzt `$page->tags(true)` (Array `tagKey => Name`)
-      und prüft `isset($tags['podcast'])`.
-- [ ] Die Sonderbehandlung für Tag-Objekte (gibt es in Bludit 3.x nicht) entfällt.
-- [ ] Eine Episode mit den Tags „podcast, Technik“ erscheint im Feed, in der
-      Admin-Liste und bekommt den Player.
+- [x] `pageHasPodcastTag()` nutzt `$page->tags(true)` (Array `tagKey => Name`)
+      und prüft den Schlüssel `podcast` (klein geschrieben, „Podcast“ zählt mit).
+- [x] Die Sonderbehandlung für Tag-Objekte (gibt es in Bludit 3.x nicht) entfällt.
+- [x] Eine Episode mit den Tags „podcast, Technik“ erscheint im Feed, in der
+      Admin-Liste und bekommt den Player (lokal getestet; beim Bearbeiten über
+      das Plugin bleibt „Technik“ erhalten, siehe 003/007).
 
 **Betroffene Dateien**
 
@@ -97,7 +98,7 @@ verschwindet aus Feed, Admin-Liste und Player.
 
 ## 003 · Seiten über `createPage()`/`editPage()`/`deletePage()` verwalten
 
-Status: idea · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`handleSaveEpisode()`, `handleDeleteEpisode()`) · Issue: [#4](https://github.com/larsauswsw/bludit-podcast-plugin/issues/4)
+Status: done · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`handleSaveEpisode()`, `handleDeleteEpisode()`) · Issue: [#4](https://github.com/larsauswsw/bludit-podcast-plugin/issues/4)
 
 **Beschreibung**
 
@@ -118,14 +119,31 @@ diese in `createPage()`, `editPage()` und `deletePage()`
 Bludits eigenes REST-API-Plugin (`bl-plugins/api/plugin.php`) nutzt ebenfalls
 `createPage()`/`editPage()`.
 
+**Umsetzung (2026-11-01)**, dabei gefunden und mit behoben:
+
+- Beim Bearbeiten werden keine `tags` mehr mitgegeben — Bludit behält die
+  vorhandenen (erster Punkt von 007).
+- `Pages::edit()` ohne `parent` verschiebt eine Unterseite an die oberste Ebene
+  (neuer Schlüssel, neue URL). Das Plugin gibt den bisherigen Elternschlüssel
+  mit. Bludit übernimmt dabei — wie im eigenen Editor — den Seitentyp der
+  Elternseite.
+- Neue Episoden bekommen die URL wie im Bludit-Editor aus dem Rohtitel
+  (`generateKey($title, false, true)`); `Pages::add()` bildete sie aus dem
+  escapten Titel (`tom-amp-jerry`). Bestehende URLs bleiben unverändert.
+- `Pages::delete()` löscht auch die Ordner von Unterseiten, deren Einträge
+  verwaist zurückblieben. Wie in Bludits Inhaltsliste lassen sich Episoden mit
+  Unterseiten im Plugin nicht löschen (Menüpunkt ausgeblendet, API lehnt ab).
+
 **Akzeptanzkriterien**
 
-- [ ] Anlegen/Bearbeiten/Löschen laufen über `createPage()`, `editPage()`,
+- [x] Anlegen/Bearbeiten/Löschen laufen über `createPage()`, `editPage()`,
       `deletePage()`; Rückgabewert `false` wird als Fehler gemeldet.
-- [ ] Neue Episoden haben den angemeldeten Nutzer als Autor.
-- [ ] `/tag/podcast` listet neue Episoden sofort; `rss.xml`/`sitemap.xml` des
-      Core-Plugins enthalten sie.
-- [ ] Im Bludit-Systemlog erscheinen Einträge für Anlegen/Bearbeiten/Löschen.
+- [x] Neue Episoden haben den angemeldeten Nutzer als Autor.
+- [x] `/tag/podcast` listet neue Episoden sofort; `rss.xml`/`sitemap.xml` des
+      Core-Plugins enthalten sie (und nach dem Löschen nicht mehr).
+- [x] Im Bludit-Systemlog erscheinen Einträge für Anlegen/Bearbeiten/Löschen.
+- [x] Unterseiten behalten beim Bearbeiten ihren Platz; Episoden mit
+      Unterseiten werden nicht gelöscht.
 
 **Betroffene Dateien**
 
@@ -244,7 +262,7 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`hand
 Beim Bearbeiten über die Plugin-Oberfläche gehen Änderungen verloren, die im
 Bludit-Editor gemacht wurden:
 
-- `tags => 'podcast'` (`plugin.php:833`) ersetzt **alle** vorhandenen Tags.
+- ~~`tags => 'podcast'` ersetzt **alle** vorhandenen Tags.~~ Behoben mit 003.
 - Der Status kennt nur `published`/`draft` (`plugin.php:768`) — Seiten vom Typ
   `sticky`, `static` oder `scheduled` werden beim Speichern zu `published`;
   `scheduled` wird in der Liste als „Entwurf“ angezeigt (`plugin.php:580–584`),
@@ -257,7 +275,8 @@ Bludit-Editor gemacht wurden:
 
 **Akzeptanzkriterien**
 
-- [ ] Bestehende Tags bleiben erhalten, `podcast` wird nur ergänzt.
+- [x] Bestehende Tags bleiben erhalten (mit 003: beim Bearbeiten werden keine
+      Tags mehr gesendet; neue Episoden bekommen `podcast`).
 - [ ] Der Status bildet `published`, `draft`, `scheduled` (und unverändert
       `sticky`/`static`) korrekt ab und wird korrekt angezeigt.
 - [x] Das Formular nutzt `contentRaw()`; Markdown bleibt nach mehrfachem Speichern
