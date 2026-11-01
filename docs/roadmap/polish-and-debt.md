@@ -79,7 +79,7 @@ Status: done · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php`, `pod
 
 ## 036 · Automatisierte Tests & CI
 
-Status: in-progress · Priorität: hoch · Aufwand: M · Bereich: neu: `.github/workflows/`, `tests/` · Issue: [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37)
+Status: done · Priorität: hoch · Aufwand: M · Bereich: neu: `.github/workflows/`, `tests/` · Issue: [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37)
 
 **Beschreibung**
 
@@ -94,20 +94,27 @@ Deprecations) wären mit einfachen Checks früh aufgefallen.
 - [x] Unit-Tests (PHPUnit) für reine Helfer: Feed-Escaping, Tag-Erkennung,
       Dauer-Parsing, Dateinamen-Bereinigung, MIME-Zuordnung. *(Dazu Kategorien,
       Shownotes, CDATA, Feed-Adresse, GUID, Datum, Abo-Links, Cover-Prüfung.)*
-- [ ] Integrationstest: Bludit 3.22 im Container installieren, Plugin aktivieren,
+- [x] Integrationstest: Bludit 3.22 im Container installieren, Plugin aktivieren,
       Episode anlegen, Feed abrufen und gegen das RSS-/iTunes-Schema prüfen.
+      *(PHP-Testserver mit frisch installiertem Bludit 3.22 im CI-Job; Feed per
+      XPath auf Apples Pflichtelemente geprüft, ein offizielles Schema gibt es
+      nicht.)*
 - [x] ESLint für `podcast-admin.js` (mit Regel gegen `innerHTML` & Co., CLAUDE.md Regel 4).
 - [x] Sicherheitsprüfung in CI: ~~Psalm-Taint-Analyse (`--taint-analysis`) für
       `plugin.php`~~, Secret-Scan; ein Fund lässt den Build fehlschlagen.
       *(Psalm-Taint vom Inhaber am 2026-11-01 verworfen: viele Fehlalarme bei
       Bludit-Code; die gezielten Sicherheitstests decken die Regeln ab.
       Secret-Scan: gitleaks über die ganze Historie.)*
-- [ ] Sicherheits-Tests für die Regeln aus `CLAUDE.md`: manipulierte
+- [x] Sicherheits-Tests für die Regeln aus `CLAUDE.md`: manipulierte
       Seitenschlüssel, fehlender CSRF-Token, falsche Rolle, Upload mit falschem
       MIME-Typ, Array-Parameter, SSRF-Ziele (`127.0.0.1`, `169.254.169.254`).
       *(Teil 1 als Unit-Tests: SSRF-Ziele und -Weiterleitungen, MIME/Endung,
       Array-Werte, Pfade außerhalb der Upload-Ordner, Rolle beim Cover-Upload.
-      Teil 2 über HTTP gegen Bludit: CSRF, Rollen, Seitenschlüssel.)*
+      Teil 2 über HTTP gegen Bludit (`tests/Integration/`): Anfrage ohne
+      CSRF-Token beendet die Sitzung und ändert nichts, Redakteur ohne Zugriff
+      auf Kanaleinstellungen und Cover, Seitenschlüssel mit `../` und fremde
+      Seiten abgelehnt, Arrays, Upload mit falschem Inhalt, unbekannte Aktion,
+      Shownotes ohne Skript im Feed.)*
 
 **Betroffene Dateien**
 

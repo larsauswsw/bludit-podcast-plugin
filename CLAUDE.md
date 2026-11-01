@@ -130,14 +130,25 @@ dort um passende Schritte ergänzen.
 ## Tests & CI (Roadmap 036)
 
 GitHub Action `.github/workflows/ci.yml` bei jedem Push auf `main` und jedem PR:
-`php -l` und PHPUnit unter PHP 8.0–8.4 (Docker `php:X-cli`), PHPStan Stufe 5
-gegen Bludit 3.22, ESLint, gitleaks. Lokal:
+`php -l` und Unit-Tests unter PHP 8.0–8.4 (Docker `php:X-cli`),
+Integrationstests gegen ein frisch installiertes Bludit 3.22, PHPStan Stufe 5,
+ESLint, gitleaks. Lokal:
 
 ```sh
-composer install && vendor/bin/phpunit
+composer install && vendor/bin/phpunit --testsuite unit
 ln -sfn /pfad/zu/bludit build/bludit && vendor/bin/phpstan analyse
 npm ci && npx eslint bl-plugins/podcast/js
+# Integration: frische Bludit-Kopie mit dem Plugin unter build/site, dann
+php -S 127.0.0.1:8099 -t build/site tests/Integration/router.php &
+curl -X POST -d "password=ci-test-12345&timezone=Europe/Berlin&install=1" \
+  "http://127.0.0.1:8099/install.php?language=de_DE"
+BLUDIT_URL=http://127.0.0.1:8099 BLUDIT_ADMIN_PASSWORD=ci-test-12345 \
+  vendor/bin/phpunit --testsuite integration
 ```
+
+Integrationstests (`tests/Integration/`) bauen per `@depends` aufeinander auf
+und brauchen eine leere Instanz. Bludit leitet mit HTTP 301 weiter und zeigt
+geschützte Admin-Seiten ohne Anmeldung mit HTTP 200 als Anmeldeformular.
 
 Unit-Tests in `tests/Unit/` rufen private Methoden per Reflection auf
 (`PodcastTestCase::call()`); `tests/bootstrap.php` bildet nur die nötige
