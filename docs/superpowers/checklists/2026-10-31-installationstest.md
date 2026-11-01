@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68.
 
 ## Vorbereitung (SSH)
 
@@ -158,9 +158,9 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] K41 Bei deutscher Website-Sprache steht in der Plugin-Liste die deutsche Beschreibung „Macht aus Bludit-Seiten einen Podcast – mit Episodenverwaltung, Podcast-Feed und Podlove Web Player.“ (vorher englisch, weil `de.json` statt `de_DE.json`).
 
 ## L · Status und Beschreibung (007)
-- [ ] L42 Episode mit Datum in der Zukunft und Status „Veröffentlicht“ speichern: In der Liste Badge „Geplant“, im Feed noch nicht; im Formular steht „Veröffentlicht“, nach erneutem Speichern bleibt sie geplant.
-- [ ] L43 Beschreibung leeren und speichern → Meldung „Bitte eine Beschreibung eingeben.“, nichts wird geändert.
-- [ ] L44 *(nur falls vorhanden)* Eine im Bludit-Editor fixierte Episode: Badge „Fixiert“, im Formular Status „Fixiert“, bleibt nach dem Speichern fixiert und steht im Feed.
+- [x] L42 Episode mit Datum in der Zukunft und Status „Veröffentlicht“ speichern: In der Liste Badge „Geplant“, im Feed noch nicht; im Formular steht „Veröffentlicht“, nach erneutem Speichern bleibt sie geplant.
+- [x] L43 Beschreibung leeren und speichern → Meldung „Bitte eine Beschreibung eingeben.“, nichts wird geändert.
+- [x] L44 *(nur falls vorhanden; live getestet)* Eine im Bludit-Editor fixierte Episode: Badge „Fixiert“, im Formular Status „Fixiert“, bleibt nach dem Speichern fixiert und steht im Feed.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
