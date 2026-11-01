@@ -834,7 +834,20 @@ class Podcast extends Plugin {
         ob_start();
         ?>
         <div id="podcast-episode-form" hidden>
-          <h4 id="podcast-form-title" class="mb-3">Neue Episode</h4>
+          <!-- Aktionen oben rechts neben dem Titel wie in Bludits eigenen Formularen
+               (views/settings.php, edit-user.php: float-right, btn-sm) -->
+          <div class="align-middle clearfix">
+            <div class="float-right mt-1 ml-2 mb-2">
+              <span id="podcast-saving" class="text-muted small mr-2" role="status" hidden>
+                <span class="fa fa-spinner fa-spin"></span> Wird gespeichert&hellip;
+              </span>
+              <button type="button" class="btn btn-primary btn-sm" id="podcast-save-btn">Speichern</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="podcast-cancel-btn">Abbrechen</button>
+            </div>
+            <h4 id="podcast-form-title" class="mb-3">Neue Episode</h4>
+          </div>
+
+          <div id="podcast-save-error" class="alert alert-danger" role="alert" hidden></div>
           <input type="hidden" id="pe-key" value="">
 
           <div class="form-group">
@@ -956,15 +969,6 @@ class Podcast extends Plugin {
             </div>
           </div>
 
-          <div id="podcast-save-error" class="alert alert-danger" role="alert" hidden></div>
-
-          <div class="d-flex flex-wrap align-items-center">
-            <button type="button" class="btn btn-primary mr-2 mb-2" id="podcast-save-btn">Speichern</button>
-            <button type="button" class="btn btn-secondary mr-3 mb-2" id="podcast-cancel-btn">Abbrechen</button>
-            <span id="podcast-saving" class="text-muted mb-2" role="status" hidden>
-              <span class="fa fa-spinner fa-spin"></span> Wird gespeichert&hellip;
-            </span>
-          </div>
         </div>
         <?php
         return ob_get_clean();
