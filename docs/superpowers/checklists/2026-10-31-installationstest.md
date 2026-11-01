@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72.
 
 ## Vorbereitung (SSH)
 
@@ -173,7 +173,7 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
   Erwartet: beide `0`. Danach die Zeile wieder entfernen.
 
 ## N · Fehlermeldungen (008)
-- [ ] N48 **Admin → Podcast** in zwei Browser-Tabs öffnen. Im zweiten Tab abmelden, im ersten eine Episode öffnen und speichern → Meldung „Sitzung abgelaufen oder Sicherheits-Token ungültig …“ statt „Netzwerkfehler“. Danach neu anmelden.
+- [x] N48 **Admin → Podcast** in zwei Browser-Tabs öffnen. Im zweiten Tab abmelden, im ersten eine Episode öffnen und speichern → Meldung „Sitzung abgelaufen oder Sicherheits-Token ungültig …“ statt „Netzwerkfehler“. Danach neu anmelden.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
