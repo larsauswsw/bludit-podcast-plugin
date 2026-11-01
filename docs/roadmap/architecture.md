@@ -89,7 +89,7 @@ Workspace schreiben, in `beforeAll()` nur ausliefern.
 
 ## 014 · Mehrsprachigkeit der Admin-UI (de_DE/en über `$L`)
 
-Status: idea · Priorität: mittel · Aufwand: M · Bereich: `plugin.php`, `podcast-admin.js`, `languages/` · Issue: [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15)
+Status: planned · Priorität: hoch · Aufwand: M · Bereich: `plugin.php`, `podcast-admin.js`, `languages/` · Issue: [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15)
 
 **Beschreibung**
 

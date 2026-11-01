@@ -78,7 +78,7 @@ dokumentiert.
 | 011 | Upload- und Eingabe-Härtung | mittel | S | [#12](https://github.com/larsauswsw/bludit-podcast-plugin/issues/12) ✅ |
 | 012 | Episoden-Metadaten als Bludit Custom Fields speichern | mittel | L | [#13](https://github.com/larsauswsw/bludit-podcast-plugin/issues/13) ✅ |
 | 013 | Feed cachen, HTTP-Caching & Performance | mittel | M | [#14](https://github.com/larsauswsw/bludit-podcast-plugin/issues/14) |
-| 014 | Mehrsprachigkeit der Admin-UI (de_DE/en über `$L`) | mittel | M | [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15) |
+| 014 | Mehrsprachigkeit der Admin-UI (de_DE/en über `$L`) | hoch | M | [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15) |
 | 015 | Konfigurierbare Episoden-Zuordnung (Tag oder Kategorie) | niedrig | M | [#16](https://github.com/larsauswsw/bludit-podcast-plugin/issues/16) |
 | 016 | Apple-Podcasts-Konformität des Feeds | hoch | M | [#17](https://github.com/larsauswsw/bludit-podcast-plugin/issues/17) ✅ |
 | 017 | Feed-Discovery & automatische Feed-URL | niedrig | S | [#18](https://github.com/larsauswsw/bludit-podcast-plugin/issues/18) ✅ |
@@ -86,7 +86,7 @@ dokumentiert.
 | 019 | Podcasting-2.0-Namespace (`podcast:*`) | niedrig | M | [#20](https://github.com/larsauswsw/bludit-podcast-plugin/issues/20) |
 | 020 | Upload-Fortschritt & Chunked Upload für große Audiodateien | mittel | M | [#21](https://github.com/larsauswsw/bludit-podcast-plugin/issues/21) |
 | 021 | Dauer & Dateigröße automatisch aus der Audiodatei ermitteln | mittel | M | [#22](https://github.com/larsauswsw/bludit-podcast-plugin/issues/22) |
-| 022 | Kanal-Cover per Upload & Bildvalidierung | mittel | S | [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23) |
+| 022 | Kanal-Cover per Upload & Bildvalidierung | hoch | S | [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23) |
 | 023 | Nächste Episodennummer automatisch vorschlagen | niedrig | S | [#24](https://github.com/larsauswsw/bludit-podcast-plugin/issues/24) |
 | 024 | Episodenliste: Status, Suche, Filter, Warnungen | niedrig | M | [#25](https://github.com/larsauswsw/bludit-podcast-plugin/issues/25) |
 | 025 | Medienverwaltung im Admin: Übersicht, aufräumen, wiederverwenden | mittel | M | [#26](https://github.com/larsauswsw/bludit-podcast-plugin/issues/26) |
@@ -100,7 +100,7 @@ dokumentiert.
 | 033 | Datenschutzfreundliche Download-Statistik | niedrig | L | [#34](https://github.com/larsauswsw/bludit-podcast-plugin/issues/34) |
 | 034 | `metadata.json`, Kompatibilität & PHP-8.2-Deprecations | hoch | S | [#35](https://github.com/larsauswsw/bludit-podcast-plugin/issues/35) ✅ |
 | 035 | Toten Code & Repo-Altlasten entfernen | niedrig | S | [#36](https://github.com/larsauswsw/bludit-podcast-plugin/issues/36) ✅ |
-| 036 | Automatisierte Tests & CI | mittel | M | [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37) |
+| 036 | Automatisierte Tests & CI | hoch | M | [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37) |
 | 037 | README, Specs & CLAUDE.md aktualisieren | niedrig | S | [#38](https://github.com/larsauswsw/bludit-podcast-plugin/issues/38) ✅ |
 | 038 | Release-Prozess: CHANGELOG & ZIP-Paket, öffentliches Repo | mittel | M | [#39](https://github.com/larsauswsw/bludit-podcast-plugin/issues/39) |
 | 039 | Pfad-Manipulation über ungeprüften Seitenschlüssel | hoch | S | [#42](https://github.com/larsauswsw/bludit-podcast-plugin/issues/42) ✅ |
@@ -121,7 +121,8 @@ Plugin-Metadaten und Kompatibilität. Damit sind alle Pflichtpunkte vor 1.0 erle
 Aus „Für 1.0 empfohlen“: 007 Seitentyp/Beschreibung, 035 Altlasten, 029 Player im
 Seiteninhalt, 008 Fehlermeldungen, 037 Doku. Außerdem 009 Datum/Zeitzone, 017 automatische Feed-URL und 043
 Kanaleinstellungen gruppiert, 016 Apple-Konformität des Feeds. Damit ist alles
-aus „Für 1.0 empfohlen“ umgesetzt; als Nächstes 038 (Release-Prozess).
+aus „Für 1.0 empfohlen“ umgesetzt. Vom Inhaber am 2026-11-01 zusätzlich für 1.0
+festgelegt: 022, 036, 014 (in dieser Reihenfolge), danach 038 (Release-Prozess).
 Teilweise vorgezogen: URL-/Typprüfung aus 011, `CLAUDE.md` aus 037, toter Code
 aus 035 (mit 010).
 
@@ -136,7 +137,10 @@ Release **1.0**; die Version bleibt bis zur ersten Veröffentlichung `1.0.0`.
    und weder Plugin-Update noch Slug-Änderung lassen Episoden verschwinden.
 2. **Für 1.0 empfohlen** — Verzeichnis-Tauglichkeit und Datenschutz:
    007, 008, 011, 016, 028, 029, 035, 037.
-3. **Nach 1.0 (1.x) – Komfort:** 020, 021, 022, 023, 013, 014, 017, danach der Rest.
+3. **Zusätzlich für 1.0 (entschieden 2026-11-01):** 022 (Cover-Upload und
+   -Prüfung), 036 (Tests & CI als Sicherheitsnetz vor dem Umbau aller Texte),
+   014 (Oberfläche Deutsch/Englisch); danach 038 (Release).
+4. **Nach 1.0 (1.x) – Komfort:** 020, 021, 023, 013, danach der Rest.
 
 **Datenhaltung vor 1.0 entscheiden:** Solange nichts veröffentlicht ist, gibt es
 keine fremden Installationen, deren Daten übernommen werden müssten — ein

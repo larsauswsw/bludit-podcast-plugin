@@ -198,7 +198,8 @@ Status: idea · Priorität: mittel · Aufwand: M · Bereich: `plugin.php` (`site
 **Beschreibung**
 
 Der Abo-Button erscheint bisher nur im Podlove-Player auf Episodenseiten
-(Option `subscribe-button`, sobald eine Feed-URL gesetzt ist). Zusätzlich soll
+(Option `subscribe-button`, seit 017 immer, App- und Dienste-Liste aus
+`subscribeClients()` seit #79). Zusätzlich soll
 der Podlove Subscribe Button eigenständig an einer Stelle der Website stehen
 können — z. B. auf einer Seite „Über den Podcast“, auf der Startseite oder in
 der Sidebar. Er öffnet eine Auswahl gängiger Podcast-Apps und bietet die
@@ -229,8 +230,8 @@ Umsetzung am Bundle zu prüfen.
 - [ ] Der Button nutzt ausschließlich das lokal mitgelieferte Bundle
       (`player/`, `Podcast::PODLOVE_VERSION`); `embed.js` des Buttons wird nur
       auf Seiten geladen, die den Button tatsächlich enthalten.
-- [ ] Feed-URL aus den Kanaleinstellungen (bzw. automatisch nach 017);
-      ohne gültige `http(s)`-Feed-URL wird kein Button ausgegeben.
+- [ ] Feed-Adresse über `feedUrl()` (seit 017 immer vorhanden) und dieselbe
+      App-/Dienste-Liste wie im Player (`subscribeClients()`).
 - [ ] Optional: Podcast-Titel, Cover und Client-Liste/IDs (z. B. Apple-Podcasts-
       oder Spotify-Link aus 017) werden an den Button übergeben.
 - [ ] Fallback ohne JavaScript: einfacher Link „Podcast abonnieren“ auf die
