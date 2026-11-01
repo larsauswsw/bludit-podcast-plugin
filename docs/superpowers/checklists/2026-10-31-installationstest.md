@@ -130,9 +130,14 @@ Auf einem iPhone und möglichst einem Android-Gerät, Hochformat. Vorher die Sei
   ```
   Danach die Testwerte aus H27/H28 wieder zurücksetzen bzw. die Testepisode löschen. *(Live: keine Altwerte gefunden.)*
 
+## I · Tags, Autor, Unterseiten (002, 003)
+- [ ] I31 Im **Bludit-Editor** einer Episode einen zweiten Tag ergänzen (z. B. `Technik`): Die Episode bleibt in **Admin → Podcast**, im Feed und hat den Player.
+- [ ] I32 Diese Episode im Podcast-Formular bearbeiten und speichern: Im Bludit-Editor stehen danach weiterhin beide Tags.
+- [ ] I33 Neue Testepisode `Neu & frisch` anlegen: URL ist `…/neu-frisch` (ohne `amp`); im Bludit-Editor ist ein Autor gesetzt; `$SITE/tag/podcast` listet sie; **Einstellungen → Allgemein → Systemprotokoll** bzw. Dashboard zeigt „Neuer Inhalt erstellt“. Falls die Plugins **RSS** bzw. **Sitemap** aktiv sind, steht sie in `$SITE/rss.xml` bzw. `$SITE/sitemap.xml`.
+- [ ] I34 Testepisode im Podcast-Admin löschen: verschwindet aus Liste, Feed, `/tag/podcast` und `rss.xml`; im Systemprotokoll steht „Inhalt gelöscht“.
+- [ ] I35 *(nur falls vorhanden)* Eine Episode, die Unterseite einer anderen Seite ist, im Podcast-Formular speichern: Ihre URL bleibt gleich. Eine Episode mit Unterseiten hat im ☰-Menü kein „Löschen“.
+
 ## Bekannte offene Punkte (keine Testfehler)
-- Episoden mit weiterem Tag neben `podcast` fehlen in Liste, Feed und Player (002).
-- Neue Episoden ohne Autor; `rss.xml`, Sitemap und `/tag/podcast` erfahren nichts von Anlegen/Löschen (003).
 - Bludit im Unterordner: Feed-Pfad noch nicht angepasst (Rest von 004; das Admin-JavaScript ist seit 042 angepasst).
 - Hinweis „Update“ in der Plugin-Liste (034).
 

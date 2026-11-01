@@ -34,6 +34,12 @@ dort um passende Schritte ergänzen.
 - Seiten anlegen/ändern/löschen über `createPage()`, `editPage()`,
   `deletePage()` (setzen Autor, `reindexTags()`, Hooks, Syslog; `editPage()`
   prüft, dass der Schlüssel existiert) — nicht `$pages->add/edit/delete` direkt.
+  Im Plugin: neue Episoden mit `slug` aus dem Rohtitel
+  (`generateKey($title, false, true)`); beim Bearbeiten keine `tags` senden
+  (bleiben erhalten), aber `parent` (sonst verschiebt `Pages::edit()` die
+  Unterseite); Episoden mit Unterseiten nicht löschen (`getChildren()`).
+- Episode erkennen: `pageHasPodcastTag()` prüft den Schlüssel `podcast` in
+  `$page->tags(true)` — auch neben weiteren Tags.
 - `$page->tags(true)` liefert `tagKey => Name`; ohne Argument einen String.
 - `$page->contentRaw()` = Rohtext, `content()` = gerendertes HTML.
 - `$page->uuid()` ist stabil, der Page-Key ändert sich mit dem Slug.

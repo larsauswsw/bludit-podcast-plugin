@@ -578,6 +578,8 @@ class Podcast extends Plugin {
      * Nebenspalten erst ab mittlerer Breite, Aktionen im ☰-Menü.
      */
     private function renderEpisodeSection($canConfigure = false) {
+        global $pages;
+
         $episodes = $this->getEpisodes();
         // Status-Badges nur für Episoden, die (noch) nicht öffentlich sind
         $publicTypes = ['published', 'sticky', 'static'];
@@ -618,6 +620,8 @@ class Podcast extends Plugin {
                       $raw    = function ($k) use ($stored) { return isset($stored[$k]) ? $stored[$k] : ''; };
 
                       $title    = $this->plainTitle($ep);
+                      // Löschen wie in Bludits Inhaltsliste nur ohne Unterseiten
+                      $canDelete = empty($pages->getChildren($ep->key()));
                       $type     = $ep->type();
                       $isPublic = in_array($type, $publicTypes, true);
                       $season   = $get('itunes_season');
@@ -681,10 +685,12 @@ class Podcast extends Plugin {
                           <a class="dropdown-item" href="<?php echo HTML_PATH_ADMIN_ROOT ?>edit-content/<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>">
                             <i class="fa fa-pencil fa-fw mr-2"></i>Im Bludit-Editor öffnen
                           </a>
+                          <?php if ($canDelete): ?>
                           <div class="dropdown-divider"></div>
                           <a href="#" class="dropdown-item text-danger podcast-delete-btn" role="button">
                             <i class="fa fa-trash fa-fw mr-2"></i>Löschen
                           </a>
+                          <?php endif ?>
                         </div>
                       </div>
                     </td>
@@ -963,21 +969,33 @@ class Podcast extends Plugin {
             'title'   => $title,
             'content' => $content,
             'type'    => $status,
-            'tags'    => 'podcast',
             'date'    => $date,
             'custom'  => $this->customFieldArgs($page, $meta),
         ];
 
+        // Über Bludits createPage()/editPage(): setzen den Autor, indizieren Tags
+        // und Kategorien neu, lösen die Hooks aus (u. a. Core-RSS, Sitemap) und
+        // schreiben ins Systemlog
         if ($key !== '') {
-            // Bestehende Episode bearbeiten (Key wurde oben geprüft)
+            // Bestehende Episode bearbeiten (Key wurde oben geprüft). Ohne 'tags'
+            // behält Bludit die vorhandenen Tags; 'podcast' ist darunter (geprüft).
             $pageArgs['key'] = $key;
+            // Ohne 'parent' würde Pages::edit() eine Unterseite an die oberste
+            // Ebene verschieben (neuer Schlüssel, neue URL)
+            $parentKey = $page->parentKey();
+            if (is_string($parentKey) && $parentKey !== '') {
+                $pageArgs['parent'] = $parentKey;
+            }
             $newKey = editPage($pageArgs);
         } else {
-            // Neue Episode anlegen
-            $newKey = $pages->add($pageArgs);
+            $pageArgs['tags'] = 'podcast';
+            // URL wie im Bludit-Editor aus dem Rohtitel; sonst bildet Pages::add()
+            // sie aus dem escapten Titel („tom-amp-jerry“)
+            $pageArgs['slug'] = $pages->generateKey($title, false, true);
+            $newKey = createPage($pageArgs);
         }
         if (!$newKey) {
-            return ['error' => 'Episode konnte nicht gespeichert werden'];
+            return ['error' => 'Episode konnte nicht gespeichert werden. Details stehen im Bludit-Log.'];
         }
         return ['success' => true, 'key' => $newKey];
     }
@@ -1000,7 +1018,15 @@ class Podcast extends Plugin {
             return ['error' => 'Seite gehört nicht zum Podcast'];
         }
 
-        $pages->delete($key);
+        // Pages::delete() löscht den Ordner samt Unterseiten-Ordnern, deren Einträge
+        // blieben verwaist zurück — wie Bludits Inhaltsliste nur ohne Unterseiten
+        if (!empty($pages->getChildren($key))) {
+            return ['error' => 'Die Episode hat Unterseiten und kann hier nicht gelöscht werden.'];
+        }
+
+        if (!deletePage($key)) {
+            return ['error' => 'Episode konnte nicht gelöscht werden. Details stehen im Bludit-Log.'];
+        }
 
         return ['success' => true];
     }
@@ -1214,20 +1240,14 @@ class Podcast extends Plugin {
      * Prüft ob eine Seite den Tag 'podcast' hat.
      * Unterstützt sowohl String-Arrays als auch Tag-Objekt-Arrays (Bludit 3.x).
      */
+    /**
+     * Episode = Seite mit dem Tag „podcast“, auch neben weiteren Tags.
+     * tags(true) liefert tagKey => Name; der Schlüssel ist klein geschrieben
+     * (Text::cleanUrl), „Podcast“ zählt also mit.
+     */
     private function pageHasPodcastTag($page) {
-        $tags = (array) $page->tags();
-        foreach ($tags as $tag) {
-            if (is_object($tag)) {
-                // Tag-Objekt: key() oder name() verwenden
-                $tagKey = method_exists($tag, 'key') ? $tag->key() : '';
-                if ($tagKey === 'podcast') return true;
-                $tagName = method_exists($tag, 'name') ? strtolower($tag->name()) : '';
-                if ($tagName === 'podcast') return true;
-            } else {
-                if ((string) $tag === 'podcast') return true;
-            }
-        }
-        return false;
+        $tags = $page->tags(true);
+        return is_array($tags) && array_key_exists('podcast', $tags);
     }
 
     /**
