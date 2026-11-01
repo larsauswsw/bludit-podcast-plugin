@@ -196,8 +196,8 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] P58 Weitere Links (Spotify, Pocket Casts, Deezer, Castbox) wie P57 prüfen, soweit vorhanden. Ein unpassender Link (z. B. `https://example.com`) zeigt unter dem Feld „Wird nicht verwendet …“ und erscheint nicht im Abo-Fenster. Testweise eingetragene fremde Links danach wieder entfernen.
 
 ## Q · Apple-Angaben im Feed (016, Teil 1)
-- [ ] Q59 **Kanaleinstellungen**: „Kategorie“ ist eine Auswahlliste (deutsch, mit englischem Namen). Dein bisheriger Eintrag ist vorausgewählt — oder unter dem Feld steht „Bisheriger Eintrag „…“ ist keine Apple-Kategorie“. Kategorie (gern mit Unterkategorie) wählen, „Art des Podcasts“ prüfen, optional Copyright eintragen und speichern; die Auswahl bleibt erhalten.
-- [ ] Q60 Feed prüfen:
+- [x] Q59 **Kanaleinstellungen**: „Kategorie“ ist eine Auswahlliste (deutsch, mit englischem Namen). Dein bisheriger Eintrag ist vorausgewählt — oder unter dem Feld steht „Bisheriger Eintrag „…“ ist keine Apple-Kategorie“. Kategorie (gern mit Unterkategorie) wählen, „Art des Podcasts“ prüfen, optional Copyright eintragen und speichern; die Auswahl bleibt erhalten.
+- [x] Q60 Feed prüfen:
   ```sh
   curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -E "itunes:category|itunes:type|itunes:explicit|<copyright>|<image>|<url>"
   ```
