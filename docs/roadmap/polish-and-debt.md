@@ -79,7 +79,7 @@ Status: done · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php`, `pod
 
 ## 036 · Automatisierte Tests & CI
 
-Status: idea · Priorität: mittel · Aufwand: M · Bereich: neu: `.github/workflows/`, `tests/` · Issue: [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37)
+Status: planned · Priorität: hoch · Aufwand: M · Bereich: neu: `.github/workflows/`, `tests/` · Issue: [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37)
 
 **Beschreibung**
 

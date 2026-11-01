@@ -34,19 +34,21 @@ Status: idea · Priorität: mittel · Aufwand: M · Bereich: `plugin.php` (`hand
 
 **Beschreibung**
 
-Die Dauer muss von Hand im Format `HH:MM:SS` eingetragen werden und wird nicht
-geprüft; bei externen URLs fehlt die Dateigröße (siehe 016). Beides lässt sich
-ermitteln: im Browser über ein `<audio>`-Element (`loadedmetadata` →
-`duration`) vor dem Upload, oder serverseitig z. B. mit getID3.
+Die Dauer muss von Hand im Format `HH:MM:SS` eingetragen werden (geprüft wird
+nur das Format, `isValidDuration()`); der Feed-Validator vermisst
+`itunes:duration`, wenn das Feld leer bleibt. Ermitteln lässt sie sich im
+Browser über ein `<audio>`-Element (`loadedmetadata` → `duration`) vor dem
+Upload, oder serverseitig z. B. mit getID3. Die Dateigröße ist mit 016 erledigt
+(Upload per `filesize()`, externe URLs per `remoteAudioLength()`).
 
 **Akzeptanzkriterien**
 
 - [ ] Nach Auswahl einer Datei bzw. Eingabe einer URL wird die Dauer automatisch
       vorgeschlagen (überschreibbar).
 - [ ] Dauer wird validiert und einheitlich gespeichert.
-- [ ] Bei lokalen Dateien wird `audio_length` immer aus `filesize()` gesetzt,
+- [x] Bei lokalen Dateien wird `audio_length` immer aus `filesize()` gesetzt,
       bei externen per `HEAD`-Request — mit demselben SSRF-Schutz wie in 016
-      (gemeinsame Hilfsfunktion).
+      (gemeinsame Hilfsfunktion). *(Mit 016 erledigt.)*
 - [ ] Serverseitige Analyse (z. B. getID3) läuft nur auf bereits validierten
       Uploads; die Bibliothek ist in fester, aktueller Version eingebunden.
 
@@ -58,7 +60,7 @@ ermitteln: im Browser über ein `<audio>`-Element (`loadedmetadata` →
 
 ## 022 · Kanal-Cover per Upload & Bildvalidierung
 
-Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`form()`, `post()`, `handleUpload()`) · Issue: [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23)
+Status: planned · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`form()`, `post()`, `handleUpload()`) · Issue: [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23)
 
 **Beschreibung**
 
@@ -118,8 +120,8 @@ Podcast-Tag). Aufbau im Bludit-Stil, Bootstrap-4-Badges und die Links
 **Akzeptanzkriterien**
 
 - [x] Bootstrap-4-Klassen (mit 042).
-- [ ] Status „veröffentlicht / geplant / Entwurf“ korrekt (siehe 007; die Liste
-      zeigt „geplant“ seit 042, das Formular kennt den Typ noch nicht).
+- [x] Status „veröffentlicht / geplant / Entwurf“ korrekt (Liste seit 042,
+      Formular seit 007, geplant mit Uhrzeit seit 009).
 - [ ] Spalte bzw. Icon „im Feed“ mit Tooltip, warum nicht.
 - [ ] Suche nach Titel, Filter nach Staffel/Status, Pagination ab ~25 Einträgen.
 - [x] Links „Seite ansehen“ und „Im Bludit-Editor öffnen“ (mit 042).
