@@ -78,12 +78,17 @@ class BluditClient
             || preg_match('/var tokenCSRF = "([^"]+)"/', $html, $m) === 1) {
             return $m[1];
         }
-        throw new RuntimeException('Kein CSRF-Token auf der Seite gefunden.');
+        throw new RuntimeException('Kein CSRF-Token auf der Seite gefunden. Anfang der Seite: '
+            . substr(trim((string) preg_replace('/\s+/', ' ', strip_tags($html))), 0, 300));
     }
 
     public function login(string $username, string $password): void
     {
-        $token = self::token($this->get('/admin/login'));
+        $page = $this->get('/admin/login');
+        if ($this->status !== 200) {
+            throw new RuntimeException('Anmeldeseite: HTTP ' . $this->status . ', Weiterleitung nach ' . (string) $this->location);
+        }
+        $token = self::token($page);
         $this->post('/admin/login', ['tokenCSRF' => $token, 'username' => $username, 'password' => $password]);
         if (!$this->redirected() || strpos((string) $this->location, 'dashboard') === false) {
             throw new RuntimeException('Anmeldung als ' . $username . ' fehlgeschlagen (HTTP ' . $this->status . ').');

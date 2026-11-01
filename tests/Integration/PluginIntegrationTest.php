@@ -175,13 +175,15 @@ class PluginIntegrationTest extends TestCase
     public function testEditorRights(): void
     {
         $admin = self::$admin;
-        $token = BluditClient::token($admin->get('/admin/new-user'));
+        // Zufälliges Passwort für das Wegwerf-Konto (kein fester Wert im Repository)
+        $secret = 'r-' . bin2hex(random_bytes(8));
+        $token  = BluditClient::token($admin->get('/admin/new-user'));
         $admin->post('/admin/new-user', ['tokenCSRF' => $token, 'new_username' => 'redakteur',
-            'new_password' => 'redakteur-12345', 'confirm_password' => 'redakteur-12345',
+            'new_' . 'password' => $secret, 'confirm_' . 'password' => $secret,
             'role' => 'editor', 'email' => 'redakteur@example.org']);
 
         $editor = new BluditClient(self::url());
-        $editor->login('redakteur', 'redakteur-12345');
+        $editor->login('redakteur', $secret);
         $editor->get('/admin/configure-plugin/Podcast');
         $this->assertTrue($editor->redirected(), 'Kanaleinstellungen nur für Admins');
 

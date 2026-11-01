@@ -88,4 +88,4 @@ jobs:
         with:
           fetch-depth: 0
       - name: Gesamte Historie prüfen
-        run: docker run --rm -v "$PWD":/repo zricethezav/gitleaks:v8.18.4 detect --source /repo --no-banner --redact --verbose
+        run: docker run --rm -v "$PWD":/repo zricethezav/gitleaks:v8.18.4 detect --source /repo --config /repo/.gitleaks.toml --no-banner --redact --verbose

@@ -1,0 +1,13 @@
+# gitleaks-Konfiguration (Roadmap 036): Standardregeln plus eine eng gefasste
+# Ausnahme. Der Wert unten war das Passwort eines Wegwerf-Kontos der
+# Integrationstests (nur in einer frisch installierten Bludit-Instanz während
+# des CI-Jobs). Er steht noch in der Git-Historie; der Test erzeugt das
+# Passwort inzwischen zur Laufzeit. Keine weiteren Ausnahmen ohne Begründung.
+title = "bludit-podcast-plugin"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Wegwerf-Passwort der Integrationstests (ersetzt, nur noch in der Historie)"
+regexes = ['''^redakteur-12345$''']
