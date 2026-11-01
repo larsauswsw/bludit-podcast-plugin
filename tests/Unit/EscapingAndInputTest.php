@@ -5,7 +5,7 @@ class EscapingAndInputTest extends PodcastTestCase
 {
     public function testXmlEscapesOnceAndReplacesInvalidCharacters(): void
     {
-        $this->assertSame('Tom &amp; Jerry &quot;Folge&quot; &lt;1&gt; &#039;x&#039;',
+        $this->assertSame('Tom &amp; Jerry &quot;Folge&quot; &lt;1&gt; &apos;x&apos;',
             $this->call('xml', 'Tom & Jerry "Folge" <1> \'x\''));
         $this->assertStringNotContainsString("\x01", $this->call('xml', "a\x01b"));
         $this->assertSame('a' . "\u{FFFD}" . 'b', $this->call('xml', "a\xC3b"));
@@ -63,7 +63,8 @@ class EscapingAndInputTest extends PodcastTestCase
 
     public function testSanitizeFilename(): void
     {
-        $this->assertSame('folge-1-ubung', $this->call('sanitizeFilename', 'Folge 1 Übung'));
+        // Nur a–z, 0–9, - und _ bleiben; Umlaute entfallen (der Zufallsteil macht Namen eindeutig)
+        $this->assertSame('folge-1-bung', $this->call('sanitizeFilename', 'Folge 1 Übung'));
         $this->assertSame('etcpasswd', $this->call('sanitizeFilename', '../../etc/passwd'));
         $this->assertSame('upload', $this->call('sanitizeFilename', '***'));
     }
