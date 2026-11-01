@@ -32,6 +32,61 @@
     var peImageFileWrap = document.getElementById('pe-image-file-wrap');
     var peAudioFileWrap = document.getElementById('pe-audio-file-wrap');
     var peFormatHint    = document.getElementById('pe-audio-format-hint');
+    var peImagePreview  = document.getElementById('pe-image-preview');
+    var previewObjectUrl = null;
+
+    // ── Kanaleinstellungen: Cover hochladen (Roadmap 022) ─────────────
+    // Lädt das Bild über die Episoden-API hoch (dort geprüft) und trägt die
+    // Adresse in „Cover-URL“ ein; gespeichert wird mit Bludits „Speichern“.
+    var coverFile = document.getElementById('podcast-cover-file');
+    if (coverFile) {
+        var coverUrl     = document.getElementById('podcast-cover');
+        var coverStatus  = document.getElementById('podcast-cover-status');
+        var coverPreview = document.getElementById('podcast-cover-preview');
+        var setCoverStatus = function (text, isError) {
+            coverStatus.textContent = text;
+            coverStatus.classList.toggle('podcast-tip-error', !!isError);
+        };
+        coverFile.addEventListener('change', function () {
+            var file = coverFile.files && coverFile.files[0];
+            if (!file) return;
+            var maxFile = parseInt(coverFile.dataset.maxFile, 10) || 0;
+            if (maxFile && file.size > maxFile) {
+                setCoverStatus('Die Datei ist größer als das Upload-Limit von ' +
+                    (maxFile / 1048576).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' MB.', true);
+                coverFile.value = '';
+                return;
+            }
+            var fd = new FormData();
+            fd.append('tokenCSRF', (typeof tokenCSRF !== 'undefined' ? tokenCSRF : ''));
+            fd.append('podcast_api_action', 'upload_cover');
+            fd.append('cover_file', file);
+            coverFile.disabled = true;
+            setCoverStatus('Wird hochgeladen und geprüft …', false);
+            fetch(coverFile.dataset.apiUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(function (response) {
+                    return response.json().catch(function () {
+                        throw new Error('Unerwartete Antwort vom Server. Bitte die Seite neu laden.');
+                    });
+                })
+                .then(function (data) {
+                    if (!data || data.error || !data.url) {
+                        throw new Error(data && data.error ? data.error : 'Upload fehlgeschlagen.');
+                    }
+                    coverUrl.value = data.url;
+                    coverPreview.src = data.url;
+                    coverPreview.hidden = false;
+                    setCoverStatus('Hochgeladen und geprüft. Zum Übernehmen oben „Speichern“ klicken.', false);
+                })
+                .catch(function (err) {
+                    setCoverStatus(err && err.message ? err.message : 'Netzwerkfehler beim Hochladen.', true);
+                })
+                .then(function () {
+                    coverFile.disabled = false;
+                    coverFile.value = '';
+                });
+        });
+    }
 
     // Nur auf der Podcast-Seite aktiv
     if (!list) return;
@@ -119,6 +174,32 @@
         peFormatHint.hidden = !/\.(wav|ogg|oga|opus)$/i.test(name.trim());
     }
 
+    // Vorschau des Episodenbilds: gewählte Datei oder http(s)-Adresse
+    function updateImagePreview() {
+        if (!peImagePreview) return;
+        if (previewObjectUrl) {
+            URL.revokeObjectURL(previewObjectUrl);
+            previewObjectUrl = null;
+        }
+        var mode = document.querySelector('input[name="pe-image-mode"]:checked');
+        var src  = '';
+        if (mode && mode.value === 'file') {
+            if (peImageFile.files && peImageFile.files[0] && window.URL && URL.createObjectURL) {
+                previewObjectUrl = URL.createObjectURL(peImageFile.files[0]);
+                src = previewObjectUrl;
+            }
+        } else if (/^https?:\/\/\S+$/i.test(peImageUrl.value.trim())) {
+            src = peImageUrl.value.trim();
+        }
+        if (src) {
+            peImagePreview.src = src;
+            peImagePreview.hidden = false;
+        } else {
+            peImagePreview.hidden = true;
+            peImagePreview.removeAttribute('src');
+        }
+    }
+
     function clearForm() {
         peKey.value      = '';
         peTitle.value    = '';
@@ -139,6 +220,7 @@
         setMode('pe-audio-mode', 'url');
         setMode('pe-image-mode', 'url');
         updateFormatHint();
+        updateImagePreview();
     }
 
     // Fixiert/statisch gibt es im Formular nur, wenn die Episode diesen Typ schon
@@ -250,6 +332,7 @@
             r.addEventListener('change', function () {
                 updateModeVisibility(r.name);
                 updateFormatHint();
+                updateImagePreview();
             });
         });
 
@@ -257,9 +340,11 @@
         input.addEventListener('change', function () {
             updateFileLabel(input);
             updateFormatHint();
+            updateImagePreview();
         });
     });
     peAudioUrl.addEventListener('input', updateFormatHint);
+    peImageUrl.addEventListener('input', updateImagePreview);
 
     // ── new episode ───────────────────────────────────────────────────
 
@@ -302,6 +387,7 @@
         // Gespeicherte Dateien stehen als URL im Feld; clearForm() hat den
         // Modus bereits auf „URL“ gesetzt
         updateFormatHint();
+        updateImagePreview();
         showForm('Episode bearbeiten');
     });
 

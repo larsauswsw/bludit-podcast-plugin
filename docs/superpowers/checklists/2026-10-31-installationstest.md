@@ -222,6 +222,13 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 ## S · Aktionsbuttons oben wie in Bludit
 - [x] S67 **Admin → Podcast → Neue Episode** und eine Episode bearbeiten: „Speichern“ und „Abbrechen“ stehen oben rechts neben dem Formulartitel (klein, wie in den Kanaleinstellungen und Bludits Einstellungen), unten am Formular keine Buttons mehr. Titel leeren und „Speichern“ → rote Meldung direkt unter der Titelzeile. „Abbrechen“ führt zurück zur Liste. Auf dem Handy ohne seitliches Scrollen.
 
+## T · Cover-Upload und Bildprüfung (022)
+- [ ] T68 **Kanaleinstellungen → Cover hochladen**: ein Bild, das nicht quadratisch ist (z. B. ein Handyfoto), wählen → rote Meldung „Das Bild eignet sich nicht als Cover … Es ist nicht quadratisch (… px)“, die Cover-URL bleibt unverändert. Dann ein quadratisches JPG/PNG mit 1400–3000 px wählen → „Hochgeladen und geprüft …“, die Cover-URL zeigt die neue Datei, darunter die Vorschau. **Speichern** → im Feed steht die neue Adresse:
+  ```sh
+  curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -m1 "itunes:image"
+  ```
+- [ ] T69 **Episode bearbeiten → Episodenbild**: Bei einer `https://`-Adresse oder einer gewählten Datei erscheint eine kleine Vorschau. Ein zu kleines Bild (z. B. 800 × 800 px) hochladen und speichern → Hinweis über der Liste „Episodenbild gespeichert, aber es passt nicht zu Apples Vorgaben …“; die Episode ist trotzdem gespeichert.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 

@@ -102,6 +102,9 @@ dort um passende Schritte ergänzen.
 - `podcast:guid` über `podcastGuid()`: einmal per `ensurePodcastGuid()` (in
   `post()` und `adminController()`) aus der Feed-Adresse erzeugt und
   gespeichert, danach unverändert; `podcast:locked` aus `feedLocked()`.
+- Kanal-Cover: Upload nur über die API-Aktion `upload_cover`
+  (`handleCoverUpload()`, nur Admins), Prüfung per `coverProblems()` vor dem
+  Speichern; Bilder dieser Website über `localImagePath()` (Muster + `realpath()`).
 - Feed-Adresse nur über `feedUrl()` (abweichende URL mit `http(s)://`, sonst
   `localFeedUrl()` = `DOMAIN_BASE` + `feedSlug()`), Website über `siteUrl()` —
   nie `setting('feedUrl')`/`setting('siteUrl')` direkt ausgeben.

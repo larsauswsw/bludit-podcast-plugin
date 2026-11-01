@@ -60,7 +60,7 @@ Upload, oder serverseitig z. B. mit getID3. Die Dateigröße ist mit 016 erledig
 
 ## 022 · Kanal-Cover per Upload & Bildvalidierung
 
-Status: planned · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`form()`, `post()`, `handleUpload()`) · Issue: [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23)
+Status: done · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`form()`, `post()`, `handleUpload()`) · Issue: [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23)
 
 **Beschreibung**
 
@@ -71,13 +71,26 @@ noch beim Episodenbild geprüft.
 
 **Akzeptanzkriterien**
 
-- [ ] Cover-Upload in den Kanaleinstellungen (eigene `post()`-Implementierung,
+- [x] Cover-Upload in den Kanaleinstellungen (eigene `post()`-Implementierung,
       ruft `parent::post()` auf) mit Vorschaubild; Ablage über `handleUpload()`
       in `uploads/podcast/images/`, damit das Cover in der Medienverwaltung
       (025) erscheint und dort als „Kanal-Cover“ benutzt gilt.
-- [ ] Prüfung per `getimagesize()`: quadratisch, 1400–3000 px; Warnung statt
+- [x] Prüfung per `getimagesize()`: quadratisch, 1400–3000 px; Warnung statt
       harter Ablehnung bei Episodenbildern.
-- [ ] Vorschaubild auch im Episodenformular.
+- [x] Vorschaubild auch im Episodenformular.
+
+**Umsetzung:** Statt über `post()` (Bludits Einstellungsformular sendet keine
+Dateien) lädt die Einstellungsseite das Bild per JavaScript über die
+Episoden-API hoch (`upload_cover`, nur Admins, CSRF in `adminController()`).
+`handleCoverUpload()` prüft mit `validateUpload()` und `coverProblems()`
+(quadratisch, 1400–3000 px, kein CMYK) **vor** dem Speichern; ein ungeeignetes
+Bild wird abgelehnt und nicht abgelegt. Das gespeicherte Bild liegt in
+`uploads/podcast/images/`, seine Adresse landet in „Cover-URL“ (mit Vorschau),
+übernommen mit „Speichern“. Ein eingetragenes Cover dieser Website wird beim
+Öffnen der Einstellungen geprüft (`localImagePath()`), Probleme stehen unter
+dem Feld; fremde Adressen werden nicht abgerufen. Episodenbilder: Warnung nach
+dem Speichern (über den Hinweis über der Liste), Vorschau im Formular für Datei
+und `http(s)`-Adresse.
 
 **Betroffene Dateien**
 
