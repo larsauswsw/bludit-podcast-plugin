@@ -55,8 +55,9 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
       nur `http`/`https`, keine privaten/Loopback-/Link-Local-Ziele nach
       DNS-Auflösung, Redirects werden erneut geprüft, kurzer Timeout.
 - [x] Hinweis/Warnung beim Upload von `wav`/`ogg`.
-- [ ] Feed besteht den Podbase- bzw. Cast-Feed-Validator ohne Fehler
-      (Prüfung auf der echten Installation: Installationstest R65).
+- [x] Feed besteht den Podbase- bzw. Cast-Feed-Validator ohne Fehler
+      (Installationstest R65, 2026-11-01: nach #84 ohne Fehler; verbleibende
+      Hinweise zu Dauer, Episodenbild und Transkript sind optional).
 
 **Umsetzung Teil 1 (Kanal):** `APPLE_CATEGORIES` mit 19 Kategorien und 91
 Unterkategorien, abgeglichen mit Apples Seite „Apple Podcasts-Kategorien“
