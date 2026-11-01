@@ -124,6 +124,7 @@ The settings are grouped like Bludit's own settings pages.
 | **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category (English name) | `Society & Culture` |
 | | **Explicit** | Whether the podcast contains explicit content | `Nein` |
 | | **E-Mail des Inhabers** | Owner email (`itunes:owner`, `managingEditor`). Public in the feed; directories such as Apple Podcasts and Spotify use it to verify ownership | `jane@example.com` |
+| | **Apple Podcasts**, **Spotify**, **Pocket Casts**, **Deezer**, **Castbox** | Optional: the podcast's public link on that service (in the app: *Share → Copy link*). Shown in the player's subscribe button. The Apple link also adds Castro and – if no own link is set – Pocket Casts | `https://podcasts.apple.com/de/podcast/my-podcast/id1234567890` |
 | **Feed** | **Feed-Dateiname** | Path at which the RSS feed is served | `podcast.xml` |
 | | **Adresse des Feeds** | Read-only: the public feed URL to submit to Apple Podcasts, Spotify etc., with a link to open the feed | `https://example.com/podcast.xml` |
 | | **Abweichende Feed-URL (optional)** | Only if the feed is served from another address (e.g. a CDN); leave empty to use the site address | `https://cdn.example.com/podcast.xml` |
@@ -215,7 +216,7 @@ The [Podlove Web Player](https://podlove.org/podlove-web-player/) is added to ev
 - **Served locally:** the plugin ships Podlove Web Player 5.13.0 in `bl-plugins/podcast/player/` (MIT license, unmodified subset of the npm package; provenance and checksums in `player/SOURCE.md`). Visitors' browsers do **not** connect to a Podlove CDN.
 - **Fallback:** a plain HTML5 `<audio>` player with a download link is shown until the Podlove player has loaded, and stays visible if JavaScript is disabled or the player cannot load.
 - **Plain HTML5 player:** choose *Player auf Episodenseiten → Einfacher HTML5-Player* in the channel settings to skip the Podlove player entirely.
-- The player shows a subscribe button for the podcast feed. It lists podcast apps that subscribe via the feed URL (Overcast, Downcast, AntennaPod, Podcast Addict and others, filtered by the visitor's platform) plus Player.fm and the plain RSS link. Apple Podcasts, Spotify and Pocket Casts are not listed: their links need the podcast's ID on that service.
+- The player shows a subscribe button for the podcast feed. It lists the services whose link is set in the channel settings (Apple Podcasts, Spotify, Pocket Casts, Castro, Deezer, Castbox), podcast apps that subscribe via the feed URL (Overcast, Downcast, AntennaPod, Podcast Addict and others, filtered by the visitor's platform), Player.fm and the plain RSS link.
 
 To update the bundled player, run `scripts/update-podlove-player.sh <version>` from the development repository (verifies the npm integrity hash and copies only the needed files).
 

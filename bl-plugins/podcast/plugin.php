@@ -35,6 +35,12 @@ class Podcast extends Plugin {
             'maxUploadMB' => '512',
             'playerMode'  => 'podlove',
             'playerPosition' => 'top',
+            // Links zum Podcast bei Diensten (Abo-Button, SUBSCRIBE_SERVICES)
+            'linkApple'       => '',
+            'linkSpotify'     => '',
+            'linkPocketCasts' => '',
+            'linkDeezer'      => '',
+            'linkCastbox'     => '',
         ];
     }
 
@@ -210,6 +216,20 @@ class Podcast extends Plugin {
         echo $text('email', 'E-Mail des Inhabers',
             'Steht öffentlich im Feed. Verzeichnisse wie Apple Podcasts und Spotify prüfen darüber, wem der Podcast gehört.',
             null, ' inputmode="email" autocomplete="email"');
+
+        // Links zum Podcast bei Diensten: erscheinen im Abo-Button des Players
+        $serviceTips = [
+            'linkApple'       => 'Links zum Podcast erscheinen im Abo-Button des Players (in der App: Teilen → Link kopieren). '
+                . 'Mit dem Apple-Link erscheinen auch Castro (iPhone) und Pocket Casts.',
+            'linkPocketCasts' => 'Leer lassen, um Pocket Casts über den Apple-Link zu verbinden.',
+        ];
+        foreach (self::SUBSCRIBE_SERVICES as $field => $service) {
+            $tip = (isset($serviceTips[$field]) ? $serviceTips[$field] . ' ' : '') . 'Beispiel: ' . $esc($service[3]);
+            if (trim($this->setting($field)) !== '' && $this->serviceId($field) === '') {
+                $tip .= ' <strong>Wird nicht verwendet: Der Link hat nicht die erwartete Form.</strong>';
+            }
+            echo $text($field, $service[1], $tip, null, ' inputmode="url"');
+        }
 
         echo $group('Feed');
         echo $text('feedSlug', 'Feed-Dateiname', 'z. B. podcast.xml');
@@ -438,16 +458,9 @@ class Podcast extends Plugin {
         // Assets (Layouts, Player-Bundle, Abo-Button) aus dem Plugin-Ordner laden;
         // Abo-Button immer mit der Feed-Adresse (auch ohne eingetragene Feed-URL)
         $feedUrl = $this->feedUrl();
-        $clients = [];
-        foreach (self::SUBSCRIBE_APPS as $id) {
-            $clients[] = ['id' => $id];
-        }
-        // Web-Varianten, deren Link aus „service“ entsteht: hier die Feed-Adresse
-        $clients[] = ['id' => 'player-fm', 'service' => $feedUrl];
-        $clients[] = ['id' => 'rss',       'service' => $feedUrl];
         $playerConfig = [
             'base'             => $this->playerBaseUrl(),
-            'subscribe-button' => ['feed' => $feedUrl, 'clients' => $clients],
+            'subscribe-button' => ['feed' => $feedUrl, 'clients' => $this->subscribeClients($feedUrl)],
         ];
 
         $flags       = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
@@ -1414,17 +1427,88 @@ class Podcast extends Plugin {
      * Apps für den Abo-Button, die den Podcast allein über die Feed-Adresse
      * abonnieren (IDs aus player/5.13.0/button/list.js). Ohne Liste bleibt das
      * Fenster „Abonnieren bei“ leer; der Player zeigt davon nur die Apps für
-     * die Plattform des Besuchers. Nicht enthalten: Dienste, deren Link die ID
-     * des Podcasts beim Dienst braucht (Apple Podcasts, Spotify, Pocket Casts,
-     * Castro, Deezer …) — der Player zieht ihren Web-Link der App vor und würde
-     * ohne ID ins Leere verlinken — sowie eingestellte Apps (Google Podcasts,
-     * Instacast, BeyondPod, Podscout).
+     * die Plattform des Besuchers. Dienste, deren Link die ID des Podcasts beim
+     * Dienst braucht, stehen in SUBSCRIBE_SERVICES — der Player zieht ihren
+     * Web-Link der App vor und würde ohne ID ins Leere verlinken. Nicht
+     * enthalten: eingestellte Apps (Google Podcasts, Instacast, BeyondPod,
+     * Podscout).
      */
     private const SUBSCRIBE_APPS = [
         'antenna-pod', 'podcast-addict', 'podcast-republic', 'procast',
         'overcast', 'downcast', 'i-catcher', 'podcat', 'rss-radio',
         'gpodder', 'clementine',
     ];
+
+    /**
+     * Dienste für den Abo-Button, die die ID des Podcasts beim Dienst brauchen:
+     * Einstellung => [Podlove-Client-ID, Bezeichnung, Muster des öffentlichen
+     * Links (Gruppe 1 = ID für den Player), Beispiel]. Gespeichert wird der
+     * Link, wie ihn die App beim Teilen liefert; an den Player geht nur die ID
+     * (Ziffern, Buchstaben, Bindestrich). Der Player baut daraus wieder einen
+     * https-Link zum Dienst.
+     */
+    private const SUBSCRIBE_SERVICES = [
+        'linkApple' => ['apple-podcasts', 'Apple Podcasts',
+            '~^https://(?:podcasts|itunes)\.apple\.com/(?:[a-z]{2}/)?podcast/(?:[^/?#]+/)?(id\d+)/?(?:[?#].*)?$~Di',
+            'https://podcasts.apple.com/de/podcast/mein-podcast/id1234567890'],
+        'linkSpotify' => ['spotify', 'Spotify',
+            '~^https://open\.spotify\.com/(?:intl-[a-z-]+/)?show/([A-Za-z0-9]{22})/?(?:[?#].*)?$~Di',
+            'https://open.spotify.com/show/0123456789abcdefABCDEF'],
+        'linkPocketCasts' => ['pocket-casts', 'Pocket Casts',
+            '~^https://pca\.st/((?:itunes/\d+)|(?:podcast/[0-9a-f-]{36})|[A-Za-z0-9_-]+)/?(?:[?#].*)?$~Di',
+            'https://pca.st/abcd1234'],
+        'linkDeezer' => ['deezer', 'Deezer',
+            '~^https://(?:www\.)?deezer\.com/(?:[a-z]{2}/)?show/(\d+)/?(?:[?#].*)?$~Di',
+            'https://www.deezer.com/de/show/1234567'],
+        'linkCastbox' => ['castbox', 'Castbox',
+            '~^https://castbox\.fm/(?:channel|ch)/(?:[^/?#]*-)?(id\d+)/?(?:[?#].*)?$~Di',
+            'https://castbox.fm/channel/Mein-Podcast-id1234567'],
+    ];
+
+    /** ID des Podcasts beim Dienst aus dem eingetragenen Link, sonst ''. */
+    private function serviceId($field) {
+        if (!isset(self::SUBSCRIBE_SERVICES[$field])) {
+            return '';
+        }
+        $link = trim($this->setting($field));
+        return $link !== '' && preg_match(self::SUBSCRIBE_SERVICES[$field][2], $link, $m) === 1 ? $m[1] : '';
+    }
+
+    /**
+     * Einträge für den Abo-Button: Dienste mit eingetragenem Link zuerst, dann
+     * die Apps (SUBSCRIBE_APPS), Player.fm und RSS. Der Player zeigt nur die
+     * zur Plattform des Besuchers passenden.
+     */
+    private function subscribeClients($feedUrl) {
+        $ids = [];
+        foreach (self::SUBSCRIBE_SERVICES as $field => $service) {
+            $ids[$service[0]] = $this->serviceId($field);
+        }
+        $appleId = $ids['apple-podcasts'];
+        // Ohne eigenen Link verbindet Pocket Casts über die Apple-ID (pca.st/itunes/…)
+        if ($ids['pocket-casts'] === '' && $appleId !== '') {
+            $ids['pocket-casts'] = 'itunes/' . substr($appleId, 2);
+        }
+
+        $clients = [];
+        foreach ($ids as $client => $id) {
+            if ($id === '') {
+                continue;
+            }
+            $clients[] = ['id' => $client, 'service' => $id];
+            // Castro (iPhone) verlinkt ebenfalls über die Apple-ID
+            if ($client === 'pocket-casts' && $appleId !== '') {
+                $clients[] = ['id' => 'castro', 'service' => $appleId];
+            }
+        }
+        foreach (self::SUBSCRIBE_APPS as $id) {
+            $clients[] = ['id' => $id];
+        }
+        // Web-Varianten, deren Link aus „service“ entsteht: hier die Feed-Adresse
+        $clients[] = ['id' => 'player-fm', 'service' => $feedUrl];
+        $clients[] = ['id' => 'rss',       'service' => $feedUrl];
+        return $clients;
+    }
 
     /**
      * Gewählter Player; unbekannte Werte fallen auf den lokalen Podlove-Player zurück.

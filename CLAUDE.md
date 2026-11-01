@@ -105,10 +105,11 @@ dort um passende Schritte ergänzen.
   HTML-Seiten aus dem Paket (z. B. `share.html`) übernehmen. Der Player rendert
   `summary` per `innerHTML` — nur HTML-escapten Text übergeben; Entities nie
   nach `strip_tags()` dekodieren (Regel 4). Abo-Button: `clients` aus
-  `Podcast::SUBSCRIBE_APPS` plus `player-fm`/`rss` mit der Feed-Adresse als
-  `service` — ohne `clients` bleibt sein Fenster leer. Dienste mit Web-Variante
-  (Apple Podcasts, Pocket Casts …) nur mit ihrer Podcast-ID: der Player zieht
-  den Web-Link der App vor.
+  `subscribeClients()` — ohne `clients` bleibt sein Fenster leer. Dienste mit
+  Web-Variante (Apple Podcasts, Pocket Casts …) nur mit ihrer Podcast-ID
+  (`SUBSCRIBE_SERVICES`, aus dem eingetragenen Link per Muster gelesen), denn
+  der Player zieht den Web-Link der App vor; Apps über die Feed-Adresse
+  (`SUBSCRIBE_APPS`), `player-fm`/`rss` mit der Feed-Adresse als `service`.
 
 ## Sicherheitsregeln (verbindlich für jede Änderung)
 

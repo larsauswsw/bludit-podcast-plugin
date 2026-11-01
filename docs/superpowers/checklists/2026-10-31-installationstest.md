@@ -192,6 +192,9 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [ ] P55 Episodenseite: Der Podlove-Player zeigt den Abo-Button. „Abonnieren“ öffnet „Abonnieren bei“ mit Apps für das Gerät (auf dem iPhone u. a. Overcast und Downcast, auf Android u. a. AntennaPod), dazu Player.fm und RSS; „RSS“ öffnet den Feed. *(Nach #78 war das Fenster leer.)*
 - [x] P56 Unter „Abweichende Feed-URL“ `feed.xml` (ohne `https://`) speichern → Hinweis „Wird nicht verwendet …“, „Adresse des Feeds“ bleibt `$SITE/podcast.xml`. Danach das Feld wieder leeren.
 
+- [ ] P57 **Kanaleinstellungen → Apple Podcasts & Verzeichnisse**: Link deines Podcasts bei Apple Podcasts eintragen (in der App: Teilen → Link kopieren; ist der Podcast dort noch nicht, testweise den Link eines beliebigen Podcasts) und speichern. Im Abo-Fenster stehen oben Apple Podcasts, Pocket Casts und auf dem iPhone Castro. Antippen öffnet jeweils den Podcast im Dienst bzw. in der App — bei Pocket Casts prüfen, ob die richtige Sendung erscheint (Link `pca.st/itunes/…`).
+- [ ] P58 Weitere Links (Spotify, Pocket Casts, Deezer, Castbox) wie P57 prüfen, soweit vorhanden. Ein unpassender Link (z. B. `https://example.com`) zeigt unter dem Feld „Wird nicht verwendet …“ und erscheint nicht im Abo-Fenster. Testweise eingetragene fremde Links danach wieder entfernen.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 
