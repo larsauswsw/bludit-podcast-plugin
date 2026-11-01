@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64.
 
 ## Vorbereitung (SSH)
 
@@ -139,17 +139,17 @@ Auf einem iPhone und möglichst einem Android-Gerät, Hochformat. Vorher die Sei
 
 ## J · Episoden-API im Admin-Bereich, Feed-Adresse (004, 010)
 Nach dem Update eine offene Seite **Admin → Podcast** neu laden (neue API-Adresse).
-- [ ] J36 Episode mit **Audio-Upload** anlegen, bearbeiten und wieder löschen: alles ohne Fehlermeldung. In den Entwicklertools des Browsers (Netzwerk) gehen die Anfragen an `…/admin/plugin/podcast?podcast_api=1`.
-- [ ] J37 Feed mit und ohne Parameter erreichbar, beide Male `200` und `application/rss+xml`:
+- [x] J36 Episode mit **Audio-Upload** anlegen, bearbeiten und wieder löschen: alles ohne Fehlermeldung. In den Entwicklertools des Browsers (Netzwerk) gehen die Anfragen an `…/admin/plugin/podcast?podcast_api=1`.
+- [x] J37 Feed mit und ohne Parameter erreichbar, beide Male `200` und `application/rss+xml`:
   ```sh
   curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "$SITE/podcast.xml"
   curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "$SITE/podcast.xml?nocache=$RANDOM"
   ```
-- [ ] J38 Der alte API-Weg über die Website ändert nichts mehr (erwartet: HTML der Startseite, kein JSON):
+- [x] J38 Der alte API-Weg über die Website ändert nichts mehr (erwartet: HTML der Startseite, kein JSON):
   ```sh
   curl -s -X POST "$SITE/?podcast_api=1" -d "podcast_api_action=delete_episode" | head -c 80; echo
   ```
-- [ ] J39 *(optional)* Zu große Datei ohne Browser-Prüfung (wie F20, z. B. Version vor #55 im Browser-Cache oder Limits kurz senken): Meldung „Upload zu groß …“, man bleibt angemeldet.
+- [ ] J39 *(optional; live übersprungen, lokal getestet)* Zu große Datei ohne Browser-Prüfung (wie F20, z. B. Version vor #55 im Browser-Cache oder Limits kurz senken): Meldung „Upload zu groß …“, man bleibt angemeldet.
 
 Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blog/`, Rolle „Autor“ (bekommt „Keine Berechtigung.“), abgelaufene Sitzung (Hinweis statt „Netzwerkfehler“).
 
