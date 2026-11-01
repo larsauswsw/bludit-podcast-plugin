@@ -11,6 +11,11 @@ class Podcast extends Plugin {
     // BLUDIT PLUGIN LIFECYCLE
     // ═══════════════════════════════════════════════════════════════════
 
+    public function __construct() {
+        parent::__construct();
+        $this->rejectOversizedApiPost();
+    }
+
     public function init() {
         $this->name        = 'Podcast';
         $this->description = 'Podcast Plugin: Episodenverwaltung, iTunes-Feed, Datei-Upload';
@@ -64,12 +69,22 @@ class Podcast extends Plugin {
 
     /**
      * Läuft für /admin/plugin/podcast vor adminView(), nur für angemeldete Nutzer.
-     * Richtet nach einem Plugin-Update die Custom Fields ein und übernimmt Altdaten.
+     * Bludit hat hier Session, Login und bei POST das CSRF-Token
+     * (rules/99.security.php) bereits geprüft.
+     *
+     * - POST mit ?podcast_api=1: Episoden-API (Speichern, Löschen, Upload) → JSON
+     * - sonst: nach einem Plugin-Update Custom Fields einrichten, Altdaten übernehmen
      */
     public function adminController() {
-        global $login;
+        $allowed = checkRole(['admin', 'editor'], false);
 
-        if (!in_array($login->role(), ['admin', 'editor'], true)) {
+        if ($this->isApiRequest()) {
+            $this->sendJson($allowed
+                ? $this->runApiAction($this->postString($_POST, 'podcast_api_action'))
+                : ['error' => 'Keine Berechtigung.']);
+        }
+
+        if (!$allowed) {
             return;
         }
         if ($this->ensureCustomFields()) {
@@ -91,8 +106,9 @@ class Podcast extends Plugin {
         }
 
         ob_start();
-        // Kennung in der URL, damit auch zu große Uploads als API-Anfrage erkannt werden
-        $apiUrl = DOMAIN_BASE . '?podcast_api=1';
+        // API im Admin-Bereich (adminController). Kennung in der URL, damit auch
+        // zu große Uploads (PHP verwirft dann den POST-Body) erkannt werden.
+        $apiUrl = DOMAIN_ADMIN . 'plugin/podcast?podcast_api=1';
         ?>
         <link rel="stylesheet" href="<?php echo htmlspecialchars($this->assetUrl('css/podcast-admin.css'), ENT_QUOTES) ?>">
 
@@ -159,7 +175,7 @@ class Podcast extends Plugin {
         echo $text('feedSlug', 'Feed-Dateiname', 'z. B. podcast.xml');
         echo $text('feedTitle', 'Podcast-Titel');
         echo $text('feedUrl', 'Feed-URL', 'Vollständige Adresse, z. B. https://example.com/podcast.xml', null, ' inputmode="url"');
-        echo $text('siteUrl', 'Website-URL', '', $this->setting('siteUrl') ?: DOMAIN, ' inputmode="url"');
+        echo $text('siteUrl', 'Website-URL', '', $this->setting('siteUrl') ?: DOMAIN_BASE, ' inputmode="url"');
         ?>
         <div>
             <label for="podcast-feedDesc">Beschreibung</label>
@@ -197,75 +213,17 @@ class Podcast extends Plugin {
     // Kein formSave() nötig — Bludit ruft post() auf, nicht formSave()
 
     // ═══════════════════════════════════════════════════════════════════
-    // BEFORE ALL: FEED + AJAX API
+    // BEFORE ALL: FEED
     // ═══════════════════════════════════════════════════════════════════
 
     public function beforeAll() {
-        $requestPath = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-
-        // ── AJAX API ─────────────────────────────────────────────────
-        // Erkennung auch über ?podcast_api=1 in der URL: Bei überschrittenem
-        // post_max_size verwirft PHP den POST-Body samt podcast_api_action.
-        $method       = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : '';
-        $isApiRequest = $method === 'POST' && (isset($_GET['podcast_api']) || !empty($_POST['podcast_api_action']));
-
-        if ($isApiRequest) {
-            while (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-            // Stray PHP warnings/notices would break JSON — suppress output, capture cleanly
-            ob_start();
-            header('Content-Type: application/json; charset=utf-8');
-            // Login aus Session lesen (funktioniert auch im Frontend-Kontext)
-            $loginCheck = new Login();
-            if (!$loginCheck->isLogged() || !in_array($loginCheck->role(), ['admin', 'editor'], true)) {
-                ob_end_clean();
-                echo json_encode(['error' => 'Unauthorized']);
-                exit;
-            }
-            // post_max_size überschritten: $_POST und $_FILES sind leer (0 = unbegrenzt)
-            $postMaxBytes = $this->parseBytes(ini_get('post_max_size'));
-            $contentLen   = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
-            if ($postMaxBytes > 0 && $contentLen > $postMaxBytes) {
-                ob_end_clean();
-                $limitMB = round($postMaxBytes / 1024 / 1024, 0);
-                echo json_encode(['error' => 'Upload zu groß: Gesamtgröße überschreitet das Server-Limit von ' . $limitMB . ' MB. Bitte kleinere Dateien wählen oder Audio-URL verwenden.']);
-                exit;
-            }
-            // Im Frontend prüft Bludit kein CSRF-Token — daher hier selbst
-            global $security;
-            if (!$security->validateTokenCSRF($this->postString($_POST, 'tokenCSRF'))) {
-                ob_end_clean();
-                Log::set(__METHOD__ . LOG_SEP . 'Invalid tokenCSRF for podcast API request.');
-                echo json_encode(['error' => 'Sicherheits-Token ungültig. Bitte die Seite neu laden.']);
-                exit;
-            }
-            $action = $this->postString($_POST, 'podcast_api_action');
-            try {
-                $this->handleApiRequest($action);
-            } catch (RuntimeException $e) {
-                // Eigene, für Nutzer formulierte Fehlermeldungen
-                echo json_encode(['error' => $e->getMessage()]);
-            } catch (Throwable $e) {
-                Log::set(__METHOD__ . LOG_SEP . $e->getMessage());
-                echo json_encode(['error' => 'Interner Fehler. Details stehen im Bludit-Log.']);
-            }
-            ob_end_flush();
-            exit;
-        }
-
-        // ── RSS-Feed ──────────────────────────────────────────────────
-        $feedSlug = $this->setting('feedSlug') ?: 'podcast.xml';
-        $feedPath = rtrim('/' . ltrim($feedSlug, '/'), '/');
-
-        if ($requestPath === $feedPath) {
+        // webhook() vergleicht mit HTML_PATH_ROOT (auch bei Bludit im Unterordner)
+        // und ignoriert Parameter wie ?nocache=…
+        $feedSlug = ltrim($this->setting('feedSlug') ?: 'podcast.xml', '/');
+        if ($this->webhook($feedSlug)) {
             $this->outputFeed();
             exit;
         }
-    }
-
-    public function beforeAdminLoad() {
-        // Nicht mehr benötigt – API läuft über beforeAll()
     }
 
     public function siteHead() {
@@ -313,7 +271,7 @@ class Podcast extends Plugin {
                 'subtitle' => '',
                 'summary'  => $showSummary,
                 'poster'   => $this->setting('cover'),
-                'link'     => $this->setting('siteUrl') ?: DOMAIN,
+                'link'     => $this->setting('siteUrl') ?: DOMAIN_BASE,
             ],
             'title'           => $this->plainTitle($page),
             'subtitle'        => '',
@@ -421,7 +379,7 @@ class Podcast extends Plugin {
         // genau einmal für XML escapen
         $title     = $this->xml($this->setting('feedTitle'));
         $feedUrl   = $this->xml($this->setting('feedUrl'));
-        $siteUrl   = $this->xml($this->setting('siteUrl') ?: DOMAIN);
+        $siteUrl   = $this->xml($this->setting('siteUrl') ?: DOMAIN_BASE);
         $desc      = $this->xml($this->setting('feedDesc'));
         $lang      = $this->xml($this->setting('feedLang') ?: 'de-de');
         $author    = $this->xml($this->setting('author'));
@@ -519,58 +477,6 @@ class Podcast extends Plugin {
     // ═══════════════════════════════════════════════════════════════════
     // EPISODE ADMIN UI
     // ═══════════════════════════════════════════════════════════════════
-
-    private function renderEpisodesPage() {
-        global $login;
-
-        while (ob_get_level() > 0) ob_end_clean();
-
-        $adminRoot = HTML_PATH_ADMIN_ROOT;
-        $coreCSS   = DOMAIN_CORE_CSS;
-        $coreJS    = DOMAIN_CORE_JS;
-        $apiUrl    = DOMAIN;
-        $role      = $login->role();
-
-        header('Content-Type: text/html; charset=UTF-8');
-        ?>
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="robots" content="noindex,nofollow">
-    <title>Podcast – Episoden</title>
-    <link rel="stylesheet" href="<?php echo $coreCSS ?>bootstrap.min.css">
-    <link rel="stylesheet" href="<?php echo $coreCSS ?>line-awesome/css/line-awesome-font-awesome.min.css">
-    <style>
-        body { background: #f5f6fa; }
-        .podcast-wrap { max-width: 960px; margin: 30px auto; padding: 0 15px; }
-        .podcast-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .back-link { font-size: 0.9em; color: #666; }
-        .back-link:hover { color: #333; text-decoration: none; }
-    </style>
-</head>
-<body>
-<div class="podcast-wrap">
-    <div class="podcast-header">
-        <h3><span class="fa fa-microphone"></span> Podcast – Episoden</h3>
-        <a class="back-link" href="<?php echo $adminRoot ?>dashboard">
-            <span class="fa fa-arrow-left"></span> Dashboard
-        </a>
-    </div>
-
-    <?php echo $this->renderEpisodeSection(); ?>
-    <?php echo $this->renderEpisodeForm($apiUrl); ?>
-</div>
-
-<script src="<?php echo $coreJS ?>jquery.min.js"></script>
-<script src="<?php echo $coreJS ?>bootstrap.bundle.min.js"></script>
-<script>var PODCAST_API_URL = <?php echo json_encode($apiUrl) ?>;</script>
-<script src="<?php echo DOMAIN ?>/bl-plugins/podcast/js/podcast-admin.js"></script>
-</body>
-</html>
-        <?php
-    }
 
     /**
      * Episodenliste nach dem Muster von Bludits Inhaltsliste
@@ -842,17 +748,70 @@ class Podcast extends Plugin {
     // EPISODE CRUD API (aufgerufen aus beforeAll)
     // ═══════════════════════════════════════════════════════════════════
 
-    private function handleApiRequest($action) {
-        switch ($action) {
-            case 'save_episode':
-                echo json_encode($this->handleSaveEpisode($_POST, $_FILES));
-                break;
-            case 'delete_episode':
-                echo json_encode($this->handleDeleteEpisode($this->postString($_POST, 'episode_key')));
-                break;
-            default:
-                echo json_encode(['error' => 'Unbekannte Aktion']);
+    /**
+     * Führt eine API-Aktion aus. Nur aus adminController() aufrufen (Login,
+     * Rolle und CSRF-Token sind dort geprüft).
+     */
+    private function runApiAction($action) {
+        try {
+            switch ($action) {
+                case 'save_episode':
+                    return $this->handleSaveEpisode($_POST, $_FILES);
+                case 'delete_episode':
+                    return $this->handleDeleteEpisode($this->postString($_POST, 'episode_key'));
+                default:
+                    return ['error' => 'Unbekannte Aktion'];
+            }
+        } catch (RuntimeException $e) {
+            // Eigene, für Nutzer formulierte Fehlermeldungen
+            return ['error' => $e->getMessage()];
+        } catch (Throwable $e) {
+            Log::set(__METHOD__ . LOG_SEP . $e->getMessage());
+            return ['error' => 'Interner Fehler. Details stehen im Bludit-Log.'];
         }
+    }
+
+    private function isApiRequest() {
+        return (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST')
+            && isset($_GET['podcast_api']);
+    }
+
+    /** Antwortet mit JSON und beendet die Anfrage; verwirft vorherige Ausgaben (z. B. PHP-Warnungen). */
+    private function sendJson(array $data) {
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    /**
+     * Überschreitet ein Upload post_max_size, verwirft PHP den ganzen POST-Body
+     * samt tokenCSRF. Bludits CSRF-Prüfung im Admin-Bereich würde den Nutzer
+     * dann abmelden. Daher läuft diese Prüfung schon beim Laden des Plugins
+     * (60.plugins.php, vor 99.security.php) und antwortet mit einer klaren
+     * Meldung — nur für angemeldete Nutzer, ohne etwas zu ändern.
+     */
+    private function rejectOversizedApiPost() {
+        global $url, $login;
+
+        if (!$this->isApiRequest() || !($url instanceof Url) || $url->whereAmI() !== 'admin') {
+            return;
+        }
+        if (strtolower(trim($url->slug(), '/')) !== 'plugin/podcast' || !$this->installed()) {
+            return;
+        }
+        $postMaxBytes = $this->parseBytes(ini_get('post_max_size'));
+        $contentLen   = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+        if ($postMaxBytes <= 0 || $contentLen <= $postMaxBytes) {
+            return;
+        }
+        if (!($login instanceof Login) || !$login->isLogged()) {
+            return;
+        }
+        $limitMB = round($postMaxBytes / 1024 / 1024, 0);
+        $this->sendJson(['error' => 'Upload zu groß: Gesamtgröße überschreitet das Server-Limit von ' . $limitMB . ' MB. Bitte kleinere Dateien wählen oder Audio-URL verwenden.']);
     }
 
     private function handleSaveEpisode($post, $files = []) {

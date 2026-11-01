@@ -60,7 +60,11 @@ dort um passende Schritte ergänzen.
   für reine Wertänderungen `$pages->setField()` nutzen.
 - Admin-Seiten: `adminController()`/`adminView()` unter `/admin/plugin/podcast`;
   dort sind Session, Login und CSRF-Prüfung (`99.security.php`) schon gelaufen.
-  Im Frontend (`beforeAll()`) wird **kein** CSRF-Token geprüft.
+  Im Frontend (`beforeAll()`) wird **kein** CSRF-Token geprüft — dort läuft
+  nur der Feed (`webhook()`). Die Episoden-API ist POST auf
+  `plugin/podcast?podcast_api=1` in `adminController()` (`runApiAction()`,
+  `sendJson()`). Ein ungültiges Token meldet Bludit ab; zu große Uploads
+  (leerer POST-Body) fängt `rejectOversizedApiPost()` im Konstruktor vorher ab.
 - Uploads nur über `handleUpload()`: prüft per `validateUpload()` Größe,
   Endung und Inhalt (`finfo`, `Podcast::UPLOAD_TYPES`), vergibt einen
   Zufallsnamen und sichert den Ordner per `prepareUploadDir()` (`index.php`,

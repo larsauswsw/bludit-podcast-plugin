@@ -68,13 +68,13 @@ dokumentiert.
 | 001 | Doppeltes HTML-Escaping in Feed, Formularen und Titeln | hoch | S | [#2](https://github.com/larsauswsw/bludit-podcast-plugin/issues/2) ✅ |
 | 002 | Episoden mit mehreren Tags werden nicht erkannt | hoch | S | [#3](https://github.com/larsauswsw/bludit-podcast-plugin/issues/3) ✅ |
 | 003 | Seiten über `createPage()`/`editPage()`/`deletePage()` verwalten | hoch | S | [#4](https://github.com/larsauswsw/bludit-podcast-plugin/issues/4) ✅ |
-| 004 | Unterverzeichnis-Installationen unterstützen (`DOMAIN` → `DOMAIN_BASE`/`webhook()`) | hoch | S | [#5](https://github.com/larsauswsw/bludit-podcast-plugin/issues/5) |
+| 004 | Unterverzeichnis-Installationen unterstützen (`DOMAIN` → `DOMAIN_BASE`/`webhook()`) | hoch | S | [#5](https://github.com/larsauswsw/bludit-podcast-plugin/issues/5) ✅ |
 | 005 | Episoden-Metadaten an UUID statt Page-Key binden (Slug-Änderung, GUID) | hoch | M | [#6](https://github.com/larsauswsw/bludit-podcast-plugin/issues/6) ✅ |
 | 006 | Datenverlust bei Plugin-Update: `episodes.json` aus dem Plugin-Ordner verlagern | hoch | S | [#7](https://github.com/larsauswsw/bludit-podcast-plugin/issues/7) ✅ |
 | 007 | Bearbeiten überschreibt Tags, Seitentyp und Inhalt | mittel | S | [#8](https://github.com/larsauswsw/bludit-podcast-plugin/issues/8) |
 | 008 | Upload-Fehler klar melden statt stumm verwerfen | mittel | S | [#9](https://github.com/larsauswsw/bludit-podcast-plugin/issues/9) |
 | 009 | Datum/Zeitzone im Episodenformular korrigieren | niedrig | S | [#10](https://github.com/larsauswsw/bludit-podcast-plugin/issues/10) |
-| 010 | CSRF-Schutz: Episoden-API in `adminController()` verlagern | hoch | M | [#11](https://github.com/larsauswsw/bludit-podcast-plugin/issues/11) |
+| 010 | CSRF-Schutz: Episoden-API in `adminController()` verlagern | hoch | M | [#11](https://github.com/larsauswsw/bludit-podcast-plugin/issues/11) ✅ |
 | 011 | Upload- und Eingabe-Härtung | mittel | S | [#12](https://github.com/larsauswsw/bludit-podcast-plugin/issues/12) ✅ |
 | 012 | Episoden-Metadaten als Bludit Custom Fields speichern | mittel | L | [#13](https://github.com/larsauswsw/bludit-podcast-plugin/issues/13) ✅ |
 | 013 | Feed cachen, HTTP-Caching & Performance | mittel | M | [#14](https://github.com/larsauswsw/bludit-podcast-plugin/issues/14) |
@@ -115,8 +115,9 @@ Bereits umgesetzt (`Status: done`): 039 (Sicherheitsfix, #41); 012 Custom Fields
 mit 005 und 006 (behebt S3); 028 lokal gehosteter Player (behebt S4) mit 040 (S8, #45); 011 Upload-Härtung
 (behebt S5); 001 Escaping; 002 Tag-Erkennung; 003 Bludit-Seitenfunktionen (mit
 Tag-Erhalt aus 007); 042 Admin-Oberfläche im Bludit-Look (übernimmt die Bootstrap-Punkte
-aus 024 und 035). Teilweise vorgezogen: CSRF-Prüfung aus 010, URL-/Typprüfung
-aus 011, `CLAUDE.md` aus 037, Skript-Einbindung aus 004 (mit 042).
+aus 024 und 035); 004 Unterordner und 010 Episoden-API im Admin-Bereich.
+Teilweise vorgezogen: URL-/Typprüfung aus 011, `CLAUDE.md` aus 037, toter Code
+aus 035 (mit 010).
 
 ## Vorschlag für die Reihenfolge
 

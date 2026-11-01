@@ -137,8 +137,23 @@ Auf einem iPhone und möglichst einem Android-Gerät, Hochformat. Vorher die Sei
 - [x] I34 Testepisode im Podcast-Admin löschen: verschwindet aus Liste, Feed, `/tag/podcast` und `rss.xml`; im Systemprotokoll steht „Inhalt gelöscht“.
 - [ ] I35 *(nur falls vorhanden; Live nicht zutreffend, keine Unterseiten — lokal getestet)* Eine Episode, die Unterseite einer anderen Seite ist, im Podcast-Formular speichern: Ihre URL bleibt gleich. Eine Episode mit Unterseiten hat im ☰-Menü kein „Löschen“.
 
+## J · Episoden-API im Admin-Bereich, Feed-Adresse (004, 010)
+Nach dem Update eine offene Seite **Admin → Podcast** neu laden (neue API-Adresse).
+- [ ] J36 Episode mit **Audio-Upload** anlegen, bearbeiten und wieder löschen: alles ohne Fehlermeldung. In den Entwicklertools des Browsers (Netzwerk) gehen die Anfragen an `…/admin/plugin/podcast?podcast_api=1`.
+- [ ] J37 Feed mit und ohne Parameter erreichbar, beide Male `200` und `application/rss+xml`:
+  ```sh
+  curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "$SITE/podcast.xml"
+  curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "$SITE/podcast.xml?nocache=$RANDOM"
+  ```
+- [ ] J38 Der alte API-Weg über die Website ändert nichts mehr (erwartet: HTML der Startseite, kein JSON):
+  ```sh
+  curl -s -X POST "$SITE/?podcast_api=1" -d "podcast_api_action=delete_episode" | head -c 80; echo
+  ```
+- [ ] J39 *(optional)* Zu große Datei ohne Browser-Prüfung (wie F20, z. B. Version vor #55 im Browser-Cache oder Limits kurz senken): Meldung „Upload zu groß …“, man bleibt angemeldet.
+
+Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blog/`, Rolle „Autor“ (bekommt „Keine Berechtigung.“), abgelaufene Sitzung (Hinweis statt „Netzwerkfehler“).
+
 ## Bekannte offene Punkte (keine Testfehler)
-- Bludit im Unterordner: Feed-Pfad noch nicht angepasst (Rest von 004; das Admin-JavaScript ist seit 042 angepasst).
 - Hinweis „Update“ in der Plugin-Liste (034).
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 

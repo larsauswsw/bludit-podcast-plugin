@@ -153,7 +153,7 @@ Bludits eigenes REST-API-Plugin (`bl-plugins/api/plugin.php`) nutzt ebenfalls
 
 ## 004 · Unterverzeichnis-Installationen unterstützen (`DOMAIN` → `DOMAIN_BASE`/`webhook()`)
 
-Status: idea · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`adminView()`, `beforeAll()`, `handleUpload()`) · Issue: [#5](https://github.com/larsauswsw/bludit-podcast-plugin/issues/5)
+Status: done · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`adminView()`, `beforeAll()`, `handleUpload()`) · Issue: [#5](https://github.com/larsauswsw/bludit-podcast-plugin/issues/5)
 
 **Beschreibung**
 
@@ -171,10 +171,14 @@ brechen bei Unterordner-Installationen:
 - [x] JS über `$this->domainPath()` einbinden, Cache-Version aus der
       Änderungszeit der Datei (mit 042).
 - [x] Upload-URLs aus `DOMAIN_UPLOADS` bilden (mit 011).
-- [ ] Feed über `$this->webhook($feedSlug)` erkennen (wie `bl-plugins/rss`).
-- [x] API-URL aus `DOMAIN_BASE` (mit S6; nach 010 ggf. `DOMAIN_ADMIN . 'plugin/podcast'`).
-- [ ] Getestet mit einer Installation unter `/blog/`: Feed, Speichern, Upload
-      und Player funktionieren.
+- [x] Feed über `$this->webhook($feedSlug)` erkennen (vergleicht mit
+      `HTML_PATH_ROOT`, ignoriert `?…`-Parameter).
+- [x] API-URL `DOMAIN_ADMIN . 'plugin/podcast?podcast_api=1'` (mit 010).
+- [x] Website-Adresse als Standard für `<link>`/Player aus `DOMAIN_BASE` statt
+      `DOMAIN`.
+- [x] Getestet mit einer Installation unter `/blog/` (lokal, Bludit 3.22):
+      Speichern mit Upload, Upload-URL, Feed samt Kanal-Link, Player auf der
+      Episodenseite, Löschen; keine fehlgeschlagenen Requests.
 
 **Betroffene Dateien**
 
