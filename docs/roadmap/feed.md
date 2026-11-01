@@ -58,9 +58,10 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
 - [ ] Feed besteht den Podbase- bzw. Cast-Feed-Validator ohne Fehler.
 
 **Umsetzung Teil 1 (Kanal):** `APPLE_CATEGORIES` mit 19 Kategorien und 91
-Unterkategorien (Apple-Liste seit 2019; 2023 nur neun Unterkategorien mit
-eigenen Charts aufgewertet, keine neuen Namen — Apples Seite war aus der
-Arbeitsumgebung nicht abrufbar, Abgleich über Sekundärquellen). Gespeichert im
+Unterkategorien, abgeglichen mit Apples Seite „Apple Podcasts-Kategorien“
+(podcasters.apple.com/support/1691, Stand 2026, vom Inhaber als PDF
+bereitgestellt); deutsche Namen wie dort, z. B. „Kinder und Familie →
+Kindererziehung (Parenting)“. Gespeichert im
 bisherigen Feld `category` als „Kategorie > Unterkategorie“, damit passende
 Freitexte (auch `Sports > Tennis`) ohne Umwandlung gelten; sonst Hinweis im
 Formular und keine Kategorie im Feed. Neue Felder `showType` und `copyright`,

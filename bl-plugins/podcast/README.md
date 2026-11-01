@@ -122,7 +122,7 @@ The settings are grouped like Bludit's own settings pages.
 | | **Sprache** | RSS language code | `en-us`, `de-de` |
 | | **Cover-URL** | URL of your podcast artwork (1400×1400 px JPG/PNG recommended; Apple: 1400–3000 px, square). Also used as the RSS `<image>` | `https://example.com/cover.jpg` |
 | | **Copyright** | Optional copyright notice (`<copyright>`) | `© 2026 Jane Doe` |
-| **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category with optional subcategory, chosen from Apple's list (shown in German with the English name; the feed contains the English names, subcategory nested). A previous free-text entry is kept if it matches an Apple category | `Kinder & Familie → Elternschaft (Parenting)` |
+| **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category with optional subcategory, chosen from Apple's list (shown with Apple's German names plus the English name; the feed contains the English names, subcategory nested). A previous free-text entry is kept if it matches an Apple category | `Kinder und Familie → Kindererziehung (Parenting)` |
 | | **Art des Podcasts** | `<itunes:type>`: episodic (newest first) or serial (in order, oldest first) | Episodisch |
 | | **Explicit** | Whether the podcast contains explicit content (`true`/`false` in the feed) | `Nein` |
 | | **E-Mail des Inhabers** | Owner email (`itunes:owner`, `managingEditor`). Public in the feed; directories such as Apple Podcasts and Spotify use it to verify ownership | `jane@example.com` |
