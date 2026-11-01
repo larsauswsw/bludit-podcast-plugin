@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79).
 
 ## Vorbereitung (SSH)
 
@@ -189,11 +189,11 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
   curl -s "$SITE/?t=$(date +%s)" | grep "application/rss+xml"
   ```
   Erwartet: `<atom:link href="$SITE/podcast.xml" rel="self" …>` (vorher ohne Feed-URL nicht vorhanden); auf der Startseite ein `<link rel="alternate" …>` mit dem Podcast-Titel und dieser Adresse (daneben ggf. der des Core-RSS-Plugins).
-- [ ] P55 Episodenseite: Der Podlove-Player zeigt den Abo-Button. „Abonnieren“ öffnet „Abonnieren bei“ mit Apps für das Gerät (auf dem iPhone u. a. Overcast und Downcast, auf Android u. a. AntennaPod), dazu Player.fm und RSS; „RSS“ öffnet den Feed. *(Nach #78 war das Fenster leer.)*
+- [x] P55 Episodenseite: Der Podlove-Player zeigt den Abo-Button. „Abonnieren“ öffnet „Abonnieren bei“ mit Apps für das Gerät (auf dem iPhone u. a. Overcast und Downcast, auf Android u. a. AntennaPod), dazu Player.fm und RSS; „RSS“ öffnet den Feed. *(Nach #78 war das Fenster leer; mit #79 in Ordnung.)*
 - [x] P56 Unter „Abweichende Feed-URL“ `feed.xml` (ohne `https://`) speichern → Hinweis „Wird nicht verwendet …“, „Adresse des Feeds“ bleibt `$SITE/podcast.xml`. Danach das Feld wieder leeren.
 
-- [ ] P57 **Kanaleinstellungen → Apple Podcasts & Verzeichnisse**: Link deines Podcasts bei Apple Podcasts eintragen (in der App: Teilen → Link kopieren; ist der Podcast dort noch nicht, testweise den Link eines beliebigen Podcasts) und speichern. Im Abo-Fenster stehen oben Apple Podcasts, Pocket Casts und auf dem iPhone Castro. Antippen öffnet jeweils den Podcast im Dienst bzw. in der App — bei Pocket Casts prüfen, ob die richtige Sendung erscheint (Link `pca.st/itunes/…`).
-- [ ] P58 Weitere Links (Spotify, Pocket Casts, Deezer, Castbox) wie P57 prüfen, soweit vorhanden. Ein unpassender Link (z. B. `https://example.com`) zeigt unter dem Feld „Wird nicht verwendet …“ und erscheint nicht im Abo-Fenster. Testweise eingetragene fremde Links danach wieder entfernen.
+- [x] P57 **Kanaleinstellungen → Apple Podcasts & Verzeichnisse**: Link deines Podcasts bei Apple Podcasts eintragen (in der App: Teilen → Link kopieren; ist der Podcast dort noch nicht, testweise den Link eines beliebigen Podcasts) und speichern. Im Abo-Fenster stehen oben Apple Podcasts, Pocket Casts und auf dem iPhone Castro. Antippen öffnet jeweils den Podcast im Dienst bzw. in der App — bei Pocket Casts prüfen, ob die richtige Sendung erscheint (Link `pca.st/itunes/…`).
+- [x] P58 Weitere Links (Spotify, Pocket Casts, Deezer, Castbox) wie P57 prüfen, soweit vorhanden. Ein unpassender Link (z. B. `https://example.com`) zeigt unter dem Feld „Wird nicht verwendet …“ und erscheint nicht im Abo-Fenster. Testweise eingetragene fremde Links danach wieder entfernen.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
