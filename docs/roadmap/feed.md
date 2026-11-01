@@ -65,7 +65,7 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
 
 ## 017 · Feed-Discovery & automatische Feed-URL
 
-Status: idea · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php` (`siteHead()`, `form()`) · Issue: [#18](https://github.com/larsauswsw/bludit-podcast-plugin/issues/18)
+Status: done · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php` (`siteHead()`, `form()`) · Issue: [#18](https://github.com/larsauswsw/bludit-podcast-plugin/issues/18)
 
 **Beschreibung**
 
@@ -81,13 +81,22 @@ gesehen). Umsetzung zusammen mit 016 und 043.
 
 **Akzeptanzkriterien**
 
-- [ ] Ist `feedUrl` leer, wird `DOMAIN_BASE . feedSlug` verwendet (Feld bleibt
+- [x] Ist `feedUrl` leer, wird `DOMAIN_BASE . feedSlug` verwendet (Feld bleibt
       als Override, z. B. für FeedBurner/CDN) — für Abo-Button und
       `<atom:link rel="self">`.
-- [ ] `siteHead()` gibt auf allen Seiten einen Discovery-Link mit Podcast-Titel aus.
-- [ ] Einstellungsseite zeigt die fertige Feed-URL als Link zum Kopieren.
-- [ ] Optional: Felder für Apple-/Spotify-/Podcast-Index-Links, die als
+- [x] `siteHead()` gibt auf allen Seiten einen Discovery-Link mit Podcast-Titel aus.
+- [x] Einstellungsseite zeigt die fertige Feed-URL als Link zum Kopieren.
+- [ ] Optional (nicht umgesetzt, eigenes Feature bei Bedarf): Felder für Apple-/Spotify-/Podcast-Index-Links, die als
       Abo-Buttons im Player und im Widget (031) erscheinen.
+
+**Umsetzung:** `feedUrl()` liefert die abweichende Feed-URL, wenn sie mit
+`http(s)://` beginnt, sonst `localFeedUrl()` (`DOMAIN_BASE` + `feedSlug()`,
+Pfadteile URL-kodiert). Genutzt für Abo-Button, `<atom:link rel="self">` (jetzt
+immer im Feed) und den Discovery-Link in `siteHead()` (Titel: Podcast-Titel,
+sonst Website-Titel). Die Einstellungsseite zeigt die Adresse in einem
+schreibgeschützten Feld mit Link „Feed öffnen“. Website-URL analog über
+`siteUrl()`; eine eingetragene URL ohne `http(s)://` wird nicht verwendet und
+im Formular markiert.
 
 **Betroffene Dateien**
 
