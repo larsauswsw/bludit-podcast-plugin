@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62.
 
 ## Vorbereitung (SSH)
 
@@ -131,14 +131,15 @@ Auf einem iPhone und möglichst einem Android-Gerät, Hochformat. Vorher die Sei
   Danach die Testwerte aus H27/H28 wieder zurücksetzen bzw. die Testepisode löschen. *(Live: keine Altwerte gefunden.)*
 
 ## I · Tags, Autor, Unterseiten (002, 003)
-- [ ] I31 Im **Bludit-Editor** einer Episode einen zweiten Tag ergänzen (z. B. `Technik`): Die Episode bleibt in **Admin → Podcast**, im Feed und hat den Player.
-- [ ] I32 Diese Episode im Podcast-Formular bearbeiten und speichern: Im Bludit-Editor stehen danach weiterhin beide Tags.
-- [ ] I33 Neue Testepisode `Neu & frisch` anlegen: URL ist `…/neu-frisch` (ohne `amp`); im Bludit-Editor ist ein Autor gesetzt; `$SITE/tag/podcast` listet sie; **Einstellungen → Allgemein → Systemprotokoll** bzw. Dashboard zeigt „Neuer Inhalt erstellt“. Falls die Plugins **RSS** bzw. **Sitemap** aktiv sind, steht sie in `$SITE/rss.xml` bzw. `$SITE/sitemap.xml`.
-- [ ] I34 Testepisode im Podcast-Admin löschen: verschwindet aus Liste, Feed, `/tag/podcast` und `rss.xml`; im Systemprotokoll steht „Inhalt gelöscht“.
-- [ ] I35 *(nur falls vorhanden)* Eine Episode, die Unterseite einer anderen Seite ist, im Podcast-Formular speichern: Ihre URL bleibt gleich. Eine Episode mit Unterseiten hat im ☰-Menü kein „Löschen“.
+- [x] I31 Im **Bludit-Editor** einer Episode einen zweiten Tag ergänzen (z. B. `Technik`): Die Episode bleibt in **Admin → Podcast**, im Feed und hat den Player. Per curl (URL der Episode in `EP`): `curl -s "$SITE/podcast.xml?nocache=$RANDOM" | grep -c "${EP##*/}"` und `curl -s "$EP?nocache=$RANDOM" | grep -c 'id="podcast-episode-player"'` ergeben je `1`.
+- [x] I32 Diese Episode im Podcast-Formular bearbeiten und speichern: Im Bludit-Editor stehen danach weiterhin beide Tags.
+- [x] I33 Neue Testepisode `Neu & frisch` anlegen: URL ist `…/neu-frisch` (ohne `amp`); im Bludit-Editor ist ein Autor gesetzt; `$SITE/tag/podcast` listet sie; **Einstellungen → Allgemein → Systemprotokoll** bzw. Dashboard zeigt „Neuer Inhalt erstellt“. Falls die Plugins **RSS** bzw. **Sitemap** aktiv sind, steht sie in `$SITE/rss.xml` bzw. `$SITE/sitemap.xml`. *(Live: Dashboard zeigt „Neu &amp; frisch“ — Bludit-Fehler, siehe unten.)*
+- [x] I34 Testepisode im Podcast-Admin löschen: verschwindet aus Liste, Feed, `/tag/podcast` und `rss.xml`; im Systemprotokoll steht „Inhalt gelöscht“.
+- [ ] I35 *(nur falls vorhanden; Live nicht zutreffend, keine Unterseiten — lokal getestet)* Eine Episode, die Unterseite einer anderen Seite ist, im Podcast-Formular speichern: Ihre URL bleibt gleich. Eine Episode mit Unterseiten hat im ☰-Menü kein „Löschen“.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Bludit im Unterordner: Feed-Pfad noch nicht angepasst (Rest von 004; das Admin-JavaScript ist seit 042 angepasst).
 - Hinweis „Update“ in der Plugin-Liste (034).
+- Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 
 Bei Fehlern: `tail -n 20 $BLUDIT/bl-content/databases/syslog.php` und das PHP-Error-Log.
