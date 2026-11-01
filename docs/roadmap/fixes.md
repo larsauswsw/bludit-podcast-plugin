@@ -53,8 +53,9 @@ formatierte Shownotes kommen mit 016.
       `&` getestet (lokal, Bludit 3.22): Einstellungen dreimal, Episode dreimal
       gespeichert — Datenbank einfach escaped, Formulare, Liste, Website, Player
       und Feed zeigen den Originaltext; der Feed ist gültiges XML, auch mit
-      Steuerzeichen im Titel. Validator-Prüfung auf der echten Installation:
-      Installationstest H27–H30.
+      Steuerzeichen im Titel. Auf der echten Installation geprüft
+      (Installationstest H27–H30, 2026-11-01): Feed einfach escaped,
+      Validator ohne Fehler, keine mehrfach escapten Altwerte.
 - [ ] ~~Optional: einmalige Bereinigung bereits mehrfach escapter Titel/Einstellungen.~~
       Bewusst nicht automatisch (ein gewolltes `&amp;` im Text ist nicht
       unterscheidbar). Betroffene Werte zeigt der Befehl in H30; sie werden

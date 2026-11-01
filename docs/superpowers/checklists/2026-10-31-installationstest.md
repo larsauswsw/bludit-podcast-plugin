@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60.
 
 ## Vorbereitung (SSH)
 
@@ -117,18 +117,18 @@ Auf einem iPhone und möglichst einem Android-Gerät, Hochformat. Vorher die Sei
 - [x] G26 Am Desktop: Liste mit Spalten Staffel, Folge, Typ; sonst wie Bludits **Inhalte**-Liste.
 
 ## H · Sonderzeichen (001)
-- [ ] H27 **Kanaleinstellungen**: Podcast-Titel `Tipps & Tricks "Test"`, Kategorie `Society & Culture` eintragen, zweimal speichern. Die Felder zeigen danach genau diesen Text, ohne `&amp;`.
-- [ ] H28 Episode mit Titel `Tom & Jerry "Folge" <1>` anlegen, im Formular öffnen und unverändert zweimal speichern: Formular, Liste und Episodenseite zeigen den Titel unverändert, auch im Player.
-- [ ] H29 Feed am Cache vorbei: Titel und Kategorie stehen genau einmal escaped drin, ein Validator (z. B. Podbase) meldet keinen Fehler:
+- [x] H27 **Kanaleinstellungen**: Podcast-Titel `Tipps & Tricks "Test"`, Kategorie `Society & Culture` eintragen, zweimal speichern. Die Felder zeigen danach genau diesen Text, ohne `&amp;`.
+- [x] H28 Episode mit Titel `Tom & Jerry "Folge" <1>` anlegen, im Formular öffnen und unverändert zweimal speichern: Formular, Liste und Episodenseite zeigen den Titel unverändert, auch im Player.
+- [x] H29 Feed am Cache vorbei: Titel und Kategorie stehen genau einmal escaped drin, ein Validator (z. B. Podbase) meldet keinen Fehler:
   ```sh
   curl -s "$SITE/podcast.xml?nocache=$RANDOM" | grep -E "<title>|itunes:category"
   ```
-  Erwartet: `<title>Tipps &amp; Tricks &quot;Test&quot;</title>`, `<itunes:category text="Society &amp; Culture" />` — nicht `&amp;amp;`.
-- [ ] H30 Altwerte aus der Zeit vor 001 suchen (mehrfach escaped). Jede Fundstelle einmal im Formular korrigieren und speichern; danach liefert der Befehl nichts mehr:
+  Erwartet: `<title>Tipps &amp; Tricks &quot;Test&quot;</title>`, `<itunes:category text="Society &amp; Culture" />` — nicht `&amp;amp;`. *(Live geprüft, Validator ohne Fehler.)*
+- [x] H30 Altwerte aus der Zeit vor 001 suchen (mehrfach escaped). Jede Fundstelle einmal im Formular korrigieren und speichern; danach liefert der Befehl nichts mehr:
   ```sh
   grep -nE '&amp;(amp|quot|lt|gt|#0?39);' "$BLUDIT/bl-content/databases/plugins/podcast/db.php" "$BLUDIT/bl-content/databases/pages.php"
   ```
-  Danach die Testwerte aus H27/H28 wieder zurücksetzen bzw. die Testepisode löschen.
+  Danach die Testwerte aus H27/H28 wieder zurücksetzen bzw. die Testepisode löschen. *(Live: keine Altwerte gefunden.)*
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Episoden mit weiterem Tag neben `podcast` fehlen in Liste, Feed und Player (002).
