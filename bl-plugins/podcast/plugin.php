@@ -559,6 +559,8 @@ class Podcast extends Plugin {
         echo '<rss version="2.0"' . "\n";
         echo '    xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"' . "\n";
         echo '    xmlns:content="http://purl.org/rss/1.0/modules/content/"' . "\n";
+        // Podcasting-2.0-Namespace: von PSP-1 verlangt; Elemente daraus folgen mit 019
+        echo '    xmlns:podcast="https://podcastindex.org/namespace/1.0"' . "\n";
         echo '    xmlns:atom="http://www.w3.org/2005/Atom">' . "\n";
         echo '<channel>' . "\n";
         echo '  <title>' . $title . '</title>' . "\n";

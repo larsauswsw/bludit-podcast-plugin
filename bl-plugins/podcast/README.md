@@ -201,6 +201,7 @@ The feed is served at the configured feed filename, e.g. `https://example.com/po
 
 The feed includes:
 - Standard RSS 2.0 channel and item elements with `<itunes:*>` tags (episode, season, type, duration, explicit, artwork)
+- The Podcasting 2.0 namespace (`xmlns:podcast`) is declared, as the PSP-1 standard requires
 - Apple Podcasts channel tags: category and subcategory from Apple's list, `<itunes:type>`, `<itunes:explicit>true|false</itunes:explicit>`, optional `<copyright>` and the RSS `<image>` from the cover
 - `<enclosure>` tags with file size and MIME type for each episode
 - Show notes: `<content:encoded>` with the episode text as HTML (paragraphs, lists, links, emphasis; scripts, styles, embeds and attributes are removed, links only `http(s)`/`mailto`), `<description>` with the text without tags (max. 4000 characters)
