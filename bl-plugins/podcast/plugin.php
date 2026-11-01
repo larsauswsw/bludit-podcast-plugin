@@ -206,8 +206,25 @@ class Podcast extends Plugin {
         <?php
         echo $text('author', 'Autor');
         echo $text('feedLang', 'Sprache', 'z. B. de-de');
-        echo $text('cover', 'Cover-URL', 'JPG oder PNG, 1400 × 1400 px empfohlen (Apple: 1400 bis 3000 px, quadratisch).' . $ignoredUrl('cover'),
+        // Ein hochgeladenes Cover dieser Website lässt sich prüfen, eine fremde Adresse nicht
+        $coverUrl      = $this->coverUrl();
+        $coverPath     = $coverUrl !== '' ? $this->localImagePath($coverUrl) : '';
+        $coverProblems = $coverPath !== '' ? $this->coverProblems($coverPath) : [];
+        echo $text('cover', 'Cover-URL', 'Apple verlangt ein quadratisches Bild mit 1400 bis 3000 px Kantenlänge, JPG oder PNG in RGB.'
+            . $ignoredUrl('cover')
+            . ($coverProblems ? ' <strong>Das eingetragene Cover passt nicht: ' . $esc(implode(' ', $coverProblems)) . '</strong>' : ''),
             null, ' inputmode="url"');
+        $limits = $this->uploadLimits();
+        ?>
+        <div>
+            <label for="podcast-cover-file">Cover hochladen</label>
+            <input type="file" id="podcast-cover-file" accept=".jpg,.jpeg,.png"
+                   data-api-url="<?php echo $esc(DOMAIN_ADMIN . 'plugin/podcast?podcast_api=1') ?>"
+                   data-max-file="<?php echo (int) $limits['file'] ?>"<?php echo $limits['enabled'] ? '' : ' disabled' ?>>
+            <span class="tip" id="podcast-cover-status" role="status">Wird beim Hochladen geprüft und in die Cover-URL übernommen; danach „Speichern“.</span>
+            <img id="podcast-cover-preview" alt="Vorschau des Covers"<?php echo $coverUrl !== '' ? ' src="' . $esc($coverUrl) . '"' : ' hidden' ?>>
+        </div>
+        <?php
         echo $text('copyright', 'Copyright', 'Optional, z. B. © 2026 Max Mustermann');
 
         echo $group('Apple Podcasts &amp; Verzeichnisse');
@@ -299,6 +316,9 @@ class Podcast extends Plugin {
         echo $group('Uploads');
         echo $text('maxUploadMB', 'Max. Upload-Größe (MB)', 'Die PHP-Limits des Servers gelten zusätzlich.',
             (int) ($this->getValue('maxUploadMB') ?: 512), ' inputmode="numeric" pattern="[0-9]*"');
+        ?>
+        <script src="<?php echo $esc($this->assetUrl('js/podcast-admin.js')) ?>"></script>
+        <?php
         return ob_get_clean();
     }
 
@@ -909,6 +929,7 @@ class Podcast extends Plugin {
               <label class="custom-file-label" for="pe-image-file" data-browse="Durchsuchen"
                      data-placeholder="Bild auswählen …">Bild auswählen …</label>
             </div>
+            <img id="pe-image-preview" class="mt-2 border rounded" alt="Vorschau des Episodenbilds" hidden>
           </div>
 
           <div class="form-group">
@@ -989,6 +1010,8 @@ class Podcast extends Plugin {
                     return $this->handleSaveEpisode($_POST, $_FILES);
                 case 'delete_episode':
                     return $this->handleDeleteEpisode($this->postString($_POST, 'episode_key'));
+                case 'upload_cover':
+                    return $this->handleCoverUpload($_FILES);
                 default:
                     return ['error' => 'Unbekannte Aktion'];
             }
@@ -1106,7 +1129,8 @@ class Podcast extends Plugin {
         }
 
         // Episodenbild
-        $imageUrl = '';
+        $imageUrl      = '';
+        $imageProblems = [];
         if (!empty($files['image_file'])) {
             $imgErr = $files['image_file']['error'] ?? UPLOAD_ERR_NO_FILE;
             if (!is_int($imgErr)) {
@@ -1114,6 +1138,9 @@ class Podcast extends Plugin {
             }
             if ($imgErr === UPLOAD_ERR_OK) {
                 $imageUrl = $this->handleUpload('image_file', 'image');
+                // Episodenbilder nur mit Warnung: Apple zeigt dann das Kanal-Cover
+                $imagePath = $this->localImagePath($imageUrl);
+                $imageProblems = $imagePath !== '' ? $this->coverProblems($imagePath) : [];
             } elseif ($imgErr !== UPLOAD_ERR_NO_FILE) {
                 return ['error' => $this->uploadErrorMessage($imgErr, 'Bild')];
             }
@@ -1223,6 +1250,10 @@ class Podcast extends Plugin {
             return ['error' => 'Episode konnte nicht gespeichert werden. Details stehen im Bludit-Log.'];
         }
         $result = ['success' => true, 'key' => $newKey];
+        if ($imageProblems) {
+            $warning = trim($warning . ' Episodenbild gespeichert, aber es passt nicht zu Apples Vorgaben: '
+                . implode(' ', $imageProblems) . ' Apple zeigt dann womöglich nur das Kanal-Cover.');
+        }
         if ($warning !== '') {
             $result['warning'] = $warning;
         }
@@ -1282,6 +1313,84 @@ class Podcast extends Plugin {
             'server'  => $perFile < $plugin,
             'enabled' => (bool) ini_get('file_uploads'),
         ];
+    }
+
+    // ── Cover-Upload und Bildprüfung (Roadmap 022)
+
+    /** Apple: quadratisch, Kantenlänge in Pixeln. */
+    private const COVER_MIN_PX = 1400;
+    private const COVER_MAX_PX = 3000;
+
+    /**
+     * Lädt ein Kanal-Cover hoch (nur Admins, wie die Kanaleinstellungen). Es
+     * wird vor dem Speichern geprüft; ein Bild, das Apple ablehnen würde, wird
+     * nicht gespeichert. Liefert die URL für das Feld „Cover-URL“.
+     */
+    private function handleCoverUpload(array $files) {
+        if (!checkRole(['admin'], false)) {
+            return ['error' => 'Das Cover dürfen nur Admins ändern.'];
+        }
+        $error = $files['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE;
+        if (!is_int($error)) {
+            return ['error' => 'Ungültiger Bild-Upload'];
+        }
+        if ($error === UPLOAD_ERR_NO_FILE) {
+            return ['error' => 'Bitte ein Bild auswählen.'];
+        }
+        if ($error !== UPLOAD_ERR_OK) {
+            return ['error' => $this->uploadErrorMessage($error, 'Bild')];
+        }
+        $this->validateUpload($files['cover_file'], 'image');
+        $problems = $this->coverProblems($files['cover_file']['tmp_name']);
+        if ($problems) {
+            return ['error' => 'Das Bild eignet sich nicht als Cover für Apple Podcasts: ' . implode(' ', $problems)
+                . ' Verlangt: quadratisch, ' . self::COVER_MIN_PX . ' bis ' . self::COVER_MAX_PX . ' px, JPG oder PNG in RGB.'];
+        }
+        $url = $this->handleUpload('cover_file', 'image');
+        if ($url === '') {
+            return ['error' => 'Upload fehlgeschlagen.'];
+        }
+        return ['success' => true, 'url' => $url];
+    }
+
+    /** Abweichungen eines Bildes von Apples Cover-Vorgaben als Sätze; leer = passt. */
+    private function coverProblems($path) {
+        $info = is_string($path) && is_file($path) ? @getimagesize($path) : false;
+        if (!$info) {
+            return ['Die Bildgröße ließ sich nicht lesen.'];
+        }
+        [$width, $height] = $info;
+        $size     = $width . ' × ' . $height . ' px';
+        $problems = [];
+        if ($width !== $height) {
+            $problems[] = 'Es ist nicht quadratisch (' . $size . ').';
+        } elseif ($width < self::COVER_MIN_PX) {
+            $problems[] = 'Es ist zu klein (' . $size . ').';
+        } elseif ($width > self::COVER_MAX_PX) {
+            $problems[] = 'Es ist zu groß (' . $size . ').';
+        }
+        if ($info[2] === IMAGETYPE_JPEG && ($info['channels'] ?? 3) === 4) {
+            $problems[] = 'Es ist im CMYK-Farbraum gespeichert, Apple verlangt RGB.';
+        }
+        return $problems;
+    }
+
+    /** Pfad eines hochgeladenen Bildes dieser Website anhand seiner URL, sonst ''. */
+    private function localImagePath($url) {
+        $prefix = DOMAIN_UPLOADS . 'podcast/images/';
+        if (!is_string($url) || strpos($url, $prefix) !== 0) {
+            return '';
+        }
+        $name = substr($url, strlen($prefix));
+        if (preg_match('/^[a-z0-9_-]+\.(?:jpe?g|png)$/D', $name) !== 1) {
+            return '';
+        }
+        $dir  = realpath(PATH_UPLOADS . 'podcast' . DS . 'images');
+        $file = realpath(PATH_UPLOADS . 'podcast' . DS . 'images' . DS . $name);
+        if ($dir === false || $file === false || strpos($file, $dir . DS) !== 0 || !is_file($file)) {
+            return '';
+        }
+        return $file;
     }
 
     /**

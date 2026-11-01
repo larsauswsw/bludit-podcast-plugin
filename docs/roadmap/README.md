@@ -86,7 +86,7 @@ dokumentiert.
 | 019 | Podcasting-2.0-Namespace (`podcast:*`) | niedrig | M | [#20](https://github.com/larsauswsw/bludit-podcast-plugin/issues/20) |
 | 020 | Upload-Fortschritt & Chunked Upload für große Audiodateien | mittel | M | [#21](https://github.com/larsauswsw/bludit-podcast-plugin/issues/21) |
 | 021 | Dauer & Dateigröße automatisch aus der Audiodatei ermitteln | mittel | M | [#22](https://github.com/larsauswsw/bludit-podcast-plugin/issues/22) |
-| 022 | Kanal-Cover per Upload & Bildvalidierung | hoch | S | [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23) |
+| 022 | Kanal-Cover per Upload & Bildvalidierung | hoch | S | [#23](https://github.com/larsauswsw/bludit-podcast-plugin/issues/23) ✅ |
 | 023 | Nächste Episodennummer automatisch vorschlagen | niedrig | S | [#24](https://github.com/larsauswsw/bludit-podcast-plugin/issues/24) |
 | 024 | Episodenliste: Status, Suche, Filter, Warnungen | niedrig | M | [#25](https://github.com/larsauswsw/bludit-podcast-plugin/issues/25) |
 | 025 | Medienverwaltung im Admin: Übersicht, aufräumen, wiederverwenden | mittel | M | [#26](https://github.com/larsauswsw/bludit-podcast-plugin/issues/26) |

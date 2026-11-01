@@ -120,7 +120,8 @@ The settings are grouped like Bludit's own settings pages.
 | | **Beschreibung** | Short summary of your podcast | `A show about...` |
 | | **Autor** | Podcast author name | `Jane Doe` |
 | | **Sprache** | RSS language code | `en-us`, `de-de` |
-| | **Cover-URL** | URL of your podcast artwork (1400×1400 px JPG/PNG recommended; Apple: 1400–3000 px, square). Also used as the RSS `<image>` | `https://example.com/cover.jpg` |
+| | **Cover-URL** | URL of your podcast artwork; Apple requires a square JPG/PNG in RGB with 1400–3000 px. Also used as the RSS `<image>`. A cover uploaded to this site is checked and the form names any problem | `https://example.com/cover.jpg` |
+| | **Cover hochladen** | Upload a cover (admins only). It is checked before it is stored — not square, too small/large or CMYK is refused with a message — and entered as *Cover-URL* with a preview; then click **Speichern** | – |
 | | **Copyright** | Optional copyright notice (`<copyright>`) | `© 2026 Jane Doe` |
 | **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category with optional subcategory, chosen from Apple's list (shown with Apple's German names plus the English name; the feed contains the English names, subcategory nested). A previous free-text entry is kept if it matches an Apple category | `Kinder und Familie → Kindererziehung (Parenting)` |
 | | **Art des Podcasts** | `<itunes:type>`: episodic (newest first) or serial (in order, oldest first) | Episodisch |
@@ -161,7 +162,7 @@ Go to **Admin → Podcast** (microphone icon in the sidebar). The list shows all
 | **Typ** | `full`, `trailer` or `bonus` |
 | **Explicit** | Explicit flag for this episode |
 | **Dauer** | `HH:MM:SS`, `MM:SS` or total seconds |
-| **Episodenbild** | External URL or file upload (JPG, PNG); the player falls back to the channel cover |
+| **Episodenbild** | External URL or file upload (JPG, PNG) with a preview; the player falls back to the channel cover. An uploaded image that does not meet Apple's cover rules is saved with a warning |
 | **Audio** | External URL or file upload (MP3, M4A, OGG, WAV) — required. Apple Podcasts does not play WAV or OGG; the form shows a hint. For an external URL the plugin asks the server for the file size when saving (see below) |
 | **Veröffentlichungsdatum** | Publication date and time |
 | **Status** | *Veröffentlicht* (published) or *Entwurf* (draft) |

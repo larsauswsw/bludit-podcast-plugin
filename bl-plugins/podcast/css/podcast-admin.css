@@ -48,3 +48,23 @@
 .plugin-form #podcast-feedAddress {
     background-color: var(--bg-main, #f8f9fa);
 }
+
+/* Vorschau von Kanal-Cover und Episodenbild (Roadmap 022): quadratisch, klein */
+.plugin-form #podcast-cover-preview,
+#pe-image-preview {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+}
+
+.plugin-form #podcast-cover-preview {
+    display: block;
+    margin-top: .5rem;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: var(--radius-sm, .25rem);
+}
+
+/* Fehlermeldung im Hinweis unter „Cover hochladen“ (.plugin-form färbt Hinweise grau mit !important) */
+.plugin-form span.tip.podcast-tip-error {
+    color: #dc3545 !important;
+}
