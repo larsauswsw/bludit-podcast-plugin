@@ -283,6 +283,12 @@ darunter, blenden Nebenspalten auf kleinen Bildschirmen aus
 - [x] Auf einem echten iPhone geprüft (Installationstest G21–G26,
       2026-11-01; Datumsfeld mit #59 nachgebessert).
 
+Nachtrag 2026-11-01: „Speichern“/„Abbrechen“ im Episodenformular standen
+unten, in Bludit (Einstellungen, Benutzer, Kategorien, Inhaltseditor) und in den
+Kanaleinstellungen oben rechts neben dem Titel. Jetzt auch im Episodenformular
+oben rechts (`float-right`, `btn-sm` wie `views/settings.php`), „Wird
+gespeichert …“ daneben, Fehlermeldung direkt unter der Titelzeile.
+
 **Betroffene Dateien**
 
 - `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/js/podcast-admin.js`,

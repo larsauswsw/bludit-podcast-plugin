@@ -83,7 +83,9 @@ dort um passende Schritte ergänzen.
   Auswahlfelder `custom-select`, Dateifelder `custom-file`, Radios/Checkboxen
   `form-check`, Listen wie `views/content.php` (Nebenspalten
   `d-none d-md-table-cell`, Aktionen im ☰-Menü `actionsDropdown`), Seitenkopf
-  wie `Bootstrap::pageTitle()`. `form-control` nur für Text- und Zahlenfelder
+  wie `Bootstrap::pageTitle()`, Formular-Aktionen („Speichern“, „Abbrechen“)
+  oben rechts neben dem Titel wie `views/settings.php` (`float-right`,
+  `btn-sm`), nie am Seitenende. `form-control` nur für Text- und Zahlenfelder
   (Datumsfeld mit Ausgleich im CSS): booty vergrößert dort den Innenabstand
   bei fester Höhe, Auswahl- und Dateifelder werden sonst abgeschnitten.
   Plugin-Einstellungen (`form()`) ohne eigene Klassen, gestylt über
