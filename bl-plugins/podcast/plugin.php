@@ -1498,7 +1498,10 @@ class Podcast extends Plugin {
             throw new RuntimeException('Upload nicht möglich: Die PHP-Erweiterung „fileinfo“ fehlt auf dem Server.');
         }
         $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-        $isImage = $type !== 'image' || in_array(@getimagesize($file['tmp_name'])[2] ?? null, [IMAGETYPE_JPEG, IMAGETYPE_PNG], true);
+        // Bilder zusätzlich per getimagesize(): liefert false, wenn es kein lesbares Bild ist
+        $imageInfo = $type === 'image' ? @getimagesize($file['tmp_name']) : false;
+        $isImage   = $type !== 'image'
+            || (is_array($imageInfo) && in_array($imageInfo[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG], true));
         if (!in_array($mime, $allowed[$ext], true) || !$isImage) {
             Log::set(__METHOD__ . LOG_SEP . 'Rejected upload, extension ' . $ext . ', detected ' . $mime);
             throw new RuntimeException($label . '-Datei passt inhaltlich nicht zur Endung .' . $ext . '.');

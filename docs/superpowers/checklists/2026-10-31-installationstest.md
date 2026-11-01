@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79), Teil Q nach #81, Teil R nach #82 (R65/R66 nach #84), Teil S nach #86.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79), Teil Q nach #81, Teil R nach #82 (R65/R66 nach #84), Teil S nach #86, Teil T nach #89.
 
 ## Vorbereitung (SSH)
 
@@ -223,11 +223,11 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] S67 **Admin → Podcast → Neue Episode** und eine Episode bearbeiten: „Speichern“ und „Abbrechen“ stehen oben rechts neben dem Formulartitel (klein, wie in den Kanaleinstellungen und Bludits Einstellungen), unten am Formular keine Buttons mehr. Titel leeren und „Speichern“ → rote Meldung direkt unter der Titelzeile. „Abbrechen“ führt zurück zur Liste. Auf dem Handy ohne seitliches Scrollen.
 
 ## T · Cover-Upload und Bildprüfung (022)
-- [ ] T68 **Kanaleinstellungen → Cover hochladen**: ein Bild, das nicht quadratisch ist (z. B. ein Handyfoto), wählen → rote Meldung „Das Bild eignet sich nicht als Cover … Es ist nicht quadratisch (… px)“, die Cover-URL bleibt unverändert. Dann ein quadratisches JPG/PNG mit 1400–3000 px wählen → „Hochgeladen und geprüft …“, die Cover-URL zeigt die neue Datei, darunter die Vorschau. **Speichern** → im Feed steht die neue Adresse:
+- [x] T68 **Kanaleinstellungen → Cover hochladen**: ein Bild, das nicht quadratisch ist (z. B. ein Handyfoto), wählen → rote Meldung „Das Bild eignet sich nicht als Cover … Es ist nicht quadratisch (… px)“, die Cover-URL bleibt unverändert. Dann ein quadratisches JPG/PNG mit 1400–3000 px wählen → „Hochgeladen und geprüft …“, die Cover-URL zeigt die neue Datei, darunter die Vorschau. **Speichern** → im Feed steht die neue Adresse:
   ```sh
   curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -m1 "itunes:image"
   ```
-- [ ] T69 **Episode bearbeiten → Episodenbild**: Bei einer `https://`-Adresse oder einer gewählten Datei erscheint eine kleine Vorschau. Ein zu kleines Bild (z. B. 800 × 800 px) hochladen und speichern → Hinweis über der Liste „Episodenbild gespeichert, aber es passt nicht zu Apples Vorgaben …“; die Episode ist trotzdem gespeichert.
+- [x] T69 **Episode bearbeiten → Episodenbild**: Bei einer `https://`-Adresse oder einer gewählten Datei erscheint eine kleine Vorschau. Ein zu kleines Bild (z. B. 800 × 800 px) hochladen und speichern → Hinweis über der Liste „Episodenbild gespeichert, aber es passt nicht zu Apples Vorgaben …“; die Episode ist trotzdem gespeichert.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.

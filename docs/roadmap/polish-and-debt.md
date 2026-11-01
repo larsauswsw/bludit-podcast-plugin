@@ -79,7 +79,7 @@ Status: done · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php`, `pod
 
 ## 036 · Automatisierte Tests & CI
 
-Status: planned · Priorität: hoch · Aufwand: M · Bereich: neu: `.github/workflows/`, `tests/` · Issue: [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37)
+Status: in-progress · Priorität: hoch · Aufwand: M · Bereich: neu: `.github/workflows/`, `tests/` · Issue: [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37)
 
 **Beschreibung**
 
@@ -88,18 +88,26 @@ Deprecations) wären mit einfachen Checks früh aufgefallen.
 
 **Akzeptanzkriterien**
 
-- [ ] GitHub Action: `php -l` für PHP 8.0–8.4, PHPStan (Level 5) mit Stubs für
-      die Bludit-Klassen.
-- [ ] Unit-Tests (PHPUnit) für reine Helfer: Feed-Escaping, Tag-Erkennung,
-      Dauer-Parsing, Dateinamen-Bereinigung, MIME-Zuordnung.
+- [x] GitHub Action: `php -l` für PHP 8.0–8.4, PHPStan (Level 5) mit Stubs für
+      die Bludit-Klassen. *(Statt Stubs liest PHPStan Bludit 3.22 selbst,
+      `scanDirectories`; nur Laufzeit-Konstanten in `tests/phpstan-constants.php`.)*
+- [x] Unit-Tests (PHPUnit) für reine Helfer: Feed-Escaping, Tag-Erkennung,
+      Dauer-Parsing, Dateinamen-Bereinigung, MIME-Zuordnung. *(Dazu Kategorien,
+      Shownotes, CDATA, Feed-Adresse, GUID, Datum, Abo-Links, Cover-Prüfung.)*
 - [ ] Integrationstest: Bludit 3.22 im Container installieren, Plugin aktivieren,
       Episode anlegen, Feed abrufen und gegen das RSS-/iTunes-Schema prüfen.
-- [ ] ESLint für `podcast-admin.js`.
-- [ ] Sicherheitsprüfung in CI: Psalm-Taint-Analyse (`--taint-analysis`) für
-      `plugin.php`, Secret-Scan; ein Fund lässt den Build fehlschlagen.
+- [x] ESLint für `podcast-admin.js` (mit Regel gegen `innerHTML` & Co., CLAUDE.md Regel 4).
+- [x] Sicherheitsprüfung in CI: ~~Psalm-Taint-Analyse (`--taint-analysis`) für
+      `plugin.php`~~, Secret-Scan; ein Fund lässt den Build fehlschlagen.
+      *(Psalm-Taint vom Inhaber am 2026-11-01 verworfen: viele Fehlalarme bei
+      Bludit-Code; die gezielten Sicherheitstests decken die Regeln ab.
+      Secret-Scan: gitleaks über die ganze Historie.)*
 - [ ] Sicherheits-Tests für die Regeln aus `CLAUDE.md`: manipulierte
       Seitenschlüssel, fehlender CSRF-Token, falsche Rolle, Upload mit falschem
       MIME-Typ, Array-Parameter, SSRF-Ziele (`127.0.0.1`, `169.254.169.254`).
+      *(Teil 1 als Unit-Tests: SSRF-Ziele und -Weiterleitungen, MIME/Endung,
+      Array-Werte, Pfade außerhalb der Upload-Ordner, Rolle beim Cover-Upload.
+      Teil 2 über HTTP gegen Bludit: CSRF, Rollen, Seitenschlüssel.)*
 
 **Betroffene Dateien**
 

@@ -1,0 +1,13 @@
+{
+  "name": "bludit-podcast-plugin-dev",
+  "private": true,
+  "description": "Entwicklungswerkzeuge für das Podcast-Plugin (ESLint) – nicht Teil des Plugin-Pakets",
+  "scripts": {
+    "lint:js": "eslint bl-plugins/podcast/js"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.14.0",
+    "globals": "17.14.0"
+  }
+}
