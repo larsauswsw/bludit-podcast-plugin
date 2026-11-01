@@ -49,20 +49,18 @@ Status: idea · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php`, `pod
 - `renderEpisodesPage()` (`plugin.php:488–538`) wird nirgends aufgerufen.
 - `beforeAdminLoad()` (`plugin.php:263–265`) ist leer, wird aber trotzdem als
   Hook registriert; `uninstall()` ruft nur `parent::uninstall()` auf.
-- `form()` verlinkt auf `admin/podcast-episodes` (`plugin.php:199`) — diese Route
-  gibt es nicht, richtig ist `admin/plugin/podcast`.
+- ~~`form()` verlinkt auf `admin/podcast-episodes`~~ — mit 042 behoben.
 - `podcast-admin.js:138–139`: `d.audioUrl ? 'url' : 'url'` — beide Zweige gleich.
 - `podcast.xml` (0 Byte) liegt in der Repo-Wurzel.
 - `.claude/settings.local.json` ist eingecheckt (lokale Einstellungen).
-- Bootstrap-3-Klassen (`radio-inline`, `btn-xs`, `btn-default`, `label-*`) im
-  Bootstrap-4-Admin (siehe auch 024).
+- ~~Bootstrap-3-Klassen im Bootstrap-4-Admin~~ — mit 042 behoben.
 
 **Akzeptanzkriterien**
 
-- [ ] Toter Code und leere Hooks entfernt, Link in `form()` korrigiert.
+- [ ] Toter Code und leere Hooks entfernt (Link in `form()` mit 042 korrigiert).
 - [ ] `podcast.xml` gelöscht, `.claude/settings.local.json` aus dem Repo
       entfernt und in `.gitignore` aufgenommen.
-- [ ] Formular nutzt Bootstrap-4-Markup (`form-check form-check-inline`).
+- [x] Formular nutzt Bootstrap-4-Markup (`form-check form-check-inline`, mit 042).
 
 **Betroffene Dateien**
 

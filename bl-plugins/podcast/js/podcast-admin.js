@@ -29,6 +29,8 @@
     var peImageFile = document.getElementById('pe-image-file');
     var peAudioUrl  = document.getElementById('pe-audio-url');
     var peAudioFile = document.getElementById('pe-audio-file');
+    var peImageFileWrap = document.getElementById('pe-image-file-wrap');
+    var peAudioFileWrap = document.getElementById('pe-audio-file-wrap');
 
     // Nur auf der Podcast-Seite aktiv
     if (!list) return;
@@ -36,15 +38,25 @@
     // ── helpers ───────────────────────────────────────────────────────
 
     function showForm(title) {
-        formTitle.textContent  = title;
-        list.style.display     = 'none';
-        form.style.display     = 'block';
-        errorBox.style.display = 'none';
+        formTitle.textContent = title;
+        list.hidden     = true;
+        form.hidden     = false;
+        errorBox.hidden = true;
+        window.scrollTo(0, 0);
     }
 
     function showList() {
-        form.style.display = 'none';
-        list.style.display = 'block';
+        form.hidden = true;
+        list.hidden = false;
+    }
+
+    // Zeigt im Upload-Feld den gewählten Dateinamen (nur als Text) oder den Platzhalter
+    function updateFileLabel(input) {
+        var label = document.querySelector('label[for="' + input.id + '"]');
+        if (!label) return;
+        label.textContent = input.files && input.files[0]
+            ? input.files[0].name
+            : (label.dataset.placeholder || '');
     }
 
     function clearForm() {
@@ -62,6 +74,8 @@
         peAudioUrl.value = '';
         peImageFile.value = '';
         peAudioFile.value = '';
+        updateFileLabel(peImageFile);
+        updateFileLabel(peAudioFile);
         setMode('pe-audio-mode', 'url');
         setMode('pe-image-mode', 'url');
     }
@@ -77,17 +91,17 @@
         if (!selected) return;
         var isUrl = selected.value === 'url';
         if (radioName === 'pe-audio-mode') {
-            peAudioUrl.style.display  = isUrl ? 'block' : 'none';
-            peAudioFile.style.display = isUrl ? 'none'  : 'block';
+            peAudioUrl.hidden      = !isUrl;
+            peAudioFileWrap.hidden = isUrl;
         } else {
-            peImageUrl.style.display  = isUrl ? 'block' : 'none';
-            peImageFile.style.display = isUrl ? 'none'  : 'block';
+            peImageUrl.hidden      = !isUrl;
+            peImageFileWrap.hidden = isUrl;
         }
     }
 
     function showError(msg) {
-        errorBox.textContent   = msg;
-        errorBox.style.display = 'block';
+        errorBox.textContent = msg;
+        errorBox.hidden      = false;
     }
 
     function formatMB(bytes) {
@@ -116,8 +130,8 @@
     }
 
     function setSaving(on) {
-        saveBtn.disabled     = on;
-        saving.style.display = on ? 'inline' : 'none';
+        saveBtn.disabled = on;
+        saving.hidden    = !on;
     }
 
     // ── radio toggle listeners ────────────────────────────────────────
@@ -129,9 +143,16 @@
             });
         });
 
+    [peImageFile, peAudioFile].forEach(function (input) {
+        input.addEventListener('change', function () {
+            updateFileLabel(input);
+        });
+    });
+
     // ── new episode ───────────────────────────────────────────────────
 
-    newBtn.addEventListener('click', function () {
+    newBtn.addEventListener('click', function (e) {
+        e.preventDefault();
         clearForm();
         showForm('Neue Episode');
     });
@@ -142,10 +163,17 @@
 
     // ── edit ──────────────────────────────────────────────────────────
 
+    // Daten der Episode stehen an der Tabellenzeile (Titel-Link und Menüeintrag)
+    function episodeRow(btn) {
+        return btn.closest('.podcast-episode-row');
+    }
+
     document.addEventListener('click', function (e) {
         var btn = e.target.closest('.podcast-edit-btn');
-        if (!btn) return;
-        var d = btn.dataset;
+        var row = btn && episodeRow(btn);
+        if (!row) return;
+        e.preventDefault();
+        var d = row.dataset;
         clearForm();
         peKey.value      = d.key      || '';
         peTitle.value    = d.title    || '';
@@ -169,13 +197,17 @@
 
     document.addEventListener('click', function (e) {
         var btn = e.target.closest('.podcast-delete-btn');
-        if (!btn) return;
-        if (!confirm('Episode "' + btn.dataset.title + '" wirklich löschen?')) return;
+        var row = btn && episodeRow(btn);
+        if (!row) return;
+        e.preventDefault();
+        var title = row.dataset.title;
+        var question = title ? 'Episode „' + title + '“ wirklich löschen?' : 'Episode ohne Titel wirklich löschen?';
+        if (!confirm(question)) return;
 
         var body = new URLSearchParams({
             tokenCSRF:          (typeof tokenCSRF !== 'undefined' ? tokenCSRF : ''),
             podcast_api_action: 'delete_episode',
-            episode_key:        btn.dataset.key
+            episode_key:        row.dataset.key
         });
 
         fetch(PODCAST_API_URL, { method: 'POST', body: body })
@@ -248,7 +280,7 @@
         }
 
         setSaving(true);
-        errorBox.style.display = 'none';
+        errorBox.hidden = true;
 
         fetch(PODCAST_API_URL, { method: 'POST', body: fd })
             .then(function (r) { return r.json(); })

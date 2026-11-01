@@ -108,19 +108,19 @@ Status: idea · Priorität: niedrig · Aufwand: M · Bereich: `plugin.php` (`ren
 
 **Beschreibung**
 
-Die Liste zeigt alle Episoden ohne Pagination. Status-Badges nutzen
-Bootstrap-3-Klassen (`label label-success`, `btn-xs`, `btn-default`), das
-Admin-Theme „booty“ nutzt Bootstrap 4 — die Badges erscheinen ungestylt. Es gibt
-keinen Hinweis, ob eine Episode im Feed landet (z. B. fehlende Audio-URL,
-`scheduled`, fehlender Podcast-Tag).
+Die Liste zeigt alle Episoden ohne Pagination. Es gibt keinen Hinweis, ob eine
+Episode im Feed landet (z. B. fehlende Audio-URL, `scheduled`, fehlender
+Podcast-Tag). Aufbau im Bludit-Stil, Bootstrap-4-Badges und die Links
+„Anschauen“/„Im Bludit-Editor öffnen“ kamen mit 042.
 
 **Akzeptanzkriterien**
 
-- [ ] Bootstrap-4-Klassen (`badge badge-success`, `btn-sm`, `btn-secondary`).
-- [ ] Status „veröffentlicht / geplant / Entwurf“ korrekt (siehe 007).
+- [x] Bootstrap-4-Klassen (mit 042).
+- [ ] Status „veröffentlicht / geplant / Entwurf“ korrekt (siehe 007; die Liste
+      zeigt „geplant“ seit 042, das Formular kennt den Typ noch nicht).
 - [ ] Spalte bzw. Icon „im Feed“ mit Tooltip, warum nicht.
 - [ ] Suche nach Titel, Filter nach Staffel/Status, Pagination ab ~25 Einträgen.
-- [ ] Links „Seite ansehen“ und „Im Bludit-Editor öffnen“.
+- [x] Links „Seite ansehen“ und „Im Bludit-Editor öffnen“ (mit 042).
 
 **Betroffene Dateien**
 
@@ -221,3 +221,59 @@ Beteiligten wäre ein Workflow sinnvoll: `author` legt Entwürfe an, `editor`/
 **Betroffene Dateien**
 
 - `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/js/podcast-admin.js`
+
+---
+
+## 042 · Admin-Oberfläche im Bludit-Look und mobil nutzbar
+
+Status: done · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`adminView()`, `form()`, `renderEpisodeSection()`, `renderEpisodeForm()`), `podcast-admin.js`, `css/podcast-admin.css` · Issue: [#57](https://github.com/larsauswsw/bludit-podcast-plugin/issues/57)
+
+**Beschreibung**
+
+Das Plugin soll sich in den Bludit-Admin einfügen statt wie ein Fremdkörper
+auszusehen, und auf dem Smartphone bedienbar sein. Beim Test auf einem iPhone
+(2026-11-01) waren die Auswahlfelder (Typ, Explicit, Status) abgeschnitten, der
+„Datei auswählen“-Knopf ragte aus seinem Feld, das Datum saß zu tief, und die
+Episodenliste lief rechts aus dem Bildschirm.
+
+Ursache (geprüft gegen Bludit 3.22): Das Admin-Theme „booty“ setzt für
+`.form-control` größere Innenabstände und einen 2-px-Rahmen, lässt aber die feste
+Bootstrap-4-Höhe stehen. Für Text reicht das, Auswahl-, Datei- und Datumsfelder
+werden abgeschnitten. Bludit selbst nutzt dafür `custom-select` und
+`custom-file`, in Plugin-Einstellungen schlichte Felder ohne Klassen (gestylt
+über `.plugin-form`). Listen (`views/content.php`) zeigen Titel mit Datum
+darunter, blenden Nebenspalten auf kleinen Bildschirmen aus
+(`d-none d-md-table-cell`) und legen Aktionen in ein ☰-Menü
+(`actionsDropdown`). Dazu kamen Bootstrap-3-Klassen (`label-*`, `btn-xs`,
+`btn-default`, `radio-inline`), die im Bootstrap-4-Admin ungestylt bleiben.
+
+**Akzeptanzkriterien**
+
+- [x] Seitenkopf wie `Bootstrap::pageTitle()`; „Neue Episode“ und
+      „Kanaleinstellungen“ als Links mit Icon wie auf Bludits Benutzerseite,
+      kein eigener `container-fluid`.
+- [x] Episodenliste nach dem Muster von Bludits Inhaltsliste: Titel als Link
+      zum Bearbeiten, Datum (mobil auch Staffel/Folge) darunter, Nebenspalten
+      erst ab mittlerer Breite, „Kein Titel“ bei leerem Titel, Status als
+      Bootstrap-4-Badge (`Entwurf`, `geplant`), Aktionen im ☰-Menü
+      (Anschauen, Bearbeiten, Im Bludit-Editor öffnen, Löschen).
+- [x] Episodenformular: Auswahlfelder `custom-select`, Datei-Uploads
+      `custom-file` mit Dateinamen-Anzeige, Radio-Buttons
+      `form-check form-check-inline`, Hinweise als `form-text`, Buttons
+      `btn-primary`/`btn-secondary`; Zahlenfelder auf dem Handy paarweise.
+- [x] Kanaleinstellungen (`form()`) im Stil der Bludit-Plugins: Felder ohne
+      eigene Klassen, Hinweise als `span.tip`, Einleitung als
+      `alert alert-primary`, Link zur Episodenverwaltung korrigiert
+      (`admin/plugin/podcast`).
+- [x] Keine Inline-Styles mehr für Layout; Ein-/Ausblenden per `hidden`. Eigenes
+      CSS nur, wo Bludit keine Lösung hat (Datumsfeld, lange Dateinamen), in
+      `css/podcast-admin.css`; Skript und CSS über `domainPath()` mit
+      Cache-Version eingebunden.
+- [ ] Auf einem echten iPhone/Android-Gerät geprüft (Installationstest,
+      Abschnitt „Mobil“).
+
+**Betroffene Dateien**
+
+- `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/js/podcast-admin.js`,
+  `bl-plugins/podcast/css/podcast-admin.css` (neu),
+  `docs/superpowers/checklists/2026-10-31-installationstest.md`
