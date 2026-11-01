@@ -17,7 +17,11 @@ bindet den Podlove Web Player ein.
 - Noch kein veröffentlichtes Release — die Version bleibt bis dahin `1.0.0`.
 - Projektsprache Deutsch (Doku, Roadmap, UI-Texte); Commit-Messages Englisch
   wie in der bisherigen Historie.
-- Das Repository ist **öffentlich**.
+- Das Repository ist **öffentlich**, bis zum Release 1.0; danach privat.
+  Öffentlich ist dann nur `larsauswsw/bludit-plugin-podcast`: README und
+  Screenshots aus `public/`, nach der Lizenzentscheidung auch der Plugin-Ordner
+  und Release-ZIPs (Roadmap 038). Dorthin nie CLAUDE.md, Doku, Roadmap, Skripte
+  oder Server-Details des Nutzers.
 
 ## Roadmap & Review
 

@@ -79,6 +79,7 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
 - **010 CSRF** — `plugin.php:229–251`; `bl-kernel/boot/site.php` lädt
   `99.security.php` nicht. **Behoben** mit 010 (#11): API im Admin-Bereich.
 - **034 Metadaten/Deprecations** — `metadata.json`, `plugin.php:15–18`.
+  **Behoben** mit 034 (#35).
 
 ### Mittel
 

@@ -153,8 +153,10 @@ Nach dem Update eine offene Seite **Admin → Podcast** neu laden (neue API-Adre
 
 Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blog/`, Rolle „Autor“ (bekommt „Keine Berechtigung.“), abgelaufene Sitzung (Hinweis statt „Netzwerkfehler“).
 
+## K · Plugin-Metadaten (034)
+- [ ] K40 **Einstellungen → Plugins**: Beim Podcast-Plugin kein Hinweis „Update“, Autor `larsauswsw`. In den Kanaleinstellungen kein gelber Kasten „möglicherweise nicht unterstützt“.
+
 ## Bekannte offene Punkte (keine Testfehler)
-- Hinweis „Update“ in der Plugin-Liste (034).
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 
 Bei Fehlern: `tail -n 20 $BLUDIT/bl-content/databases/syslog.php` und das PHP-Error-Log.

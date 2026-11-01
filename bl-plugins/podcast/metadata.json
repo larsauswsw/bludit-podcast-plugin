@@ -1,7 +1,10 @@
 {
-    "author": "Plugin Author",
+    "author": "larsauswsw",
+    "email": "",
+    "website": "https://github.com/larsauswsw/bludit-plugin-podcast",
     "version": "1.0.0",
-    "description": "Podcast Plugin: Episodenverwaltung, iTunes-Feed, Datei-Upload",
-    "compatible": "3.0",
+    "releaseDate": "",
+    "license": "",
+    "compatible": "3.19,3.20,3.21,3.22",
     "notes": ""
 }

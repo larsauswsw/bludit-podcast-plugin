@@ -17,11 +17,9 @@ class Podcast extends Plugin {
     }
 
     public function init() {
-        $this->name        = 'Podcast';
-        $this->description = 'Podcast Plugin: Episodenverwaltung, iTunes-Feed, Datei-Upload';
-        $this->author      = 'Lars Miesner';
-        $this->version     = '1.0.0';
-
+        // Name, Beschreibung, Autor und Version liest Bludit aus metadata.json
+        // bzw. languages/*.json. Eigene Properties dafür wären „dynamic
+        // properties“: seit PHP 8.2 veraltet, mit PHP 9 ein Fehler.
         $this->dbFields = [
             'feedSlug'    => 'podcast.xml',
             'feedTitle'   => '',
