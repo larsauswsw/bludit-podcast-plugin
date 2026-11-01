@@ -13,7 +13,7 @@ bindet den Podlove Web Player ein.
 
 - Ziel: Bludit **3.19–3.22**, PHP **≥ 8.0** (Bludit 3.22 verlangt 8.0).
 - Code: `bl-plugins/podcast/` (`plugin.php`, `js/podcast-admin.js`,
-  `metadata.json`, `languages/`).
+  `css/podcast-admin.css`, `metadata.json`, `languages/`).
 - Noch kein veröffentlichtes Release — die Version bleibt bis dahin `1.0.0`.
 - Projektsprache Deutsch (Doku, Roadmap, UI-Texte); Commit-Messages Englisch
   wie in der bisherigen Historie.
@@ -57,6 +57,15 @@ dort um passende Schritte ergänzen.
   Endung und Inhalt (`finfo`, `Podcast::UPLOAD_TYPES`), vergibt einen
   Zufallsnamen und sichert den Ordner per `prepareUploadDir()` (`index.php`,
   `.htaccess` nur mit FileInfo-Direktiven, sonst droht Fehler 500).
+- Admin-Optik: Theme „booty“ = Bootstrap 4.6. Markup wie Bludit selbst —
+  Auswahlfelder `custom-select`, Dateifelder `custom-file`, Radios/Checkboxen
+  `form-check`, Listen wie `views/content.php` (Nebenspalten
+  `d-none d-md-table-cell`, Aktionen im ☰-Menü `actionsDropdown`), Seitenkopf
+  wie `Bootstrap::pageTitle()`. `form-control` nur für Text- und Zahlenfelder
+  (Datumsfeld mit Ausgleich im CSS): booty vergrößert dort den Innenabstand
+  bei fester Höhe, Auswahl- und Dateifelder werden sonst abgeschnitten.
+  Plugin-Einstellungen (`form()`) ohne eigene Klassen, gestylt über
+  `.plugin-form`. Eigenes CSS nur in `css/podcast-admin.css`.
 - Player-Position: Hooks `pageBegin`/`pageEnd`.
 - Podlove Web Player liegt lokal in `bl-plugins/podcast/player/`
   (`Podcast::PODLOVE_VERSION`, Herkunft und Prüfsummen in `player/SOURCE.md`).

@@ -1,0 +1,38 @@
+/*
+ * Podcast-Plugin – Ergänzungen zum Bludit-Admin (Theme „booty“, Bootstrap 4).
+ *
+ * Bewusst klein: Aussehen und Farben kommen von Bludit. Hier steht nur, wofür
+ * Bludit keine eigene Klasse hat.
+ */
+
+/* Episodenliste: Schriftgrößen wie Bludits Inhaltsliste (views/content.php) */
+#podcast-episode-list .podcast-episode-title {
+    font-size: 1.1em;
+}
+
+#podcast-episode-list .podcast-episode-meta {
+    font-size: 0.8em;
+}
+
+/*
+ * Datumsfeld: booty vergrößert den Innenabstand von .form-control, die Höhe
+ * bleibt die feste Bootstrap-Höhe. Bei Textfeldern fällt das nicht auf, Safari
+ * auf iOS schiebt den Datumswert dadurch aber nach unten und zentriert ihn.
+ */
+#podcast-episode-form input[type="datetime-local"].form-control {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#podcast-episode-form input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+}
+
+/* Upload-Feld: Dateiname in normaler Schrift, lange Namen gekürzt statt unter dem Knopf */
+#podcast-episode-form .custom-file-label {
+    overflow: hidden;
+    padding-right: 8rem;
+    font-weight: var(--font-weight-normal, 450);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

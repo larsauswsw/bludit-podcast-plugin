@@ -53,7 +53,7 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
 | Feed-Erzeugung | Core-RSS: Datei im Workspace, neu erzeugt bei `afterPage*`-Hooks | bei jedem Abruf komplett neu, kein HTTP-Caching | Performance | 013 |
 | Player-Position | Hooks `pageBegin`/`pageEnd` in allen Core-Themes | DOM-Selektoren + `siteBodyEnd` | funktioniert, aber fragil | 029 |
 | Feed-Discovery | Core-RSS: `<link rel="alternate">` in `siteHead()` | fehlt | Verbesserung | 017 |
-| Admin-Styling | Admin-Theme „booty“ = Bootstrap 4.6 | Bootstrap-3-Klassen (`label-*`, `btn-xs`, `radio-inline`) | ✗ teils ungestylt | 024, 035 |
+| Admin-Styling | Admin-Theme „booty“ = Bootstrap 4.6 | Bootstrap-3-Klassen (`label-*`, `btn-xs`, `radio-inline`) | ✗ teils ungestylt | 042 (vorher 024, 035) |
 | PHP-Version | Bludit 3.22 verlangt PHP ≥ 8.0 | README nennt 7.4 | Doku | 034 |
 
 ## Befunde nach Schwere

@@ -91,35 +91,40 @@ class Podcast extends Plugin {
         }
 
         ob_start();
+        // Kennung in der URL, damit auch zu große Uploads als API-Anfrage erkannt werden
+        $apiUrl = DOMAIN_BASE . '?podcast_api=1';
         ?>
-        <div class="container-fluid">
-          <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><span class="fa fa-microphone"></span> Podcast – Episoden</h2>
-            <?php if ($login->role() === 'admin'): ?>
-            <a href="<?php echo HTML_PATH_ADMIN_ROOT ?>configure-plugin/Podcast"
-               class="btn btn-sm btn-outline-secondary">
-              <span class="fa fa-gear"></span> Kanaleinstellungen
-            </a>
-            <?php endif ?>
-          </div>
+        <link rel="stylesheet" href="<?php echo htmlspecialchars($this->assetUrl('css/podcast-admin.css'), ENT_QUOTES) ?>">
 
-          <?php
-          // Kennung in der URL, damit auch zu große Uploads als API-Anfrage erkannt werden
-          $apiUrl = DOMAIN_BASE . '?podcast_api=1';
-          try {
-              echo $this->renderEpisodeSection();
-              echo $this->renderEpisodeForm($apiUrl);
-          } catch (Exception $e) {
-              echo '<div class="alert alert-danger">Fehler: '
-                  . htmlspecialchars($e->getMessage()) . '</div>';
-          }
-          ?>
-        </div>
+        <h2 class="mt-0 mb-3">
+          <span class="fa fa-microphone" style="font-size: 0.9em;"></span><span>Podcast – Episoden</span>
+        </h2>
+
+        <?php
+        try {
+            echo $this->renderEpisodeSection($login->role() === 'admin');
+            echo $this->renderEpisodeForm($apiUrl);
+        } catch (Exception $e) {
+            Log::set(__METHOD__ . LOG_SEP . $e->getMessage());
+            echo '<div class="alert alert-danger">Die Episoden konnten nicht geladen werden. Details stehen im Bludit-Log.</div>';
+        }
+        ?>
 
         <script>var PODCAST_API_URL = <?php echo json_encode($apiUrl, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-        <script src="<?php echo DOMAIN ?>/bl-plugins/podcast/js/podcast-admin.js"></script>
+        <script src="<?php echo htmlspecialchars($this->assetUrl('js/podcast-admin.js'), ENT_QUOTES) ?>"></script>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * URL einer Datei aus dem Plugin-Ordner (fester Pfad aus dem Code, keine
+     * Benutzereingabe) mit Änderungszeit als Cache-Version, damit Browser nach
+     * einem Plugin-Update nicht das alte Skript oder CSS verwenden.
+     */
+    private function assetUrl($relPath) {
+        $file    = $this->phpPath() . $relPath;
+        $version = is_file($file) ? (string) filemtime($file) : (string) $this->version();
+        return $this->domainPath() . $relPath . '?version=' . rawurlencode($version);
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -127,91 +132,63 @@ class Podcast extends Plugin {
     // ═══════════════════════════════════════════════════════════════════
 
     public function form() {
+        // Aufbau wie bei Bludits eigenen Plugins: Felder ohne eigene Klassen,
+        // gestylt über .plugin-form (bl-kernel/admin/views/configure-plugin.php),
+        // Hinweise als span.tip. Beschriftungen und Hinweise sind feste Texte.
+        $text = function ($name, $label, $tip = '', $value = null, $attrs = '') {
+            if ($value === null) {
+                $value = $this->getValue($name);
+            }
+            return '<div>'
+                . '<label for="podcast-' . $name . '">' . $label . '</label>'
+                . '<input type="text" id="podcast-' . $name . '" name="' . $name . '" value="'
+                . htmlspecialchars((string) $value, ENT_QUOTES) . '"' . $attrs . '>'
+                . ($tip !== '' ? '<span class="tip">' . $tip . '</span>' : '')
+                . '</div>';
+        };
+
         ob_start();
         ?>
-        <div class="podcast-settings" id="podcast-settings-wrap">
-            <h4>Podcast-Kanaleinstellungen</h4>
-
-            <div class="form-group">
-                <label>Feed-Dateiname (z.B. podcast.xml)</label>
-                <input type="text" class="form-control" name="feedSlug"
-                       value="<?php echo htmlspecialchars($this->getValue('feedSlug'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>Podcast-Titel</label>
-                <input type="text" class="form-control" name="feedTitle"
-                       value="<?php echo htmlspecialchars($this->getValue('feedTitle'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>Feed-URL (vollständig, z.B. https://example.com/podcast.xml)</label>
-                <input type="text" class="form-control" name="feedUrl"
-                       value="<?php echo htmlspecialchars($this->getValue('feedUrl'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>Website-URL</label>
-                <input type="text" class="form-control" name="siteUrl"
-                       value="<?php echo htmlspecialchars($this->getValue('siteUrl') ?: DOMAIN, ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>Beschreibung</label>
-                <textarea class="form-control" name="feedDesc" rows="3"><?php
-                    echo htmlspecialchars($this->getValue('feedDesc')) ?></textarea>
-            </div>
-            <div class="form-group">
-                <label>Sprache (z.B. de-de)</label>
-                <input type="text" class="form-control" name="feedLang"
-                       value="<?php echo htmlspecialchars($this->getValue('feedLang'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>Autor</label>
-                <input type="text" class="form-control" name="author"
-                       value="<?php echo htmlspecialchars($this->getValue('author'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>E-Mail (managingEditor)</label>
-                <input type="email" class="form-control" name="email"
-                       value="<?php echo htmlspecialchars($this->getValue('email'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>iTunes-Kategorie (z.B. Society &amp; Culture)</label>
-                <input type="text" class="form-control" name="category"
-                       value="<?php echo htmlspecialchars($this->getValue('category'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>Cover-URL (1400×1400px JPG/PNG empfohlen)</label>
-                <input type="text" class="form-control" name="cover"
-                       value="<?php echo htmlspecialchars($this->getValue('cover'), ENT_QUOTES) ?>">
-            </div>
-            <div class="form-group">
-                <label>Explicit</label>
-                <select class="form-control" name="explicit">
-                    <option value="no"  <?php echo $this->getValue('explicit') !== 'yes' ? 'selected' : '' ?>>Nein</option>
-                    <option value="yes" <?php echo $this->getValue('explicit') === 'yes' ? 'selected' : '' ?>>Ja</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Player auf Episodenseiten</label>
-                <select class="form-control" name="playerMode">
-                    <option value="podlove" <?php echo $this->playerMode() === 'podlove' ? 'selected' : '' ?>>Podlove Web Player (lokal gehostet, ohne Drittanbieter)</option>
-                    <option value="html5"   <?php echo $this->playerMode() === 'html5'   ? 'selected' : '' ?>>Einfacher HTML5-Player</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Max. Upload-Größe (MB)</label>
-                <input type="number" class="form-control" name="maxUploadMB"
-                       value="<?php echo (int) ($this->getValue('maxUploadMB') ?: 512) ?>">
-            </div>
+        <div class="alert alert-primary" role="alert">
+            Kanal- und Feed-Einstellungen des Podcasts. Episoden werden unter
+            <a href="<?php echo HTML_PATH_ADMIN_ROOT ?>plugin/podcast">Podcast – Episoden</a> verwaltet.
         </div>
 
-        <hr>
-        <p class="text-muted">
-            <span class="fa fa-info-circle"></span>
-            Episoden verwalten:
-            <a href="<?php echo HTML_PATH_ADMIN_ROOT ?>podcast-episodes">
-                Zur Episodenverwaltung
-            </a>
-        </p>
         <?php
+        echo $text('feedSlug', 'Feed-Dateiname', 'z. B. podcast.xml');
+        echo $text('feedTitle', 'Podcast-Titel');
+        echo $text('feedUrl', 'Feed-URL', 'Vollständige Adresse, z. B. https://example.com/podcast.xml', null, ' inputmode="url"');
+        echo $text('siteUrl', 'Website-URL', '', $this->getValue('siteUrl') ?: DOMAIN, ' inputmode="url"');
+        ?>
+        <div>
+            <label for="podcast-feedDesc">Beschreibung</label>
+            <textarea id="podcast-feedDesc" name="feedDesc" rows="3"><?php
+                echo htmlspecialchars($this->getValue('feedDesc')) ?></textarea>
+        </div>
+        <?php
+        echo $text('feedLang', 'Sprache', 'z. B. de-de');
+        echo $text('author', 'Autor');
+        echo $text('email', 'E-Mail', 'Kontaktadresse im Feed (managingEditor)', null, ' inputmode="email" autocomplete="email"');
+        echo $text('category', 'iTunes-Kategorie', 'z. B. Society &amp; Culture');
+        echo $text('cover', 'Cover-URL', 'JPG oder PNG, 1400 × 1400 px empfohlen', null, ' inputmode="url"');
+        ?>
+        <div>
+            <label for="podcast-explicit">Explicit</label>
+            <select id="podcast-explicit" name="explicit">
+                <option value="no"  <?php echo $this->getValue('explicit') !== 'yes' ? 'selected' : '' ?>>Nein</option>
+                <option value="yes" <?php echo $this->getValue('explicit') === 'yes' ? 'selected' : '' ?>>Ja</option>
+            </select>
+        </div>
+        <div>
+            <label for="podcast-playerMode">Player auf Episodenseiten</label>
+            <select id="podcast-playerMode" name="playerMode">
+                <option value="podlove" <?php echo $this->playerMode() === 'podlove' ? 'selected' : '' ?>>Podlove Web Player (lokal gehostet, ohne Drittanbieter)</option>
+                <option value="html5"   <?php echo $this->playerMode() === 'html5'   ? 'selected' : '' ?>>Einfacher HTML5-Player</option>
+            </select>
+        </div>
+        <?php
+        echo $text('maxUploadMB', 'Max. Upload-Größe (MB)', 'Die PHP-Limits des Servers gelten zusätzlich.',
+            (int) ($this->getValue('maxUploadMB') ?: 512), ' inputmode="numeric" pattern="[0-9]*"');
         return ob_get_clean();
     }
 
@@ -588,76 +565,121 @@ class Podcast extends Plugin {
         <?php
     }
 
-    private function renderEpisodeSection() {
+    /**
+     * Episodenliste nach dem Muster von Bludits Inhaltsliste
+     * (bl-kernel/admin/views/content.php): Titel mit Datum darunter,
+     * Nebenspalten erst ab mittlerer Breite, Aktionen im ☰-Menü.
+     */
+    private function renderEpisodeSection($canConfigure = false) {
         $episodes = $this->getEpisodes();
+        // Status-Badges nur für Episoden, die (noch) nicht öffentlich sind
+        $publicTypes = ['published', 'sticky', 'static'];
         ob_start();
         ?>
         <div id="podcast-manager">
           <div id="podcast-episode-list">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <h4 style="margin:0">Episoden</h4>
-              <button type="button" class="btn btn-sm btn-primary" id="podcast-new-btn">
-                + Neue Episode
-              </button>
+            <div class="d-flex flex-wrap">
+              <a href="#" id="podcast-new-btn" class="mr-4 mb-2" role="button">
+                <span class="fa fa-plus mr-1"></span>Neue Episode
+              </a>
+              <?php if ($canConfigure): ?>
+              <a href="<?php echo HTML_PATH_ADMIN_ROOT ?>configure-plugin/Podcast" class="mb-2">
+                <span class="fa fa-cog mr-1"></span>Kanaleinstellungen
+              </a>
+              <?php endif ?>
             </div>
 
             <?php if (empty($episodes)): ?>
-              <p class="text-muted">Noch keine Episoden vorhanden.</p>
+              <p class="mt-4 text-muted">Noch keine Episoden vorhanden.</p>
             <?php else: ?>
-              <table class="table table-sm table-hover">
+              <table class="table mt-3">
                 <thead>
                   <tr>
-                    <th>#</th>
-                    <th>Titel</th>
-                    <th>Staffel</th>
-                    <th>Typ</th>
-                    <th>Datum</th>
-                    <th>Status</th>
-                    <th></th>
+                    <th class="border-0" scope="col">Titel</th>
+                    <th class="border-0 text-center d-none d-md-table-cell" scope="col">Staffel</th>
+                    <th class="border-0 text-center d-none d-md-table-cell" scope="col">Folge</th>
+                    <th class="border-0 d-none d-lg-table-cell" scope="col">Typ</th>
+                    <th class="border-0 text-center" scope="col">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
                   <?php foreach ($episodes as $ep):
                       $meta   = $this->getEpisodeMeta($ep);
-                      $get    = function ($k) use ($meta) { return isset($meta[$k]) ? $meta[$k] : ''; };
+                      $get    = function ($k) use ($meta) { return isset($meta[$k]) ? (string) $meta[$k] : ''; };
                       // Formular mit den gespeicherten Werten vorbelegen, auch wenn sie ungültig sind
                       $stored = $this->getStoredEpisodeMeta($ep);
                       $raw    = function ($k) use ($stored) { return isset($stored[$k]) ? $stored[$k] : ''; };
+
+                      $title    = (string) $ep->title();
+                      $type     = $ep->type();
+                      $isPublic = in_array($type, $publicTypes, true);
+                      $season   = $get('itunes_season');
+                      $number   = $get('itunes_episode');
+                      $numbers  = [];
+                      if ($season !== '') $numbers[] = 'Staffel ' . $season;
+                      if ($number !== '') $numbers[] = 'Folge ' . $number;
                   ?>
-                  <tr>
-                    <td><?php echo htmlspecialchars($get('itunes_episode')) ?></td>
-                    <td><?php echo htmlspecialchars($ep->title()) ?></td>
-                    <td><?php echo htmlspecialchars($get('itunes_season')) ?></td>
-                    <td><?php echo htmlspecialchars($get('itunes_type') ?: 'full') ?></td>
-                    <td><?php echo $ep->date('d.m.Y') ?></td>
-                    <td>
-                      <?php if ($ep->type() === 'published'): ?>
-                        <span class="label label-success">veröffentlicht</span>
-                      <?php else: ?>
-                        <span class="label label-default">Entwurf</span>
-                      <?php endif ?>
+                  <tr class="podcast-episode-row"
+                      data-key="<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>"
+                      data-title="<?php echo htmlspecialchars($title, ENT_QUOTES) ?>"
+                      data-content="<?php echo htmlspecialchars($ep->contentRaw(), ENT_QUOTES) ?>"
+                      data-episode="<?php echo htmlspecialchars($raw('itunes_episode'), ENT_QUOTES) ?>"
+                      data-season="<?php echo htmlspecialchars($raw('itunes_season'), ENT_QUOTES) ?>"
+                      data-type="<?php echo htmlspecialchars($get('itunes_type') ?: 'full', ENT_QUOTES) ?>"
+                      data-explicit="<?php echo htmlspecialchars($get('itunes_explicit') ?: 'no', ENT_QUOTES) ?>"
+                      data-duration="<?php echo htmlspecialchars($raw('itunes_duration'), ENT_QUOTES) ?>"
+                      data-image="<?php echo htmlspecialchars($raw('itunes_image'), ENT_QUOTES) ?>"
+                      data-audio-url="<?php echo htmlspecialchars($raw('audio_url'), ENT_QUOTES) ?>"
+                      data-status="<?php echo htmlspecialchars($type, ENT_QUOTES) ?>"
+                      data-date="<?php echo $ep->date('Y-m-d\TH:i') ?>">
+                    <td class="pt-3">
+                      <div class="text-break">
+                        <a href="#" class="podcast-edit-btn podcast-episode-title" role="button">
+                          <?php if ($title !== ''): ?>
+                            <?php echo htmlspecialchars($title) ?>
+                          <?php else: ?>
+                            <span class="label-empty-title">Kein Titel</span>
+                          <?php endif ?>
+                        </a>
+                        <?php if ($type === 'scheduled'): ?>
+                          <span class="badge badge-info align-middle ml-1">geplant</span>
+                        <?php elseif (!$isPublic): ?>
+                          <span class="badge badge-secondary align-middle ml-1">Entwurf</span>
+                        <?php endif ?>
+                      </div>
+                      <p class="podcast-episode-meta m-0 text-uppercase text-muted">
+                        <?php echo $ep->date('d.m.Y') ?><?php if ($numbers): ?><span class="d-md-none"> · <?php echo htmlspecialchars(implode(' · ', $numbers)) ?></span><?php endif ?>
+                      </p>
                     </td>
-                    <td style="white-space:nowrap">
-                      <button type="button" class="btn btn-xs btn-default podcast-edit-btn"
-                        data-key="<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>"
-                        data-title="<?php echo htmlspecialchars($ep->title(), ENT_QUOTES) ?>"
-                        data-content="<?php echo htmlspecialchars($ep->contentRaw(), ENT_QUOTES) ?>"
-                        data-episode="<?php echo htmlspecialchars($raw('itunes_episode'), ENT_QUOTES) ?>"
-                        data-season="<?php echo htmlspecialchars($raw('itunes_season'), ENT_QUOTES) ?>"
-                        data-type="<?php echo htmlspecialchars($get('itunes_type') ?: 'full', ENT_QUOTES) ?>"
-                        data-explicit="<?php echo htmlspecialchars($get('itunes_explicit') ?: 'no', ENT_QUOTES) ?>"
-                        data-duration="<?php echo htmlspecialchars($raw('itunes_duration'), ENT_QUOTES) ?>"
-                        data-image="<?php echo htmlspecialchars($raw('itunes_image'), ENT_QUOTES) ?>"
-                        data-audio-url="<?php echo htmlspecialchars($raw('audio_url'), ENT_QUOTES) ?>"
-                        data-status="<?php echo htmlspecialchars($ep->type(), ENT_QUOTES) ?>"
-                        data-date="<?php echo $ep->date('Y-m-d\TH:i') ?>">
-                        Bearbeiten
-                      </button>
-                      <button type="button" class="btn btn-xs btn-danger podcast-delete-btn"
-                        data-key="<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>"
-                        data-title="<?php echo htmlspecialchars($ep->title(), ENT_QUOTES) ?>">
-                        Löschen
-                      </button>
+                    <td class="pt-3 text-center d-none d-md-table-cell"><?php echo htmlspecialchars($season) ?></td>
+                    <td class="pt-3 text-center d-none d-md-table-cell"><?php echo htmlspecialchars($number) ?></td>
+                    <td class="pt-3 d-none d-lg-table-cell"><?php echo htmlspecialchars($get('itunes_type') ?: 'full') ?></td>
+                    <td class="pt-3 text-center align-middle">
+                      <div class="dropdown actionsDropdown">
+                        <button class="btn btn-link text-secondary p-1 actionsDropdownToggle" type="button"
+                                data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false"
+                                title="Aktionen"
+                                aria-label="Aktionen für <?php echo htmlspecialchars($title !== '' ? $title : 'Episode ohne Titel', ENT_QUOTES) ?>">
+                          <i class="fa fa-bars"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                          <?php if ($isPublic): ?>
+                          <a class="dropdown-item" target="_blank" rel="noopener" href="<?php echo htmlspecialchars($ep->permalink(), ENT_QUOTES) ?>">
+                            <i class="fa fa-desktop fa-fw mr-2"></i>Anschauen
+                          </a>
+                          <?php endif ?>
+                          <a href="#" class="dropdown-item podcast-edit-btn" role="button">
+                            <i class="fa fa-edit fa-fw mr-2"></i>Bearbeiten
+                          </a>
+                          <a class="dropdown-item" href="<?php echo HTML_PATH_ADMIN_ROOT ?>edit-content/<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>">
+                            <i class="fa fa-pencil fa-fw mr-2"></i>Im Bludit-Editor öffnen
+                          </a>
+                          <div class="dropdown-divider"></div>
+                          <a href="#" class="dropdown-item text-danger podcast-delete-btn" role="button">
+                            <i class="fa fa-trash fa-fw mr-2"></i>Löschen
+                          </a>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                   <?php endforeach ?>
@@ -672,92 +694,94 @@ class Podcast extends Plugin {
     }
 
     private function renderEpisodeForm($apiUrl = '') {
+        $limits = $this->uploadLimits();
         ob_start();
         ?>
-        <div id="podcast-episode-form" style="display:none;margin-top:20px">
-          <h4 id="podcast-form-title">Neue Episode</h4>
+        <div id="podcast-episode-form" hidden>
+          <h4 id="podcast-form-title" class="mb-3">Neue Episode</h4>
           <input type="hidden" id="pe-key" value="">
 
           <div class="form-group">
-            <label>Titel *</label>
+            <label for="pe-title">Titel *</label>
             <input type="text" class="form-control" id="pe-title">
           </div>
           <div class="form-group">
-            <label>Beschreibung *</label>
+            <label for="pe-content">Beschreibung *</label>
             <textarea class="form-control" id="pe-content" rows="4"></textarea>
           </div>
 
-          <div class="row">
-            <div class="col-sm-3">
-              <div class="form-group">
-                <label>Episode #</label>
-                <input type="number" class="form-control" id="pe-episode" min="0">
-              </div>
+          <div class="form-row">
+            <div class="form-group col-6 col-md-3">
+              <label for="pe-episode">Folge</label>
+              <input type="number" class="form-control" id="pe-episode" min="0" inputmode="numeric">
             </div>
-            <div class="col-sm-3">
-              <div class="form-group">
-                <label>Staffel</label>
-                <input type="number" class="form-control" id="pe-season" min="0">
-              </div>
+            <div class="form-group col-6 col-md-3">
+              <label for="pe-season">Staffel</label>
+              <input type="number" class="form-control" id="pe-season" min="0" inputmode="numeric">
             </div>
-            <div class="col-sm-3">
-              <div class="form-group">
-                <label>Typ</label>
-                <select class="form-control" id="pe-type">
-                  <option value="full">full</option>
-                  <option value="trailer">trailer</option>
-                  <option value="bonus">bonus</option>
-                </select>
-              </div>
+            <div class="form-group col-6 col-md-3">
+              <label for="pe-type">Typ</label>
+              <select class="custom-select" id="pe-type">
+                <option value="full">full</option>
+                <option value="trailer">trailer</option>
+                <option value="bonus">bonus</option>
+              </select>
             </div>
-            <div class="col-sm-3">
-              <div class="form-group">
-                <label>Explicit</label>
-                <select class="form-control" id="pe-explicit">
-                  <option value="no">Nein</option>
-                  <option value="yes">Ja</option>
-                </select>
-              </div>
+            <div class="form-group col-6 col-md-3">
+              <label for="pe-explicit">Explicit</label>
+              <select class="custom-select" id="pe-explicit">
+                <option value="no">Nein</option>
+                <option value="yes">Ja</option>
+              </select>
             </div>
           </div>
 
           <div class="form-group">
-            <label>Dauer (HH:MM:SS)</label>
+            <label for="pe-duration">Dauer (HH:MM:SS)</label>
             <input type="text" class="form-control" id="pe-duration" placeholder="00:45:00">
           </div>
 
           <div class="form-group">
-            <label>Episodenbild</label>
-            <div>
-              <label class="radio-inline">
-                <input type="radio" name="pe-image-mode" value="url" checked> URL
-              </label>
-              <label class="radio-inline">
-                <input type="radio" name="pe-image-mode" value="file"> Datei hochladen
-              </label>
+            <label id="pe-image-label">Episodenbild</label>
+            <div role="radiogroup" aria-labelledby="pe-image-label">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="pe-image-mode" id="pe-image-mode-url" value="url" checked>
+                <label class="form-check-label" for="pe-image-mode-url">URL</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="pe-image-mode" id="pe-image-mode-file" value="file">
+                <label class="form-check-label" for="pe-image-mode-file">Datei hochladen</label>
+              </div>
             </div>
-            <input type="text" class="form-control" id="pe-image-url"
-                   placeholder="https://..." style="margin-top:6px">
-            <input type="file" class="form-control" id="pe-image-file"
-                   accept=".jpg,.jpeg,.png" style="display:none;margin-top:6px">
+            <input type="text" class="form-control mt-2" id="pe-image-url" placeholder="https://..."
+                   inputmode="url" aria-labelledby="pe-image-label">
+            <div class="custom-file mt-2" id="pe-image-file-wrap" hidden>
+              <input type="file" class="custom-file-input" id="pe-image-file" accept=".jpg,.jpeg,.png">
+              <label class="custom-file-label" for="pe-image-file" data-browse="Durchsuchen"
+                     data-placeholder="Bild auswählen …">Bild auswählen …</label>
+            </div>
           </div>
 
           <div class="form-group">
-            <label>Audio *</label>
-            <div>
-              <label class="radio-inline">
-                <input type="radio" name="pe-audio-mode" value="url" checked> Externe URL
-              </label>
-              <label class="radio-inline">
-                <input type="radio" name="pe-audio-mode" value="file"> Datei hochladen
-              </label>
+            <label id="pe-audio-label">Audio *</label>
+            <div role="radiogroup" aria-labelledby="pe-audio-label">
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="pe-audio-mode" id="pe-audio-mode-url" value="url" checked>
+                <label class="form-check-label" for="pe-audio-mode-url">Externe URL</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="pe-audio-mode" id="pe-audio-mode-file" value="file">
+                <label class="form-check-label" for="pe-audio-mode-file">Datei hochladen</label>
+              </div>
             </div>
-            <input type="text" class="form-control" id="pe-audio-url"
-                   placeholder="https://..." style="margin-top:6px">
-            <input type="file" class="form-control" id="pe-audio-file"
-                   accept=".mp3,.m4a,.ogg,.wav" style="display:none;margin-top:6px">
-            <?php $limits = $this->uploadLimits(); ?>
-            <small class="text-muted" id="pe-upload-limit"
+            <input type="text" class="form-control mt-2" id="pe-audio-url" placeholder="https://..."
+                   inputmode="url" aria-labelledby="pe-audio-label">
+            <div class="custom-file mt-2" id="pe-audio-file-wrap" hidden>
+              <input type="file" class="custom-file-input" id="pe-audio-file" accept=".mp3,.m4a,.ogg,.wav">
+              <label class="custom-file-label" for="pe-audio-file" data-browse="Durchsuchen"
+                     data-placeholder="Audiodatei auswählen …">Audiodatei auswählen …</label>
+            </div>
+            <small class="form-text text-muted" id="pe-upload-limit"
                    data-max-file="<?php echo (int) $limits['file'] ?>"
                    data-max-post="<?php echo (int) $limits['post'] ?>">
               <?php if (!$limits['enabled']): ?>
@@ -772,36 +796,30 @@ class Podcast extends Plugin {
             </small>
           </div>
 
-          <div class="row">
-            <div class="col-sm-6">
-              <div class="form-group">
-                <label>Veröffentlichungsdatum *</label>
-                <input type="datetime-local" class="form-control" id="pe-date"
-                       value="<?php echo date('Y-m-d\TH:i') ?>">
-              </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="pe-date">Veröffentlichungsdatum *</label>
+              <input type="datetime-local" class="form-control" id="pe-date"
+                     value="<?php echo date('Y-m-d\TH:i') ?>">
             </div>
-            <div class="col-sm-6">
-              <div class="form-group">
-                <label>Status</label>
-                <select class="form-control" id="pe-status">
-                  <option value="published">Veröffentlicht</option>
-                  <option value="draft">Entwurf</option>
-                </select>
-              </div>
+            <div class="form-group col-md-6">
+              <label for="pe-status">Status</label>
+              <select class="custom-select" id="pe-status">
+                <option value="published">Veröffentlicht</option>
+                <option value="draft">Entwurf</option>
+              </select>
             </div>
           </div>
 
-          <div id="podcast-save-error" class="alert alert-danger" style="display:none"></div>
+          <div id="podcast-save-error" class="alert alert-danger" role="alert" hidden></div>
 
-          <button type="button" class="btn btn-primary" id="podcast-save-btn">
-            Speichern
-          </button>
-          <button type="button" class="btn btn-default" id="podcast-cancel-btn" style="margin-left:8px">
-            Abbrechen
-          </button>
-          <span id="podcast-saving" style="display:none;margin-left:10px">
-            <span class="fa fa-spinner fa-spin"></span> Wird gespeichert&hellip;
-          </span>
+          <div class="d-flex flex-wrap align-items-center">
+            <button type="button" class="btn btn-primary mr-2 mb-2" id="podcast-save-btn">Speichern</button>
+            <button type="button" class="btn btn-secondary mr-3 mb-2" id="podcast-cancel-btn">Abbrechen</button>
+            <span id="podcast-saving" class="text-muted mb-2" role="status" hidden>
+              <span class="fa fa-spinner fa-spin"></span> Wird gespeichert&hellip;
+            </span>
+          </div>
         </div>
         <?php
         return ob_get_clean();

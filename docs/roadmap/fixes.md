@@ -133,8 +133,8 @@ brechen bei Unterordner-Installationen:
 
 **Akzeptanzkriterien**
 
-- [ ] JS über `$this->includeJS('podcast-admin.js')` bzw. `$this->domainPath()`
-      einbinden (inkl. Cache-Busting über `?version=`).
+- [x] JS über `$this->domainPath()` einbinden, Cache-Version aus der
+      Änderungszeit der Datei (mit 042).
 - [x] Upload-URLs aus `DOMAIN_UPLOADS` bilden (mit 011).
 - [ ] Feed über `$this->webhook($feedSlug)` erkennen (wie `bl-plugins/rss`).
 - [x] API-URL aus `DOMAIN_BASE` (mit S6; nach 010 ggf. `DOMAIN_ADMIN . 'plugin/podcast'`).

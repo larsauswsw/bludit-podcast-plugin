@@ -57,7 +57,7 @@ dokumentiert.
 | [security.md](./security.md) | Sicherheit | 010–011, 039–040 |
 | [architecture.md](./architecture.md) | Architektur & Datenhaltung | 012–015 |
 | [feed.md](./feed.md) | RSS-Feed & Podcast-Verzeichnisse | 016–019 |
-| [admin-ux.md](./admin-ux.md) | Admin-Oberfläche & Workflow | 020–027 |
+| [admin-ux.md](./admin-ux.md) | Admin-Oberfläche & Workflow | 020–027, 042 |
 | [frontend.md](./frontend.md) | Frontend & Player | 028–033, 041 |
 | [polish-and-debt.md](./polish-and-debt.md) | Sonstiges & technische Schulden | 034–038 |
 
@@ -106,14 +106,16 @@ dokumentiert.
 | 039 | Pfad-Manipulation über ungeprüften Seitenschlüssel | hoch | S | [#42](https://github.com/larsauswsw/bludit-podcast-plugin/issues/42) ✅ |
 | 040 | Episodenbeschreibung im Player als HTML ausgeführt | mittel | S | [#46](https://github.com/larsauswsw/bludit-podcast-plugin/issues/46) ✅ |
 | 041 | Podlove Subscribe Button frei platzieren | mittel | M | [#48](https://github.com/larsauswsw/bludit-podcast-plugin/issues/48) |
+| 042 | Admin-Oberfläche im Bludit-Look und mobil nutzbar | hoch | M | [#57](https://github.com/larsauswsw/bludit-podcast-plugin/issues/57) ✅ |
 
 Alle Einträge starten mit `Status: idea` — priorisieren/verwerfen ist bewusst
 der nächste Schritt für dich.
 
 Bereits umgesetzt (`Status: done`): 039 (Sicherheitsfix, #41); 012 Custom Fields
 mit 005 und 006 (behebt S3); 028 lokal gehosteter Player (behebt S4) mit 040 (S8, #45); 011 Upload-Härtung
-(behebt S5). Teilweise
-vorgezogen: CSRF-Prüfung aus 010, URL-/Typprüfung aus 011, `CLAUDE.md` aus 037.
+(behebt S5); 042 Admin-Oberfläche im Bludit-Look (übernimmt die Bootstrap-Punkte
+aus 024 und 035). Teilweise vorgezogen: CSRF-Prüfung aus 010, URL-/Typprüfung
+aus 011, `CLAUDE.md` aus 037, Skript-Einbindung aus 004 (mit 042).
 
 ## Vorschlag für die Reihenfolge
 

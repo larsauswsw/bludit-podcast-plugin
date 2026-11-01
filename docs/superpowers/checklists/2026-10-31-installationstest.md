@@ -107,11 +107,20 @@ rm $BLUDIT/$F
 ```
 Erhöhen bei PHP-FPM: in der Pool-Datei (z. B. `/etc/php/8.3/fpm/pool.d/www.conf`) `php_admin_value[upload_max_filesize] = 512M`, `php_admin_value[post_max_size] = 520M`, `php_admin_value[max_input_time] = 600`, dann `php-fpm8.3 -t && systemctl reload php8.3-fpm`. `php_value` in Apache-Konfiguration/`.htaccess` wirkt nur mit mod_php.
 
+## G · Admin auf dem Smartphone (042)
+Auf einem iPhone und möglichst einem Android-Gerät, Hochformat. Vorher die Seite neu laden (das Skript hat eine neue Cache-Version).
+- [ ] G21 **Admin → Podcast**: Überschrift „Podcast – Episoden“ ohne Umbruch neben einem Knopf, darunter „Neue Episode“ und „Kanaleinstellungen“ als Links. Liste ohne seitliches Scrollen: Titel, darunter Datum mit „Staffel · Folge“, rechts ☰.
+- [ ] G22 ☰ öffnet das Menü mit Anschauen (nur bei veröffentlichten Episoden), Bearbeiten, Im Bludit-Editor öffnen, Löschen; Tippen auf den Titel öffnet ebenfalls das Formular. Episode ohne Titel erscheint als „Kein Titel“, Entwurf mit Badge „Entwurf“.
+- [ ] G23 Formular: Typ, Explicit und Status zeigen ihren Text vollständig; Folge/Staffel und Typ/Explicit stehen paarweise nebeneinander; das Datum steht linksbündig und mittig im Feld.
+- [ ] G24 Audio → **Datei hochladen**: Feld mit „Durchsuchen“, nach der Auswahl erscheint der Dateiname (lange Namen mit „…“); Speichern lädt hoch wie bisher.
+- [ ] G25 **Kanaleinstellungen** sehen aus wie bei anderen Bludit-Plugins (Hinweise klein unter den Feldern); Speichern übernimmt die Werte, der Link im blauen Kasten führt zur Episodenliste.
+- [ ] G26 Am Desktop: Liste mit Spalten Staffel, Folge, Typ; sonst wie Bludits **Inhalte**-Liste.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - „&“ in Titeln oder Kategorie im Feed doppelt escaped (001).
 - Episoden mit weiterem Tag neben `podcast` fehlen in Liste, Feed und Player (002).
 - Neue Episoden ohne Autor; `rss.xml`, Sitemap und `/tag/podcast` erfahren nichts von Anlegen/Löschen (003).
-- Bludit im Unterordner: Admin-JavaScript und Feed-Pfad noch nicht angepasst (Rest von 004).
+- Bludit im Unterordner: Feed-Pfad noch nicht angepasst (Rest von 004; das Admin-JavaScript ist seit 042 angepasst).
 - Hinweis „Update“ in der Plugin-Liste (034).
 
 Bei Fehlern: `tail -n 20 $BLUDIT/bl-content/databases/syslog.php` und das PHP-Error-Log.
