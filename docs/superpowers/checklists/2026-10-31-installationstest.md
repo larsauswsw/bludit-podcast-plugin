@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76.
 
 ## Vorbereitung (SSH)
 
@@ -179,6 +179,18 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] O49 **Neue Episode**: Das Datum ist mit der aktuellen Uhrzeit vorbelegt (vorher 1–2 Stunden zu früh). Unter dem Feld steht „Zeitzone der Website: …“ wie unter **Einstellungen → Allgemein → Sprache → Zeitzone**.
 - [x] O50 *(am Computer)* Im Datumsfeld einen Teil löschen (z. B. die Minuten) und speichern → Meldung „Bitte ein gültiges Veröffentlichungsdatum eingeben.“, nichts wird gespeichert.
 - [x] O51 Episode mit Datum in der Zukunft (z. B. morgen 06:00) und Status „Veröffentlicht“ speichern → in der Liste Badge „Geplant“, darunter Datum mit Uhrzeit („…, 06:00 Uhr“). Beim Bearbeiten steht dieselbe Uhrzeit im Feld. Danach Datum zurücksetzen oder Episode löschen.
+
+## P · Kanaleinstellungen und Feed-Adresse (043, 017)
+- [ ] P52 **Kanaleinstellungen**: fünf Gruppen mit Zwischenüberschrift (Podcast · Apple Podcasts & Verzeichnisse · Feed · Website & Player · Uploads). Alle bisherigen Werte stehen noch drin. Auf dem Handy ohne seitliches Scrollen.
+- [ ] P53 Gruppe **Feed**: „Adresse des Feeds“ zeigt `$SITE/podcast.xml` (grau hinterlegt, nicht änderbar); „Feed öffnen“ öffnet den Feed. Steht unter „Abweichende Feed-URL“ ein Wert, der nicht nötig ist: notieren, leeren und speichern — die Adresse bleibt gleich.
+- [ ] P54 Feed und Discovery-Link:
+  ```sh
+  curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep "atom:link"
+  curl -s "$SITE/?t=$(date +%s)" | grep "application/rss+xml"
+  ```
+  Erwartet: `<atom:link href="$SITE/podcast.xml" rel="self" …>` (vorher ohne Feed-URL nicht vorhanden); auf der Startseite ein `<link rel="alternate" …>` mit dem Podcast-Titel und dieser Adresse (daneben ggf. der des Core-RSS-Plugins).
+- [ ] P55 Episodenseite: Der Podlove-Player zeigt den Abo-Button; er bietet die Feed-Adresse an.
+- [ ] P56 Unter „Abweichende Feed-URL“ `feed.xml` (ohne `https://`) speichern → Hinweis „Wird nicht verwendet …“, „Adresse des Feeds“ bleibt `$SITE/podcast.xml`. Danach das Feld wieder leeren.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.

@@ -112,22 +112,27 @@ The admin interface is in German; menu names are given in German below.
 
 Before publishing episodes, configure your podcast channel: **Admin → Podcast → Kanaleinstellungen** (admins only), or **Einstellungen → Plugins → Podcast → Einstellungen**.
 
-| Setting | Description | Example |
-|---|---|---|
-| **Feed-Dateiname** | Path at which the RSS feed is served | `podcast.xml` |
-| **Podcast-Titel** | The name of your podcast | `My Podcast` |
-| **Feed-URL** | Full public URL of the RSS feed (also used for the subscribe button) | `https://example.com/podcast.xml` |
-| **Website-URL** | Your podcast website (defaults to the Bludit site) | `https://example.com` |
-| **Beschreibung** | Short summary of your podcast | `A show about...` |
-| **Sprache** | RSS language code | `en-us`, `de-de` |
-| **Autor** | Podcast author name | `Jane Doe` |
-| **E-Mail** | Contact email (used as `managingEditor`) | `jane@example.com` |
-| **iTunes-Kategorie** | Apple Podcasts category | `Society & Culture` |
-| **Cover-URL** | URL of your podcast artwork (1400×1400 px JPG/PNG recommended) | `https://example.com/cover.jpg` |
-| **Explicit** | Whether the podcast contains explicit content | `Nein` |
-| **Player auf Episodenseiten** | Podlove Web Player (served locally) or a plain HTML5 player | Podlove |
-| **Position des Players** | At the start of the page content (below the title) or at the end | start |
-| **Max. Upload-Größe (MB)** | Plugin-level upload limit; the server's PHP limits apply as well | `512` |
+The settings are grouped like Bludit's own settings pages.
+
+| Group | Setting | Description | Example |
+|---|---|---|---|
+| **Podcast** | **Podcast-Titel** | The name of your podcast | `My Podcast` |
+| | **Beschreibung** | Short summary of your podcast | `A show about...` |
+| | **Autor** | Podcast author name | `Jane Doe` |
+| | **Sprache** | RSS language code | `en-us`, `de-de` |
+| | **Cover-URL** | URL of your podcast artwork (1400×1400 px JPG/PNG recommended) | `https://example.com/cover.jpg` |
+| **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category (English name) | `Society & Culture` |
+| | **Explicit** | Whether the podcast contains explicit content | `Nein` |
+| | **E-Mail des Inhabers** | Owner email (`itunes:owner`, `managingEditor`). Public in the feed; directories such as Apple Podcasts and Spotify use it to verify ownership | `jane@example.com` |
+| **Feed** | **Feed-Dateiname** | Path at which the RSS feed is served | `podcast.xml` |
+| | **Adresse des Feeds** | Read-only: the public feed URL to submit to Apple Podcasts, Spotify etc., with a link to open the feed | `https://example.com/podcast.xml` |
+| | **Abweichende Feed-URL (optional)** | Only if the feed is served from another address (e.g. a CDN); leave empty to use the site address | `https://cdn.example.com/podcast.xml` |
+| | **Website-URL** | Your podcast website; leave empty for the Bludit site | `https://example.com` |
+| **Website & Player** | **Player auf Episodenseiten** | Podlove Web Player (served locally) or a plain HTML5 player | Podlove |
+| | **Position des Players** | At the start of the page content (below the title) or at the end | start |
+| **Uploads** | **Max. Upload-Größe (MB)** | Plugin-level upload limit; the server's PHP limits apply as well | `512` |
+
+The feed URL is built from the Bludit site address and the feed filename (subdirectory installations included). URLs that do not start with `http://` or `https://` are not used; the form marks them. Every page of the site links to the feed in its `<head>` (`<link rel="alternate" type="application/rss+xml">`), so browsers and podcast apps can find it from the website address.
 
 Click **Speichern** after making changes.
 
@@ -210,7 +215,7 @@ The [Podlove Web Player](https://podlove.org/podlove-web-player/) is added to ev
 - **Served locally:** the plugin ships Podlove Web Player 5.13.0 in `bl-plugins/podcast/player/` (MIT license, unmodified subset of the npm package; provenance and checksums in `player/SOURCE.md`). Visitors' browsers do **not** connect to a Podlove CDN.
 - **Fallback:** a plain HTML5 `<audio>` player with a download link is shown until the Podlove player has loaded, and stays visible if JavaScript is disabled or the player cannot load.
 - **Plain HTML5 player:** choose *Player auf Episodenseiten → Einfacher HTML5-Player* in the channel settings to skip the Podlove player entirely.
-- If a feed URL is set in the channel settings, a subscribe button appears in the player.
+- The player shows a subscribe button for the podcast feed.
 
 To update the bundled player, run `scripts/update-podlove-player.sh <version>` from the development repository (verifies the npm integrity hash and copies only the needed files).
 

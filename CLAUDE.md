@@ -87,7 +87,11 @@ dort um passende Schritte ergänzen.
   (Datumsfeld mit Ausgleich im CSS): booty vergrößert dort den Innenabstand
   bei fester Höhe, Auswahl- und Dateifelder werden sonst abgeschnitten.
   Plugin-Einstellungen (`form()`) ohne eigene Klassen, gestylt über
-  `.plugin-form`. Eigenes CSS nur in `css/podcast-admin.css`.
+  `.plugin-form`, Gruppen per `Bootstrap::formTitle()`. Eigenes CSS nur in
+  `css/podcast-admin.css`.
+- Feed-Adresse nur über `feedUrl()` (abweichende URL mit `http(s)://`, sonst
+  `localFeedUrl()` = `DOMAIN_BASE` + `feedSlug()`), Website über `siteUrl()` —
+  nie `setting('feedUrl')`/`setting('siteUrl')` direkt ausgeben.
 - Player-Position: im Seiteninhalt — `beforeSiteLoad()` → `injectPlayer()` →
   `$page->setField('content', …)` (wie Bludits custom-fields-parser), erneut in
   `siteHead()`, falls ein anderes Plugin den Inhalt neu gebaut hat. Einstellung

@@ -42,3 +42,9 @@
     white-space: nowrap;
     text-overflow: ellipsis;
 }
+
+/* Kanaleinstellungen: „Adresse des Feeds“ ist nur zum Kopieren da und soll
+   nicht wie ein Eingabefeld aussehen (.plugin-form färbt alle Textfelder weiß) */
+.plugin-form #podcast-feedAddress {
+    background-color: var(--bg-main, #f8f9fa);
+}

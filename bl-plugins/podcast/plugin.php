@@ -145,44 +145,59 @@ class Podcast extends Plugin {
     public function form() {
         // Aufbau wie bei Bludits eigenen Plugins: Felder ohne eigene Klassen,
         // gestylt über .plugin-form (bl-kernel/admin/views/configure-plugin.php),
-        // Hinweise als span.tip. Beschriftungen und Hinweise sind feste Texte.
-        // Werte dekodiert lesen und genau einmal escapen (Plugin::post() escaped beim Speichern).
-        $text = function ($name, $label, $tip = '', $value = null, $attrs = '') {
+        // Hinweise als span.tip, Gruppen mit Bludits Zwischenüberschrift
+        // (Bootstrap::formTitle wie in den Bludit-Einstellungen). Beschriftungen
+        // und Hinweise sind feste Texte. Werte dekodiert lesen und genau einmal
+        // escapen (Plugin::post() escaped beim Speichern).
+        $esc  = function ($value) { return htmlspecialchars((string) $value, ENT_QUOTES); };
+        $text = function ($name, $label, $tip = '', $value = null, $attrs = '') use ($esc) {
             if ($value === null) {
                 $value = $this->setting($name);
             }
             return '<div>'
                 . '<label for="podcast-' . $name . '">' . $label . '</label>'
                 . '<input type="text" id="podcast-' . $name . '" name="' . $name . '" value="'
-                . htmlspecialchars((string) $value, ENT_QUOTES) . '"' . $attrs . '>'
+                . $esc($value) . '"' . $attrs . '>'
                 . ($tip !== '' ? '<span class="tip">' . $tip . '</span>' : '')
                 . '</div>';
         };
+        $group = function ($title) {
+            return Bootstrap::formTitle(['title' => $title]);
+        };
+        // Eingetragene URL, die nicht mit http(s):// beginnt, wird nicht verwendet
+        $ignoredUrl = function ($name) {
+            $value = trim($this->setting($name));
+            return $value !== '' && !$this->isHttpUrl($value)
+                ? ' <strong>Wird nicht verwendet: Die Adresse muss mit http:// oder https:// beginnen.</strong>'
+                : '';
+        };
+        $feedUrl = $this->feedUrl();
 
         ob_start();
         ?>
+        <link rel="stylesheet" href="<?php echo $esc($this->assetUrl('css/podcast-admin.css')) ?>">
+
         <div class="alert alert-primary" role="alert">
             Kanal- und Feed-Einstellungen des Podcasts. Episoden werden unter
             <a href="<?php echo HTML_PATH_ADMIN_ROOT ?>plugin/podcast">Podcast – Episoden</a> verwaltet.
         </div>
 
         <?php
-        echo $text('feedSlug', 'Feed-Dateiname', 'z. B. podcast.xml');
+        echo $group('Podcast');
         echo $text('feedTitle', 'Podcast-Titel');
-        echo $text('feedUrl', 'Feed-URL', 'Vollständige Adresse, z. B. https://example.com/podcast.xml', null, ' inputmode="url"');
-        echo $text('siteUrl', 'Website-URL', '', $this->setting('siteUrl') ?: DOMAIN_BASE, ' inputmode="url"');
         ?>
         <div>
             <label for="podcast-feedDesc">Beschreibung</label>
             <textarea id="podcast-feedDesc" name="feedDesc" rows="3"><?php
-                echo htmlspecialchars($this->setting('feedDesc'), ENT_QUOTES) ?></textarea>
+                echo $esc($this->setting('feedDesc')) ?></textarea>
         </div>
         <?php
-        echo $text('feedLang', 'Sprache', 'z. B. de-de');
         echo $text('author', 'Autor');
-        echo $text('email', 'E-Mail', 'Kontaktadresse im Feed (managingEditor)', null, ' inputmode="email" autocomplete="email"');
-        echo $text('category', 'iTunes-Kategorie', 'z. B. Society &amp; Culture');
+        echo $text('feedLang', 'Sprache', 'z. B. de-de');
         echo $text('cover', 'Cover-URL', 'JPG oder PNG, 1400 × 1400 px empfohlen', null, ' inputmode="url"');
+
+        echo $group('Apple Podcasts &amp; Verzeichnisse');
+        echo $text('category', 'Kategorie', 'Englischer Name der Apple-Kategorie, z. B. Society &amp; Culture');
         ?>
         <div>
             <label for="podcast-explicit">Explicit</label>
@@ -191,6 +206,31 @@ class Podcast extends Plugin {
                 <option value="yes" <?php echo $this->getValue('explicit') === 'yes' ? 'selected' : '' ?>>Ja</option>
             </select>
         </div>
+        <?php
+        echo $text('email', 'E-Mail des Inhabers',
+            'Steht öffentlich im Feed. Verzeichnisse wie Apple Podcasts und Spotify prüfen darüber, wem der Podcast gehört.',
+            null, ' inputmode="email" autocomplete="email"');
+
+        echo $group('Feed');
+        echo $text('feedSlug', 'Feed-Dateiname', 'z. B. podcast.xml');
+        ?>
+        <div>
+            <label for="podcast-feedAddress">Adresse des Feeds</label>
+            <!-- Nur zum Kopieren: ohne name, wird nicht gespeichert -->
+            <input type="text" id="podcast-feedAddress" value="<?php echo $esc($feedUrl) ?>" readonly>
+            <span class="tip">Diese Adresse bei Apple Podcasts, Spotify und anderen Verzeichnissen eintragen.
+                <a href="<?php echo $esc($feedUrl) ?>" target="_blank" rel="noopener">Feed öffnen</a></span>
+        </div>
+        <?php
+        echo $text('feedUrl', 'Abweichende Feed-URL (optional)',
+            'Nur nötig, wenn der Feed über eine andere Adresse ausgeliefert wird, z. B. ein CDN. Leer lassen für die Adresse oben.' . $ignoredUrl('feedUrl'),
+            null, ' inputmode="url" placeholder="' . $esc($this->localFeedUrl()) . '"');
+        echo $text('siteUrl', 'Website-URL',
+            'Leer lassen für diese Bludit-Website.' . $ignoredUrl('siteUrl'),
+            null, ' inputmode="url" placeholder="' . $esc(DOMAIN_BASE) . '"');
+
+        echo $group('Website &amp; Player');
+        ?>
         <div>
             <label for="podcast-playerMode">Player auf Episodenseiten</label>
             <select id="podcast-playerMode" name="playerMode">
@@ -207,6 +247,7 @@ class Podcast extends Plugin {
             <span class="tip">Für eine eigene Stelle <code>{{ podcast-player }}</code> in den Text der Episode schreiben.</span>
         </div>
         <?php
+        echo $group('Uploads');
         echo $text('maxUploadMB', 'Max. Upload-Größe (MB)', 'Die PHP-Limits des Servers gelten zusätzlich.',
             (int) ($this->getValue('maxUploadMB') ?: 512), ' inputmode="numeric" pattern="[0-9]*"');
         return ob_get_clean();
@@ -222,8 +263,7 @@ class Podcast extends Plugin {
     public function beforeAll() {
         // webhook() vergleicht mit HTML_PATH_ROOT (auch bei Bludit im Unterordner)
         // und ignoriert Parameter wie ?nocache=…
-        $feedSlug = ltrim($this->setting('feedSlug') ?: 'podcast.xml', '/');
-        if ($this->webhook($feedSlug)) {
+        if ($this->webhook($this->feedSlug())) {
             $this->outputFeed();
             exit;
         }
@@ -249,6 +289,15 @@ class Podcast extends Plugin {
 
     public function siteHead() {
         $this->removePlaceholdersInLists();
+
+        // Feed-Discovery auf allen Seiten (wie das Core-RSS-Plugin), damit
+        // Browser und Podcast-Apps den Feed über die Website-Adresse finden
+        global $site;
+        $feedTitle = $this->setting('feedTitle') ?: Sanitize::htmlDecode((string) $site->title());
+        echo '<link rel="alternate" type="application/rss+xml" title="'
+            . htmlspecialchars($feedTitle, ENT_QUOTES, 'UTF-8') . '" href="'
+            . htmlspecialchars($this->feedUrl(), ENT_QUOTES, 'UTF-8') . '">' . "\n";
+
         $page = $this->currentEpisode();
         if (!$page) return;
 
@@ -368,7 +417,7 @@ class Podcast extends Plugin {
                 'subtitle' => '',
                 'summary'  => $showSummary,
                 'poster'   => $this->setting('cover'),
-                'link'     => $this->setting('siteUrl') ?: DOMAIN_BASE,
+                'link'     => $this->siteUrl(),
             ],
             'title'           => $this->plainTitle($page),
             'subtitle'        => '',
@@ -386,12 +435,12 @@ class Podcast extends Plugin {
             ],
         ];
 
-        // Assets (Layouts, Player-Bundle, Abo-Button) aus dem Plugin-Ordner laden
-        $playerConfig = ['base' => $this->playerBaseUrl()];
-        $feedUrl = $this->setting('feedUrl');
-        if ($feedUrl) {
-            $playerConfig['subscribe-button'] = ['feed' => $feedUrl];
-        }
+        // Assets (Layouts, Player-Bundle, Abo-Button) aus dem Plugin-Ordner laden;
+        // Abo-Button immer mit der Feed-Adresse (auch ohne eingetragene Feed-URL)
+        $playerConfig = [
+            'base'             => $this->playerBaseUrl(),
+            'subscribe-button' => ['feed' => $this->feedUrl()],
+        ];
 
         $flags       = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
         $episodeJson = json_encode($episodeConfig, $flags);
@@ -454,8 +503,8 @@ class Podcast extends Plugin {
         // Einstellungen und Titel sind HTML-escaped gespeichert: dekodieren, dann
         // genau einmal für XML escapen
         $title     = $this->xml($this->setting('feedTitle'));
-        $feedUrl   = $this->xml($this->setting('feedUrl'));
-        $siteUrl   = $this->xml($this->setting('siteUrl') ?: DOMAIN_BASE);
+        $feedUrl   = $this->xml($this->feedUrl());
+        $siteUrl   = $this->xml($this->siteUrl());
         $desc      = $this->xml($this->setting('feedDesc'));
         $lang      = $this->xml($this->setting('feedLang') ?: 'de-de');
         $author    = $this->xml($this->setting('author'));
@@ -485,9 +534,7 @@ class Podcast extends Plugin {
         }
         echo '  <lastBuildDate>' . $buildDate . '</lastBuildDate>' . "\n";
         echo '  <generator>Bludit Podcast Plugin</generator>' . "\n";
-        if ($feedUrl) {
-            echo '  <atom:link href="' . $feedUrl . '" rel="self" type="application/rss+xml" />' . "\n";
-        }
+        echo '  <atom:link href="' . $feedUrl . '" rel="self" type="application/rss+xml" />' . "\n";
         echo '  <itunes:author>' . $author . '</itunes:author>' . "\n";
         echo '  <itunes:owner>' . "\n";
         echo '    <itunes:name>' . $author . '</itunes:name>' . "\n";
@@ -1365,6 +1412,39 @@ class Podcast extends Plugin {
     /** Position des Players im Inhalt; unbekannte Werte → am Anfang. */
     private function playerPosition() {
         return $this->getValue('playerPosition') === 'bottom' ? 'bottom' : 'top';
+    }
+
+    // ── Feed- und Website-Adresse (Roadmap 017)
+
+    /** Feed-Dateiname aus den Einstellungen, ohne führenden Schrägstrich. */
+    private function feedSlug() {
+        $slug = ltrim(trim($this->setting('feedSlug')), '/');
+        return $slug !== '' ? $slug : 'podcast.xml';
+    }
+
+    /**
+     * Feed-Adresse auf dieser Website: DOMAIN_BASE (auch bei Bludit im
+     * Unterordner) und der Dateiname, jeder Pfadteil URL-kodiert — webhook()
+     * vergleicht mit dem dekodierten Pfad.
+     */
+    private function localFeedUrl() {
+        return DOMAIN_BASE . implode('/', array_map('rawurlencode', explode('/', $this->feedSlug())));
+    }
+
+    /**
+     * Öffentliche Feed-Adresse für Abo-Button, Discovery-Link und
+     * <atom:link rel="self">: die abweichende Feed-URL (z. B. CDN), wenn sie
+     * mit http(s):// beginnt, sonst die Adresse auf dieser Website.
+     */
+    private function feedUrl() {
+        $url = trim($this->setting('feedUrl'));
+        return $url !== '' && $this->isHttpUrl($url) ? $url : $this->localFeedUrl();
+    }
+
+    /** Website des Podcasts: Einstellung, wenn sie mit http(s):// beginnt, sonst die Bludit-Website. */
+    private function siteUrl() {
+        $url = trim($this->setting('siteUrl'));
+        return $url !== '' && $this->isHttpUrl($url) ? $url : DOMAIN_BASE;
     }
 
     // ── Escaping: Bludit speichert Texte HTML-escaped (Sanitize::html). Gelesen
