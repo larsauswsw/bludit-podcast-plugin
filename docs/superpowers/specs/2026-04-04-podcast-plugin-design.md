@@ -1,5 +1,22 @@
 # Podcast Plugin für Bludit 3.19+ — Design-Dokument
 
+> **Stand 2026-11-01 — umgesetzt abweichend.** Dieses Dokument ist die
+> ursprüngliche Planung. Der Code weicht so ab:
+> - Keine `admin/*.php`-Dateien: Die Admin-Oberfläche steckt in `plugin.php`
+>   (`adminView()`, `adminController()`) plus `js/podcast-admin.js` und
+>   `css/podcast-admin.css`, im Bludit-Look (042).
+> - Kein `metadata/episodes.json`: Metadaten liegen nur als Custom Fields
+>   `podcast_*` in der Seite (Zuordnung `Podcast::CUSTOM_FIELDS`); Altdaten
+>   übernimmt das Plugin beim ersten Aufruf (012, 005, 006).
+> - Episoden-API als POST auf `admin/plugin/podcast?podcast_api=1` in
+>   `adminController()` (010); Seiten über `createPage()`/`editPage()`/`deletePage()` (003).
+> - Feed per `webhook()` (004) mit veröffentlichten, fixierten und statischen
+>   Episoden, nach Datum sortiert (007).
+> - Uploads mit Endungs- und Inhaltsprüfung, zufälligem Namensteil und
+>   Schutzdateien (011).
+>
+> Aktueller Stand: `CLAUDE.md` und `docs/roadmap/`.
+
 **Datum:** 2026-04-04  
 **Status:** Genehmigt  
 

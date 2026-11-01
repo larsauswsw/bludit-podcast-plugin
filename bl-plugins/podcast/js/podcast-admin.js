@@ -150,16 +150,31 @@
     var SESSION_ERROR = 'Sitzung abgelaufen oder Sicherheits-Token ungültig. ' +
         'Bitte neu anmelden und es noch einmal versuchen.';
 
-    // Die API antwortet mit JSON. Lehnt Bludit die Anfrage ab (Sitzung abgelaufen,
-    // Token ungültig), leitet es auf die Login-Seite um — dann kommt HTML zurück.
+    // Die API antwortet immer mit JSON. Alles andere kommt nicht vom Plugin:
+    // - Umleitung zur Anmeldung: Bludit hat die Anfrage abgelehnt (Sitzung
+    //   abgelaufen, Token ungültig)
+    // - HTTP 413: Der Webserver selbst lehnt die Größe ab (vor PHP)
+    // - sonstiger Fehlerstatus: z. B. PHP-Fehler (500)
     function readJson(response) {
         var type = response.headers.get('Content-Type') || '';
-        if (type.indexOf('application/json') === -1) {
-            var err = new Error(SESSION_ERROR);
-            err.isSession = true;
-            throw err;
+        if (type.indexOf('application/json') !== -1) {
+            return response.json();
         }
-        return response.json();
+        var msg;
+        if (response.redirected && /\/login\/?$/.test(new URL(response.url).pathname)) {
+            msg = SESSION_ERROR;
+        } else if (response.status === 413) {
+            msg = 'Die Anfrage ist für den Webserver zu groß (HTTP 413). Bitte eine kleinere Datei ' +
+                'oder eine Audio-URL verwenden; das Limit legt die Server-Konfiguration fest ' +
+                '(z. B. LimitRequestBody bei Apache, client_max_body_size bei Nginx).';
+        } else if (!response.ok) {
+            msg = 'Serverfehler (HTTP ' + response.status + '). Details stehen im Bludit- bzw. PHP-Fehlerlog.';
+        } else {
+            msg = 'Unerwartete Antwort vom Server. Bitte die Seite neu laden und es noch einmal versuchen.';
+        }
+        var err = new Error(msg);
+        err.isServerResponse = true;
+        throw err;
     }
 
     function setSaving(on) {
@@ -252,7 +267,7 @@
                 location.reload();
             })
             .catch(function (err) {
-                alert(err && err.isSession ? SESSION_ERROR : 'Netzwerkfehler beim Löschen.');
+                alert(err && err.isServerResponse ? err.message : 'Netzwerkfehler beim Löschen.');
             });
     });
 
@@ -330,7 +345,7 @@
             })
             .catch(function (err) {
                 setSaving(false);
-                showError(err && err.isSession ? SESSION_ERROR : 'Netzwerkfehler beim Speichern.');
+                showError(err && err.isServerResponse ? err.message : 'Netzwerkfehler beim Speichern.');
             });
     });
 

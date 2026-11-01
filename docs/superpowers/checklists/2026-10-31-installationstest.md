@@ -172,6 +172,9 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
   ```
   Erwartet: beide `0`. Danach die Zeile wieder entfernen.
 
+## N · Fehlermeldungen (008)
+- [ ] N48 **Admin → Podcast** in zwei Browser-Tabs öffnen. Im zweiten Tab abmelden, im ersten eine Episode öffnen und speichern → Meldung „Sitzung abgelaufen oder Sicherheits-Token ungültig …“ statt „Netzwerkfehler“. Danach neu anmelden.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 

@@ -109,7 +109,7 @@ Deprecations) wären mit einfachen Checks früh aufgefallen.
 
 ## 037 · README, Specs & CLAUDE.md aktualisieren
 
-Status: idea · Priorität: niedrig · Aufwand: S · Bereich: `README.md`, `docs/superpowers/`, `CLAUDE.md` · Issue: [#38](https://github.com/larsauswsw/bludit-podcast-plugin/issues/38)
+Status: done · Priorität: niedrig · Aufwand: S · Bereich: `README.md`, `docs/superpowers/`, `CLAUDE.md` · Issue: [#38](https://github.com/larsauswsw/bludit-podcast-plugin/issues/38)
 
 **Beschreibung**
 
@@ -127,8 +127,12 @@ Status: idea · Priorität: niedrig · Aufwand: S · Bereich: `README.md`, `docs
 
 **Akzeptanzkriterien**
 
-- [ ] README entspricht dem tatsächlichen Verhalten; Google Podcasts entfernt.
-- [ ] Specs mit Hinweis „umgesetzt abweichend: …“ oder aktualisiert.
+- [x] README entspricht dem tatsächlichen Verhalten; Google Podcasts entfernt
+      (2026-11-01: deutsche Menünamen, ☰-Menü, Status-Typen, Feed-Inhalt und
+      -Sortierung, Player-Position und Platzhalter, aktuelle Fehlermeldungen;
+      „License: MIT“ ersetzt durch „noch nicht entschieden, alle Rechte
+      vorbehalten“, Podlove-Player bleibt MIT).
+- [x] Specs mit Hinweis „umgesetzt abweichend: …“; Pläne als historisch markiert.
 - [x] Neue `CLAUDE.md` mit verifizierter API-Übersicht, Sicherheitsregeln und
       Verweis auf diese Roadmap (angelegt 2026-10-30).
 
