@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79), Teil Q nach #81, Teil R nach #82 (R65/R66 nach #84).
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79), Teil Q nach #81, Teil R nach #82 (R65/R66 nach #84), Teil S nach #86.
 
 ## Vorbereitung (SSH)
 
@@ -220,7 +220,7 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] R65 Feed-Adresse im [Podbase-Validator](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/) prüfen: keine Fehler. Hinweise (blaues ℹ️) zu `podcast:locked`, `podcast:guid`, `podcast:transcript` sind erwartet (Roadmap 019/030), ebenso zu `itunes:duration`/`itunes:image` bei Episoden ohne Dauer bzw. eigenes Bild. *(Erster Durchlauf: nur PSP-1 „Podcast-Namespace fehlt“ als Fehler. Nach #83 mit angemeldetem Namespace weiterhin — der Test erkennt ihn offenbar nur, wenn ein `podcast:`-Element vorkommt; daher `podcast:guid` und `podcast:locked` mit dem folgenden PR.)* Danach erwartet: keine ℹ️ mehr zu `podcast:locked` und `podcast:guid`.
 
 ## S · Aktionsbuttons oben wie in Bludit
-- [ ] S67 **Admin → Podcast → Neue Episode** und eine Episode bearbeiten: „Speichern“ und „Abbrechen“ stehen oben rechts neben dem Formulartitel (klein, wie in den Kanaleinstellungen und Bludits Einstellungen), unten am Formular keine Buttons mehr. Titel leeren und „Speichern“ → rote Meldung direkt unter der Titelzeile. „Abbrechen“ führt zurück zur Liste. Auf dem Handy ohne seitliches Scrollen.
+- [x] S67 **Admin → Podcast → Neue Episode** und eine Episode bearbeiten: „Speichern“ und „Abbrechen“ stehen oben rechts neben dem Formulartitel (klein, wie in den Kanaleinstellungen und Bludits Einstellungen), unten am Formular keine Buttons mehr. Titel leeren und „Speichern“ → rote Meldung direkt unter der Titelzeile. „Abbrechen“ führt zurück zur Liste. Auf dem Handy ohne seitliches Scrollen.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
