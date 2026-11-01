@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79).
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79), Teil Q nach #81, Teil R nach #82 (R65/R66 nach #84).
 
 ## Vorbereitung (SSH)
 
@@ -212,12 +212,12 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
   Erwartet: `<content:encoded><![CDATA[<p>…<strong>…</strong>…<a href="https://…">…</a>…]]>` mit Absätzen und Liste, `<description>` mit dem Text ohne Tags, kein `itunes:summary` mehr.
 - [x] R63 Episode mit externer Audio-URL (z. B. einer MP3 bei einem Hoster) neu speichern: kein Hinweis über der Liste, im Feed hat ihr `<enclosure>` eine `length` größer 0. Eine nicht erreichbare URL (z. B. `https://audio.example.invalid/x.mp3`) testweise eintragen → Hinweis „Episode gespeichert, aber die Dateigröße … ließ sich nicht ermitteln …“ über der Liste; danach die richtige URL wieder eintragen.
 - [x] R64 Hochgeladene Episode bearbeiten, ohne eine neue Datei zu wählen, und speichern: Ihr `<enclosure length>` bleibt gleich (vorher wurde er beim Bearbeiten 0). Im Formular unter „Audio“ eine URL auf `.wav` eintippen → gelber Hinweis „Apple Podcasts spielt WAV- und OGG-Dateien nicht ab …“; mit `.mp3` verschwindet er.
-- [ ] R66 **Kanaleinstellungen**: In der Gruppe Feed steht die „Podcast-GUID“ (grau, nicht änderbar), in „Apple Podcasts & Verzeichnisse“ „Feed gegen Übernahme sperren: Nein“. Danach:
+- [x] R66 **Kanaleinstellungen**: In der Gruppe Feed steht die „Podcast-GUID“ (grau, nicht änderbar), in „Apple Podcasts & Verzeichnisse“ „Feed gegen Übernahme sperren: Nein“. Danach:
   ```sh
   curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -E "podcast:guid|podcast:locked"
   ```
   Erwartet: `<podcast:guid>` mit derselben GUID wie in den Einstellungen und `<podcast:locked owner="…">no</podcast:locked>`.
-- [ ] R65 Feed-Adresse im [Podbase-Validator](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/) prüfen: keine Fehler. Hinweise (blaues ℹ️) zu `podcast:locked`, `podcast:guid`, `podcast:transcript` sind erwartet (Roadmap 019/030), ebenso zu `itunes:duration`/`itunes:image` bei Episoden ohne Dauer bzw. eigenes Bild. *(Erster Durchlauf: nur PSP-1 „Podcast-Namespace fehlt“ als Fehler. Nach #83 mit angemeldetem Namespace weiterhin — der Test erkennt ihn offenbar nur, wenn ein `podcast:`-Element vorkommt; daher `podcast:guid` und `podcast:locked` mit dem folgenden PR.)* Danach erwartet: keine ℹ️ mehr zu `podcast:locked` und `podcast:guid`.
+- [x] R65 Feed-Adresse im [Podbase-Validator](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/) prüfen: keine Fehler. Hinweise (blaues ℹ️) zu `podcast:locked`, `podcast:guid`, `podcast:transcript` sind erwartet (Roadmap 019/030), ebenso zu `itunes:duration`/`itunes:image` bei Episoden ohne Dauer bzw. eigenes Bild. *(Erster Durchlauf: nur PSP-1 „Podcast-Namespace fehlt“ als Fehler. Nach #83 mit angemeldetem Namespace weiterhin — der Test erkennt ihn offenbar nur, wenn ein `podcast:`-Element vorkommt; daher `podcast:guid` und `podcast:locked` mit dem folgenden PR.)* Danach erwartet: keine ℹ️ mehr zu `podcast:locked` und `podcast:guid`.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
