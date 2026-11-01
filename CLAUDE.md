@@ -45,7 +45,10 @@ dort um passende Schritte ergänzen.
   (bleiben erhalten), aber `parent` (sonst verschiebt `Pages::edit()` die
   Unterseite); Episoden mit Unterseiten nicht löschen (`getChildren()`).
 - Episode erkennen: `pageHasPodcastTag()` prüft den Schlüssel `podcast` in
-  `$page->tags(true)` — auch neben weiteren Tags.
+  `$page->tags(true)` — auch neben weiteren Tags. Öffentlich (Feed, Link
+  „Anschauen“) sind die Typen `published`, `sticky`, `static`; `scheduled`
+  entsteht bei `published` mit Zukunftsdatum. Das Formular speichert nur
+  `published`/`draft` oder den vorhandenen Sondertyp `sticky`/`static`.
 - `$page->tags(true)` liefert `tagKey => Name`; ohne Argument einen String.
 - `$page->contentRaw()` = Rohtext, `content()` = gerendertes HTML.
 - `$page->uuid()` ist stabil, der Page-Key ändert sich mit dem Slug.

@@ -155,7 +155,12 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 
 ## K · Plugin-Metadaten (034)
 - [x] K40 **Einstellungen → Plugins**: Beim Podcast-Plugin kein Hinweis „Update“, Autor `larsauswsw`. In den Kanaleinstellungen kein gelber Kasten „möglicherweise nicht unterstützt“.
-- [ ] K41 Bei deutscher Website-Sprache steht in der Plugin-Liste die deutsche Beschreibung „Macht aus Bludit-Seiten einen Podcast – mit Episodenverwaltung, Podcast-Feed und Podlove Web Player.“ (vorher englisch, weil `de.json` statt `de_DE.json`).
+- [x] K41 Bei deutscher Website-Sprache steht in der Plugin-Liste die deutsche Beschreibung „Macht aus Bludit-Seiten einen Podcast – mit Episodenverwaltung, Podcast-Feed und Podlove Web Player.“ (vorher englisch, weil `de.json` statt `de_DE.json`).
+
+## L · Status und Beschreibung (007)
+- [ ] L42 Episode mit Datum in der Zukunft und Status „Veröffentlicht“ speichern: In der Liste Badge „Geplant“, im Feed noch nicht; im Formular steht „Veröffentlicht“, nach erneutem Speichern bleibt sie geplant.
+- [ ] L43 Beschreibung leeren und speichern → Meldung „Bitte eine Beschreibung eingeben.“, nichts wird geändert.
+- [ ] L44 *(nur falls vorhanden)* Eine im Bludit-Editor fixierte Episode: Badge „Fixiert“, im Formular Status „Fixiert“, bleibt nach dem Speichern fixiert und steht im Feed.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.

@@ -85,6 +85,7 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
 
 - **007** Tags werden überschrieben (`plugin.php:833`), Typ-Mapping
   (`768`, `580–584`), `content()` statt `contentRaw()` (`590`).
+  **Behoben** mit 003 und 007 (#8).
 - **008** Stille Upload-Fehler (`911–913`, `927–929`); `post_max_size`-Prüfung
   greift für jeden Frontend-POST (`218–227`); JS wertet Nicht-JSON als
   Netzwerkfehler (`podcast-admin.js:157`, `219`).
@@ -103,6 +104,7 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
 - **035** Toter Code (`renderEpisodesPage()`, `beforeAdminLoad()`), toter Link
   (`plugin.php:199`), No-op-Ternary (`podcast-admin.js:138–139`),
   `podcast.xml` (0 Byte) und `.claude/settings.local.json` im Repo.
+  **Behoben** mit 010, 042 und 035 (#36).
 - **037** README/Specs weichen vom Code ab.
 
 ## Was gut ist
