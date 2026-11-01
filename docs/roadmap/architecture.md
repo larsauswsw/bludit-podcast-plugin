@@ -94,15 +94,17 @@ Status: idea · Priorität: mittel · Aufwand: M · Bereich: `plugin.php`, `podc
 **Beschreibung**
 
 Alle Texte der Oberfläche sind fest auf Deutsch im Code, das README ist auf
-Englisch. Zusätzlich heißt die deutsche Sprachdatei `languages/de.json` —
-Bludit lädt aber `languages/<Sitesprache>.json`, also `de_DE.json`
+Englisch. Bludit lädt `languages/<Sitesprache>.json`, also `de_DE.json`
 (bzw. `de_AT`, `de_CH`), sonst `en.json` (`bl-kernel/boot/rules/60.plugins.php:81–84`).
-Die deutsche Datei wird daher nie verwendet.
+~~Die deutsche Datei hieß `de.json` und wurde nie geladen.~~ Seit 2026-11-01
+gibt es `de_DE.json`, `de_AT.json` und `de_CH.json`; sie enthalten bisher nur
+Name und Beschreibung für die Plugin-Liste.
 
 **Akzeptanzkriterien**
 
 - [ ] Alle UI-Texte über `$L->get('…')` mit Schlüsseln in `en.json` und `de_DE.json`
-      (ggf. Kopien für `de_AT.json`/`de_CH.json`).
+      (Kopien für `de_AT.json`/`de_CH.json`; Dateien angelegt, bisher nur
+      `plugin-data`).
 - [ ] Texte für das JS werden per `json_encode` als Objekt übergeben.
 - [ ] Deutsche Bludit-Installation zeigt deutsche, englische zeigt englische Texte.
 

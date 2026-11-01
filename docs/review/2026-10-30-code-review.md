@@ -37,7 +37,7 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
 | Bereich | Bludit (Doku / Kernel 3.22) | Plugin | Bewertung | ID |
 |---|---|---|---|---|
 | Plugin-Metadaten | `metadata.json` mit `author`, `email`, `website`, `version`, `releaseDate`, `license`, `compatible`; Name/Beschreibung aus `languages/` | Platzhalter-Autor, `compatible: "3.0"`, Felder fehlen; zusätzlich dynamische Properties in `init()` | ✗ Badge „Update“ in 3.19–3.22, PHP-8.2-Deprecations | 034 |
-| Sprachdateien | `languages/<Sitesprache>.json`, z. B. `de_DE.json`, Fallback `en.json` | `de.json` | ✗ wird nie geladen | 014 |
+| Sprachdateien | `languages/<Sitesprache>.json`, z. B. `de_DE.json`, Fallback `en.json` | `de.json` | ✗ wird nie geladen — **behoben** 2026-11-01 (`de_DE.json`, `de_AT.json`, `de_CH.json`) | 014 |
 | Einstellungen | `form()` + `Plugin::post()` speichert `dbFields` sanitized; `getValue()` liefert sanitized Wert | `post()` korrekt genutzt, aber Werte im Formular erneut escaped | ✗ fortschreitendes Escaping | 001 |
 | Admin-Seite | `adminSidebar()`, `adminView()`, `adminController()` unter `/admin/plugin/<name>` | `adminSidebar()`/`adminView()` korrekt; kein `adminController()` | ✓ / Verbesserung möglich | 010 |
 | CSRF | `99.security.php` prüft `tokenCSRF` bei jedem Admin-POST; JS-Variable `tokenCSRF` | Token wird gesendet, aber im Frontend-`beforeAll()` nicht geprüft | ✗ nur durch `SameSite=Lax` abgefedert | 010 |
