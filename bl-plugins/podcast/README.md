@@ -215,7 +215,7 @@ The [Podlove Web Player](https://podlove.org/podlove-web-player/) is added to ev
 - **Served locally:** the plugin ships Podlove Web Player 5.13.0 in `bl-plugins/podcast/player/` (MIT license, unmodified subset of the npm package; provenance and checksums in `player/SOURCE.md`). Visitors' browsers do **not** connect to a Podlove CDN.
 - **Fallback:** a plain HTML5 `<audio>` player with a download link is shown until the Podlove player has loaded, and stays visible if JavaScript is disabled or the player cannot load.
 - **Plain HTML5 player:** choose *Player auf Episodenseiten → Einfacher HTML5-Player* in the channel settings to skip the Podlove player entirely.
-- The player shows a subscribe button for the podcast feed.
+- The player shows a subscribe button for the podcast feed. It lists podcast apps that subscribe via the feed URL (Overcast, Downcast, AntennaPod, Podcast Addict and others, filtered by the visitor's platform) plus Player.fm and the plain RSS link. Apple Podcasts, Spotify and Pocket Casts are not listed: their links need the podcast's ID on that service.
 
 To update the bundled player, run `scripts/update-podlove-player.sh <version>` from the development repository (verifies the npm integrity hash and copies only the needed files).
 

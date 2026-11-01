@@ -437,9 +437,17 @@ class Podcast extends Plugin {
 
         // Assets (Layouts, Player-Bundle, Abo-Button) aus dem Plugin-Ordner laden;
         // Abo-Button immer mit der Feed-Adresse (auch ohne eingetragene Feed-URL)
+        $feedUrl = $this->feedUrl();
+        $clients = [];
+        foreach (self::SUBSCRIBE_APPS as $id) {
+            $clients[] = ['id' => $id];
+        }
+        // Web-Varianten, deren Link aus „service“ entsteht: hier die Feed-Adresse
+        $clients[] = ['id' => 'player-fm', 'service' => $feedUrl];
+        $clients[] = ['id' => 'rss',       'service' => $feedUrl];
         $playerConfig = [
             'base'             => $this->playerBaseUrl(),
-            'subscribe-button' => ['feed' => $this->feedUrl()],
+            'subscribe-button' => ['feed' => $feedUrl, 'clients' => $clients],
         ];
 
         $flags       = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
@@ -1401,6 +1409,22 @@ class Podcast extends Plugin {
 
     // Version des mitgelieferten Podlove Web Players (player/SOURCE.md)
     private const PODLOVE_VERSION = '5.13.0';
+
+    /**
+     * Apps für den Abo-Button, die den Podcast allein über die Feed-Adresse
+     * abonnieren (IDs aus player/5.13.0/button/list.js). Ohne Liste bleibt das
+     * Fenster „Abonnieren bei“ leer; der Player zeigt davon nur die Apps für
+     * die Plattform des Besuchers. Nicht enthalten: Dienste, deren Link die ID
+     * des Podcasts beim Dienst braucht (Apple Podcasts, Spotify, Pocket Casts,
+     * Castro, Deezer …) — der Player zieht ihren Web-Link der App vor und würde
+     * ohne ID ins Leere verlinken — sowie eingestellte Apps (Google Podcasts,
+     * Instacast, BeyondPod, Podscout).
+     */
+    private const SUBSCRIBE_APPS = [
+        'antenna-pod', 'podcast-addict', 'podcast-republic', 'procast',
+        'overcast', 'downcast', 'i-catcher', 'podcat', 'rss-radio',
+        'gpodder', 'clementine',
+    ];
 
     /**
      * Gewählter Player; unbekannte Werte fallen auf den lokalen Podlove-Player zurück.

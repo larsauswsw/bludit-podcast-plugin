@@ -98,6 +98,12 @@ schreibgeschützten Feld mit Link „Feed öffnen“. Website-URL analog über
 `siteUrl()`; eine eingetragene URL ohne `http(s)://` wird nicht verwendet und
 im Formular markiert.
 
+Nachtrag Installationstest P55: Der Abo-Button braucht eine Liste `clients`,
+sonst bleibt sein Fenster leer. Übergeben werden Apps, die über die
+Feed-Adresse abonnieren (`Podcast::SUBSCRIBE_APPS`), plus Player.fm und RSS.
+Apple Podcasts, Spotify, Pocket Casts u. a. brauchen die ID des Podcasts beim
+Dienst — das ist der optionale Punkt oben.
+
 **Betroffene Dateien**
 
 - `bl-plugins/podcast/plugin.php`

@@ -104,7 +104,11 @@ dort um passende Schritte ergänzen.
   Aktualisieren nur über `scripts/update-podlove-player.sh`; keine
   HTML-Seiten aus dem Paket (z. B. `share.html`) übernehmen. Der Player rendert
   `summary` per `innerHTML` — nur HTML-escapten Text übergeben; Entities nie
-  nach `strip_tags()` dekodieren (Regel 4).
+  nach `strip_tags()` dekodieren (Regel 4). Abo-Button: `clients` aus
+  `Podcast::SUBSCRIBE_APPS` plus `player-fm`/`rss` mit der Feed-Adresse als
+  `service` — ohne `clients` bleibt sein Fenster leer. Dienste mit Web-Variante
+  (Apple Podcasts, Pocket Casts …) nur mit ihrer Podcast-ID: der Player zieht
+  den Web-Link der App vor.
 
 ## Sicherheitsregeln (verbindlich für jede Änderung)
 
