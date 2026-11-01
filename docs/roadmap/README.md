@@ -57,7 +57,7 @@ dokumentiert.
 | [security.md](./security.md) | Sicherheit | 010–011, 039–040 |
 | [architecture.md](./architecture.md) | Architektur & Datenhaltung | 012–015 |
 | [feed.md](./feed.md) | RSS-Feed & Podcast-Verzeichnisse | 016–019 |
-| [admin-ux.md](./admin-ux.md) | Admin-Oberfläche & Workflow | 020–027, 042 |
+| [admin-ux.md](./admin-ux.md) | Admin-Oberfläche & Workflow | 020–027, 042–043 |
 | [frontend.md](./frontend.md) | Frontend & Player | 028–033, 041 |
 | [polish-and-debt.md](./polish-and-debt.md) | Sonstiges & technische Schulden | 034–038 |
 
@@ -107,6 +107,7 @@ dokumentiert.
 | 040 | Episodenbeschreibung im Player als HTML ausgeführt | mittel | S | [#46](https://github.com/larsauswsw/bludit-podcast-plugin/issues/46) ✅ |
 | 041 | Podlove Subscribe Button frei platzieren | mittel | M | [#48](https://github.com/larsauswsw/bludit-podcast-plugin/issues/48) |
 | 042 | Admin-Oberfläche im Bludit-Look und mobil nutzbar | hoch | M | [#57](https://github.com/larsauswsw/bludit-podcast-plugin/issues/57) ✅ |
+| 043 | Kanaleinstellungen gruppieren | mittel | S | [#74](https://github.com/larsauswsw/bludit-podcast-plugin/issues/74) |
 
 Alle Einträge starten mit `Status: idea` — priorisieren/verwerfen ist bewusst
 der nächste Schritt für dich.
@@ -118,7 +119,9 @@ Tag-Erhalt aus 007); 042 Admin-Oberfläche im Bludit-Look (übernimmt die Bootst
 aus 024 und 035); 004 Unterordner und 010 Episoden-API im Admin-Bereich; 034
 Plugin-Metadaten und Kompatibilität. Damit sind alle Pflichtpunkte vor 1.0 erledigt.
 Aus „Für 1.0 empfohlen“: 007 Seitentyp/Beschreibung, 035 Altlasten, 029 Player im
-Seiteninhalt, 008 Fehlermeldungen, 037 Doku. Offen für 1.0: 016.
+Seiteninhalt, 008 Fehlermeldungen, 037 Doku. Offen für 1.0: 016 — geplant für
+2026-11-02 zusammen mit 017 (automatische Feed-URL) und 043 (Kanaleinstellungen
+gruppieren).
 Teilweise vorgezogen: URL-/Typprüfung aus 011, `CLAUDE.md` aus 037, toter Code
 aus 035 (mit 010).
 
