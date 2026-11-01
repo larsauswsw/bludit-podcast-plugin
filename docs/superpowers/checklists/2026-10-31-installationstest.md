@@ -175,6 +175,11 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 ## N · Fehlermeldungen (008)
 - [x] N48 **Admin → Podcast** in zwei Browser-Tabs öffnen. Im zweiten Tab abmelden, im ersten eine Episode öffnen und speichern → Meldung „Sitzung abgelaufen oder Sicherheits-Token ungültig …“ statt „Netzwerkfehler“. Danach neu anmelden.
 
+## O · Datum und Zeitzone (009)
+- [ ] O49 **Neue Episode**: Das Datum ist mit der aktuellen Uhrzeit vorbelegt (vorher 1–2 Stunden zu früh). Unter dem Feld steht „Zeitzone der Website: …“ wie unter **Einstellungen → Allgemein → Sprache → Zeitzone**.
+- [ ] O50 *(am Computer)* Im Datumsfeld einen Teil löschen (z. B. die Minuten) und speichern → Meldung „Bitte ein gültiges Veröffentlichungsdatum eingeben.“, nichts wird gespeichert.
+- [ ] O51 Episode mit Datum in der Zukunft (z. B. morgen 06:00) und Status „Veröffentlicht“ speichern → in der Liste Badge „Geplant“, darunter Datum mit Uhrzeit („…, 06:00 Uhr“). Beim Bearbeiten steht dieselbe Uhrzeit im Feld. Danach Datum zurücksetzen oder Episode löschen.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 
