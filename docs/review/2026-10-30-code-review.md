@@ -72,11 +72,12 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
 - **003 Low-Level-Pages-API** — `plugin.php:840`, `846`, `872`.
   **Behoben** mit 003 (#4).
 - **004 Unterordner** — `plugin.php:104`, `115–116`, `215`/`254–260`, `920`, `924`.
+  **Behoben** mit 004 (#5).
 - **005 Slug als Schlüssel/GUID** — `plugin.php:454`, `1030–1045`.
 - **006 Daten im Plugin-Ordner** — `plugin.php:57–60`, `1009–1011`; das Repo
   liefert `metadata/episodes.json` mit `[]` aus.
 - **010 CSRF** — `plugin.php:229–251`; `bl-kernel/boot/site.php` lädt
-  `99.security.php` nicht.
+  `99.security.php` nicht. **Behoben** mit 010 (#11): API im Admin-Bereich.
 - **034 Metadaten/Deprecations** — `metadata.json`, `plugin.php:15–18`.
 
 ### Mittel
@@ -123,7 +124,7 @@ wurde zusätzlich mit einem Stub-Harness gegen alten und neuen Code geprüft.
 | # | Schwere | Befund | Stand |
 |---|---|---|---|
 | S1 | kritisch | Ungeprüfter Seitenschlüssel beim Speichern → `Pages::edit()` verschiebt Dateien außerhalb von `bl-content/pages/` (z. B. `databases/site.php` → Bludit startet den Installer → Übernahme der Website). Benötigt Rolle `editor`/`admin`. | **behoben** in #41 (039, #42) |
-| S2 | hoch | CSRF-Token wurde im Frontend-Hook nicht geprüft; nur `SameSite=Lax` schützte. Verstärkte S1. | **behoben** in #41; Umbau auf `adminController()` offen (010) |
+| S2 | hoch | CSRF-Token wurde im Frontend-Hook nicht geprüft; nur `SameSite=Lax` schützte. Verstärkte S1. | **behoben** in #41; API seit 010 im Admin-Bereich (`adminController()`) |
 | S3 | mittel | `bl-plugins/podcast/metadata/episodes.json` ist per HTTP abrufbar (Bludits `.htaccess` sperrt nur `bl-content/{databases,workspaces,pages,tmp}`) — Entwürfe und geplante Episoden inkl. Audio-URL einsehbar. | **behoben** mit 012 (Custom Fields; Altdatei wird als geschütztes Backup verschoben und gelöscht) |
 | S4 | mittel | Podlove-Skript vom CDN mit wandernder Version `5.x`, ohne SRI, im selben Origin wie der Admin-Bereich. | **behoben** mit 028 (Player 5.13.0 lokal, per npm-Integritätshash geprüft) |
 | S5 | niedrig–mittel | Uploads nur per Endung geprüft; vorhersagbare Dateinamen (Audio unveröffentlichter Episoden erratbar). | **behoben** mit 011 (MIME-Prüfung, zufällige Dateinamen, `.htaccess`); URL-Schema-Prüfung in #41 |

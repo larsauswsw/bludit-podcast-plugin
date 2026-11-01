@@ -129,6 +129,21 @@
         return '';
     }
 
+    var SESSION_ERROR = 'Sitzung abgelaufen oder Sicherheits-Token ungültig. ' +
+        'Bitte neu anmelden und es noch einmal versuchen.';
+
+    // Die API antwortet mit JSON. Lehnt Bludit die Anfrage ab (Sitzung abgelaufen,
+    // Token ungültig), leitet es auf die Login-Seite um — dann kommt HTML zurück.
+    function readJson(response) {
+        var type = response.headers.get('Content-Type') || '';
+        if (type.indexOf('application/json') === -1) {
+            var err = new Error(SESSION_ERROR);
+            err.isSession = true;
+            throw err;
+        }
+        return response.json();
+    }
+
     function setSaving(on) {
         saveBtn.disabled = on;
         saving.hidden    = !on;
@@ -210,8 +225,8 @@
             episode_key:        row.dataset.key
         });
 
-        fetch(PODCAST_API_URL, { method: 'POST', body: body })
-            .then(function (r) { return r.json(); })
+        fetch(PODCAST_API_URL, { method: 'POST', body: body, credentials: 'same-origin' })
+            .then(readJson)
             .then(function (data) {
                 if (data.error) {
                     alert('Fehler: ' + data.error);
@@ -219,8 +234,8 @@
                 }
                 location.reload();
             })
-            .catch(function () {
-                alert('Netzwerkfehler beim Löschen.');
+            .catch(function (err) {
+                alert(err && err.isSession ? SESSION_ERROR : 'Netzwerkfehler beim Löschen.');
             });
     });
 
@@ -282,8 +297,8 @@
         setSaving(true);
         errorBox.hidden = true;
 
-        fetch(PODCAST_API_URL, { method: 'POST', body: fd })
-            .then(function (r) { return r.json(); })
+        fetch(PODCAST_API_URL, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(readJson)
             .then(function (data) {
                 setSaving(false);
                 if (data.error) {
@@ -292,9 +307,9 @@
                 }
                 location.reload();
             })
-            .catch(function () {
+            .catch(function (err) {
                 setSaving(false);
-                showError('Netzwerkfehler beim Speichern.');
+                showError(err && err.isSession ? SESSION_ERROR : 'Netzwerkfehler beim Speichern.');
             });
     });
 

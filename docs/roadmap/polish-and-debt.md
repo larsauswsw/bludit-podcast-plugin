@@ -46,9 +46,8 @@ Status: idea · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php`, `pod
 
 **Beschreibung**
 
-- `renderEpisodesPage()` (`plugin.php:488–538`) wird nirgends aufgerufen.
-- `beforeAdminLoad()` (`plugin.php:263–265`) ist leer, wird aber trotzdem als
-  Hook registriert; `uninstall()` ruft nur `parent::uninstall()` auf.
+- ~~`renderEpisodesPage()` wird nirgends aufgerufen; `beforeAdminLoad()` ist
+  leer~~ — mit 010 entfernt. `uninstall()` ruft nur `parent::uninstall()` auf.
 - ~~`form()` verlinkt auf `admin/podcast-episodes`~~ — mit 042 behoben.
 - `podcast-admin.js:138–139`: `d.audioUrl ? 'url' : 'url'` — beide Zweige gleich.
 - `podcast.xml` (0 Byte) liegt in der Repo-Wurzel.

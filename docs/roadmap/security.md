@@ -5,7 +5,7 @@ Status-/Prioritäts-Legende.
 
 ## 010 · CSRF-Schutz: Episoden-API in `adminController()` verlagern
 
-Status: idea · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`beforeAll()`, `adminView()`, `handleApiRequest()`), `podcast-admin.js` · Issue: [#11](https://github.com/larsauswsw/bludit-podcast-plugin/issues/11)
+Status: done · Priorität: hoch · Aufwand: M · Bereich: `plugin.php` (`beforeAll()`, `adminView()`, `handleApiRequest()`), `podcast-admin.js` · Issue: [#11](https://github.com/larsauswsw/bludit-podcast-plugin/issues/11)
 
 **Beschreibung**
 
@@ -22,15 +22,28 @@ Bludit bietet seit 3.13 einen offiziellen Weg (Doku „Admin panel: Controller a
 View via plugins“): `adminController()` wird für `/admin/plugin/podcast`
 aufgerufen, **nachdem** Session, Login und CSRF-Prüfung gelaufen sind.
 
+**Umsetzung (2026-11-01):** Die API läuft als POST auf
+`DOMAIN_ADMIN . 'plugin/podcast?podcast_api=1'`. Bludit prüft dort Session,
+Login und CSRF-Token (`99.security.php`) und meldet bei ungültigem Token ab;
+das JS erkennt die Umleitung zur Anmeldung und zeigt „Sitzung abgelaufen …“
+statt „Netzwerkfehler“. Überschreitet ein Upload `post_max_size`, verwirft PHP
+den POST-Body samt Token — Bludit würde dann ebenfalls abmelden. Diesen Fall
+fängt der Plugin-Konstruktor ab (`rejectOversizedApiPost()`, läuft in
+`60.plugins.php` vor der CSRF-Prüfung): nur für angemeldete Nutzer, nur für
+`plugin/podcast?podcast_api=1`, ohne etwas zu ändern, mit der bekannten Meldung
+„Upload zu groß …“. Der alte Weg über die Website (`?podcast_api=1` im
+Frontend) ist entfernt.
+
 **Akzeptanzkriterien**
 
-- [ ] Speichern/Löschen/Upload laufen als POST auf `DOMAIN_ADMIN . 'plugin/podcast'`
+- [x] Speichern/Löschen/Upload laufen als POST auf `DOMAIN_ADMIN . 'plugin/podcast'`
       und werden in `adminController()` verarbeitet (JSON-Antwort + `exit`).
-- [x] Ohne gültigen `tokenCSRF` wird nichts geändert (vorgezogen: Prüfung per
-      `$security->validateTokenCSRF()` in `beforeAll()`, getestet).
-- [ ] Die Rollenprüfung (`admin`, `editor`) bleibt erhalten, nutzt
-      `checkRole(['admin','editor'], false)`.
-- [ ] `beforeAll()` enthält nur noch die Feed-Auslieferung.
+- [x] Ohne gültigen `tokenCSRF` wird nichts geändert (jetzt Bludits Prüfung
+      im Admin-Bereich; getestet: Abmeldung + Hinweis im Formular).
+- [x] Die Rollenprüfung (`admin`, `editor`) bleibt erhalten, nutzt
+      `checkRole(['admin','editor'], false)` (getestet: Autor bekommt
+      „Keine Berechtigung.“).
+- [x] `beforeAll()` enthält nur noch die Feed-Auslieferung.
 - [x] Fehlermeldungen geben keine Server-Pfade preis; unerwartete Fehler landen
       im Bludit-Log.
 
