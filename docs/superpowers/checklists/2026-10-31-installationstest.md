@@ -111,7 +111,7 @@ Erhöhen bei PHP-FPM: in der Pool-Datei (z. B. `/etc/php/8.3/fpm/pool.d/www.conf
 Auf einem iPhone und möglichst einem Android-Gerät, Hochformat. Vorher die Seite neu laden (das Skript hat eine neue Cache-Version).
 - [x] G21 **Admin → Podcast**: Überschrift „Podcast – Episoden“ ohne Umbruch neben einem Knopf, darunter „Neue Episode“ und „Kanaleinstellungen“ als Links. Liste ohne seitliches Scrollen: Titel, darunter Datum mit „Staffel · Folge“, rechts ☰.
 - [x] G22 ☰ öffnet das Menü mit Anschauen (nur bei veröffentlichten Episoden), Bearbeiten, Im Bludit-Editor öffnen, Löschen; Tippen auf den Titel öffnet ebenfalls das Formular. Episode ohne Titel erscheint als „Kein Titel“, Entwurf mit Badge „Entwurf“.
-- [ ] G23 Formular: Typ, Explicit und Status zeigen ihren Text vollständig; Folge/Staffel und Typ/Explicit stehen paarweise nebeneinander; das Datum steht linksbündig und mittig im Feld. *(Nach #58 Auswahlfelder und Paare in Ordnung, das Datum saß zu weit oben; Korrektur danach — erneut prüfen.)*
+- [x] G23 Formular: Typ, Explicit und Status zeigen ihren Text vollständig; Folge/Staffel und Typ/Explicit stehen paarweise nebeneinander; das Datum steht linksbündig und mittig im Feld. *(Nach #58 saß das Datum zu weit oben; mit #59 auf dem iPhone in Ordnung.)*
 - [x] G24 Audio → **Datei hochladen**: Feld mit „Durchsuchen“, nach der Auswahl erscheint der Dateiname (lange Namen mit „…“); Speichern lädt hoch wie bisher.
 - [x] G25 **Kanaleinstellungen** sehen aus wie bei anderen Bludit-Plugins (Hinweise klein unter den Feldern); Speichern übernimmt die Werte, der Link im blauen Kasten führt zur Episodenliste.
 - [x] G26 Am Desktop: Liste mit Spalten Staffel, Folge, Typ; sonst wie Bludits **Inhalte**-Liste.
