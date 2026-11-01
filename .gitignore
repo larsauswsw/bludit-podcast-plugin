@@ -4,3 +4,9 @@ bl-plugins/podcast/metadata/
 
 # Lokale Claude-Code-Einstellungen (nicht committen, CLAUDE.md Regel 11)
 .claude/settings.local.json
+
+# Entwicklungswerkzeuge (Roadmap 036)
+/vendor/
+/node_modules/
+/build/
+/.phpunit.result.cache

@@ -127,6 +127,24 @@ dort um passende Schritte ergänzen.
   der Player zieht den Web-Link der App vor; Apps über die Feed-Adresse
   (`SUBSCRIBE_APPS`), `player-fm`/`rss` mit der Feed-Adresse als `service`.
 
+## Tests & CI (Roadmap 036)
+
+GitHub Action `.github/workflows/ci.yml` bei jedem Push auf `main` und jedem PR:
+`php -l` und PHPUnit unter PHP 8.0–8.4 (Docker `php:X-cli`), PHPStan Stufe 5
+gegen Bludit 3.22, ESLint, gitleaks. Lokal:
+
+```sh
+composer install && vendor/bin/phpunit
+ln -sfn /pfad/zu/bludit build/bludit && vendor/bin/phpstan analyse
+npm ci && npx eslint bl-plugins/podcast/js
+```
+
+Unit-Tests in `tests/Unit/` rufen private Methoden per Reflection auf
+(`PodcastTestCase::call()`); `tests/bootstrap.php` bildet nur die nötige
+Bludit-Umgebung nach. Neue Hilfsfunktionen und jeder Sicherheitsfix bekommen
+einen Test. Entwicklungsdateien (`composer.json`, `package.json`, `tests/`,
+`.github/`) gehören nicht ins Release-ZIP.
+
 ## Sicherheitsregeln (verbindlich für jede Änderung)
 
 Jede Änderung muss frei von bekannten Schwachstellen sein. Wird beim Arbeiten
@@ -164,7 +182,8 @@ und möglichst im selben Change behoben, nicht nur notiert.
 11. **Keine Geheimnisse** im Repository; `.claude/settings.local.json` nicht
     committen.
 12. **Vor jedem Commit:** Diff gegen diese Liste prüfen (Security-Review),
-    `php -l` auf geänderte PHP-Dateien; Ergebnis im PR/Commit kurz nennen.
+    `php -l` auf geänderte PHP-Dateien, `vendor/bin/phpunit` und bei JS-Änderungen
+    ESLint; Ergebnis im PR/Commit kurz nennen.
 13. **Öffentliches Repo:** Schwachstellen nicht mit Ausnutzungsdetails in
     Issues, Commits oder Doku beschreiben, bevor der Fix gemergt ist; den Fix
     neutral benennen.

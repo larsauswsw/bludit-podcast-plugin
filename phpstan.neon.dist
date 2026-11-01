@@ -1,0 +1,11 @@
+# Statische Analyse von plugin.php (Roadmap 036). Bludit 3.22 liegt in
+# build/bludit (CI: git clone am Tag 3.22.0; lokal z. B. als Symlink) und wird
+# nur gelesen, um Klassen und Funktionen zu kennen, nicht ausgeführt.
+parameters:
+    level: 5
+    paths:
+        - bl-plugins/podcast/plugin.php
+    scanDirectories:
+        - build/bludit/bl-kernel
+    bootstrapFiles:
+        - tests/phpstan-constants.php

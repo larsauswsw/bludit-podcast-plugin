@@ -165,7 +165,7 @@
     function updateFormatHint() {
         if (!peFormatHint) return;
         var mode = document.querySelector('input[name="pe-audio-mode"]:checked');
-        var name = '';
+        var name;
         if (mode && mode.value === 'file') {
             name = peAudioFile.files && peAudioFile.files[0] ? peAudioFile.files[0].name : '';
         } else {
@@ -230,7 +230,7 @@
     function setStatus(type) {
         var extra = peStatus.querySelector('option[data-extra]');
         if (extra) peStatus.removeChild(extra);
-        if (EXTRA_STATUS.hasOwnProperty(type)) {
+        if (Object.prototype.hasOwnProperty.call(EXTRA_STATUS, type)) {
             var opt = document.createElement('option');
             opt.value = type;
             opt.textContent = EXTRA_STATUS[type];
@@ -238,7 +238,7 @@
             peStatus.appendChild(opt);
         }
         // „Geplant“ = veröffentlicht mit Datum in der Zukunft (setzt Bludit)
-        peStatus.value = type === 'draft' || EXTRA_STATUS.hasOwnProperty(type) ? type : 'published';
+        peStatus.value = type === 'draft' || Object.prototype.hasOwnProperty.call(EXTRA_STATUS, type) ? type : 'published';
     }
 
     function setMode(radioName, value) {

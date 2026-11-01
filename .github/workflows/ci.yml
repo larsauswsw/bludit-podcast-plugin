@@ -1,0 +1,64 @@
+# CI für das Podcast-Plugin (Roadmap 036, Teil 1).
+# Nur Actions der GitHub-Organisation actions/; Werkzeuge über Docker-Images mit
+# fester Version bzw. Composer/npm mit Lock-Datei (CLAUDE.md Regel 9).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP ${{ matrix.php }} – Syntax und Unit-Tests
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Abhängigkeiten (Composer, auf PHP 8.0 festgelegt)
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Syntax und Tests mit PHP ${{ matrix.php }}
+        run: |
+          docker run --rm -v "$PWD":/app -w /app php:${{ matrix.php }}-cli sh -ec '
+            php -v | head -n 1
+            find bl-plugins/podcast tests -name "*.php" -not -path "*/player/*" -print0 | xargs -0 -n 1 php -l
+            vendor/bin/phpunit
+          '
+
+  phpstan:
+    name: PHPStan (Stufe 5)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Abhängigkeiten
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Bludit 3.22 zum Lesen der Klassen
+        run: git clone --quiet --depth 1 --branch 3.22.0 https://github.com/bludit/bludit.git build/bludit
+      - name: Analyse
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+  javascript:
+    name: ESLint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Abhängigkeiten (npm, aus package-lock.json)
+        run: npm ci --no-audit --no-fund
+      - name: Lint
+        run: npx eslint bl-plugins/podcast/js
+
+  secrets:
+    name: Geheimnisse (gitleaks)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gesamte Historie prüfen
+        run: docker run --rm -v "$PWD":/repo zricethezav/gitleaks:v8.18.4 detect --source /repo --no-banner --redact --verbose
