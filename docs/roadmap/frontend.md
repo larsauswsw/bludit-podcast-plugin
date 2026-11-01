@@ -50,7 +50,7 @@ Admin-Aktionen ausführen.
 
 ## 029 · Player über `pageBegin`-Hook statt DOM-Selektoren einbinden
 
-Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`siteBodyEnd()`) · Issue: [#30](https://github.com/larsauswsw/bludit-podcast-plugin/issues/30)
+Status: done · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`siteBodyEnd()`) · Issue: [#30](https://github.com/larsauswsw/bludit-podcast-plugin/issues/30)
 
 **Beschreibung**
 
@@ -63,13 +63,30 @@ popeye) innerhalb des Seiteninhalts aufrufen. Achtung: `pageBegin` wird in
 Listenansichten pro Seite aufgerufen — nur bei `$url->whereAmI() === 'page'`
 ausgeben.
 
+**Umsetzung (2026-11-01), anders als geplant:** In allen vier Core-Themes
+liegt `pageBegin` **vor** dem Titel (bei flavor sogar vor der Brotkrumen-
+Navigation) und `pageEnd` nach dem Inhalt — der Player stünde über der
+Überschrift. Stattdessen setzt das Plugin den Player in den Seiteninhalt:
+`beforeSiteLoad()` → `$page->setField('content', …)`, wie Bludits
+`custom-fields-parser`. So steht er in jedem Theme dort, wo das Theme den Inhalt
+ausgibt, serverseitig und ohne Layout-Sprung. Weil `custom-fields-parser` den
+Inhalt neu aus dem Rohtext aufbaut, prüft `siteHead()` (läuft nach allen
+`beforeSiteLoad`-Hooks, vor der Ausgabe des Inhalts) noch einmal und setzt den
+Player bei Bedarf erneut. `siteBodyEnd()` startet nur noch den Podlove-Player;
+das Verschieben per Selektorliste ist entfernt.
+
 **Akzeptanzkriterien**
 
-- [ ] Player-Container wird im `pageBegin`-Hook (Einstellung: oben/unten →
-      `pageBegin`/`pageEnd`) ausgegeben.
-- [ ] Fallback über `siteBodyEnd` nur, wenn das Theme die Hooks nicht aufruft.
-- [ ] Optional: Platzhalter `{{ podcast-player }}` im Inhalt zur freien Positionierung.
-- [ ] Getestet mit allen vier Core-Themes.
+- [x] Player steht im Seiteninhalt; Einstellung „Position des Players“: am
+      Anfang (unter dem Titel, Standard) oder am Ende des Inhalts.
+- [x] Kein Verschieben per JavaScript mehr, daher kein Fallback nötig — jedes
+      Theme gibt den Seiteninhalt aus.
+- [x] Platzhalter `{{ podcast-player }}` im Text setzt den Player an genau diese
+      Stelle; in Listen (Startseite, Tag-Seiten), Feed und Player-Beschreibung
+      wird er entfernt.
+- [x] Getestet mit allen vier Core-Themes (alternative, blogx, flavor, popeye):
+      Player zwischen Titel und Text, genau einmal, Podlove lädt; außerdem
+      „Am Ende“, Platzhalter, HTML5-Player und aktiver `custom-fields-parser`.
 
 **Betroffene Dateien**
 
@@ -197,6 +214,8 @@ Umsetzung am Bundle zu prüfen.
 **Offene Entscheidung: Position**
 
 1. **Platzhalter im Seiteninhalt** (Vorschlag), z. B. `{{ podcast-subscribe }}`
+   — gleiche Technik wie `{{ podcast-player }}` aus 029 (`injectPlayer()`,
+   `removePlaceholdersInLists()`)
    — funktioniert in jedem Theme und auf jeder Seite; Ersetzung beim Rendern
    (`beforeSiteLoad`, wie in der Bludit-Doku „Plugins and pages“ bzw. dem
    Core-Plugin „Custom fields parser“).

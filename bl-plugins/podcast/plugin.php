@@ -34,6 +34,7 @@ class Podcast extends Plugin {
             'explicit'    => 'no',
             'maxUploadMB' => '512',
             'playerMode'  => 'podlove',
+            'playerPosition' => 'top',
         ];
     }
 
@@ -197,6 +198,14 @@ class Podcast extends Plugin {
                 <option value="html5"   <?php echo $this->playerMode() === 'html5'   ? 'selected' : '' ?>>Einfacher HTML5-Player</option>
             </select>
         </div>
+        <div>
+            <label for="podcast-playerPosition">Position des Players</label>
+            <select id="podcast-playerPosition" name="playerPosition">
+                <option value="top"    <?php echo $this->playerPosition() === 'top'    ? 'selected' : '' ?>>Am Anfang des Inhalts (unter dem Titel)</option>
+                <option value="bottom" <?php echo $this->playerPosition() === 'bottom' ? 'selected' : '' ?>>Am Ende des Inhalts</option>
+            </select>
+            <span class="tip">Für eine eigene Stelle <code>{{ podcast-player }}</code> in den Text der Episode schreiben.</span>
+        </div>
         <?php
         echo $text('maxUploadMB', 'Max. Upload-Größe (MB)', 'Die PHP-Limits des Servers gelten zusätzlich.',
             (int) ($this->getValue('maxUploadMB') ?: 512), ' inputmode="numeric" pattern="[0-9]*"');
@@ -220,14 +229,34 @@ class Podcast extends Plugin {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // PLAYER AUF EPISODENSEITEN
+    // ═══════════════════════════════════════════════════════════════════
+
+    /** Platzhalter, mit dem man den Player frei im Inhalt positioniert. */
+    private const PLAYER_PLACEHOLDER = '{{ podcast-player }}';
+
+    /**
+     * Setzt den Player in den Seiteninhalt — so steht er in jedem Theme dort,
+     * wo das Theme den Inhalt ausgibt (zwischen Titel und Text bzw. am Ende),
+     * ohne nachträgliches Verschieben per JavaScript. Muster wie Bludits
+     * custom-fields-parser: $page->setField('content', …) in beforeSiteLoad().
+     */
+    public function beforeSiteLoad() {
+        $this->injectPlayer();
+        $this->removePlaceholdersInLists();
+    }
+
     public function siteHead() {
-        global $url, $page;
+        $this->removePlaceholdersInLists();
+        $page = $this->currentEpisode();
+        if (!$page) return;
 
-        if ($url->whereAmI() !== 'page') return;
-        if (!$page instanceof Page || !$this->pageHasPodcastTag($page)) return;
+        // Ein anderes Plugin (z. B. custom-fields-parser) kann den Inhalt in
+        // beforeSiteLoad() neu aus dem Rohtext aufgebaut haben — siteHead()
+        // läuft danach und vor der Ausgabe des Inhalts.
+        $this->injectPlayer();
 
-        $meta = $this->getEpisodeMeta($page);
-        if (empty($meta['audio_url'])) return;
         if ($this->playerMode() !== 'podlove') return;
 
         // Lokal ausgelieferter Player (player/SOURCE.md) — keine Verbindung zu einem CDN
@@ -235,27 +264,101 @@ class Podcast extends Plugin {
         echo '<script src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . '"></script>' . "\n";
     }
 
-    public function siteBodyEnd() {
+    /** Aktuelle Seite, wenn sie eine Episode mit Audio ist, sonst null. */
+    private function currentEpisode() {
         global $url, $page;
 
-        if ($url->whereAmI() !== 'page') return;
-        if (!$page instanceof Page || !$this->pageHasPodcastTag($page)) return;
+        if (!($url instanceof Url) || $url->whereAmI() !== 'page') return null;
+        if (!$page instanceof Page || !$this->pageHasPodcastTag($page)) return null;
+        $meta = $this->getEpisodeMeta($page);
+        return empty($meta['audio_url']) ? null : $page;
+    }
+
+    /** Fügt den Player einmal in den Inhalt der aktuellen Episode ein. */
+    private function injectPlayer() {
+        $page = $this->currentEpisode();
+        if (!$page) return;
+
+        $content = (string) $page->content();
+        if (strpos($content, 'id="podcast-episode-player"') !== false) return;
+
+        $player = $this->playerHtml($page);
+        // Platzhalter: Parsedown setzt eine allein stehende Zeile in <p>…</p>
+        $wrapped = '<p>' . self::PLAYER_PLACEHOLDER . '</p>';
+        if (strpos($content, $wrapped) !== false) {
+            $content = $this->replaceOnce($wrapped, $player, $content);
+        } elseif (strpos($content, self::PLAYER_PLACEHOLDER) !== false) {
+            $content = $this->replaceOnce(self::PLAYER_PLACEHOLDER, $player, $content);
+        } elseif ($this->playerPosition() === 'bottom') {
+            $content = $content . "\n" . $player;
+        } else {
+            $content = $player . "\n" . $content;
+        }
+        // Weitere Platzhalter entfernen (nur ein Player pro Seite)
+        $content = str_replace([$wrapped, self::PLAYER_PLACEHOLDER], '', $content);
+        $page->setField('content', $content);
+    }
+
+    /**
+     * In Listen (Startseite, Tag-, Kategorieseiten) gibt es keinen Player —
+     * dort den Platzhalter aus Vorschau und Inhalt entfernen.
+     */
+    private function removePlaceholdersInLists() {
+        global $url, $content;
+
+        if (!($url instanceof Url) || $url->whereAmI() === 'page' || !is_array($content)) return;
+        foreach ($content as $listPage) {
+            if (!$listPage instanceof Page || !$this->pageHasPodcastTag($listPage)) continue;
+            $html = (string) $listPage->content();
+            if (strpos($html, self::PLAYER_PLACEHOLDER) === false) continue;
+            $html = str_replace(['<p>' . self::PLAYER_PLACEHOLDER . '</p>', self::PLAYER_PLACEHOLDER], '', $html);
+            // Leerer Wert ließe Page::content() den Rohtext neu laden
+            $listPage->setField('content', $html === '' ? ' ' : $html);
+        }
+    }
+
+    private function replaceOnce($search, $replace, $subject) {
+        $pos = strpos($subject, $search);
+        return $pos === false ? $subject : substr_replace($subject, $replace, $pos, strlen($search));
+    }
+
+    /** Text einer Seite ohne HTML und ohne Player-Platzhalter (Feed, Player-Beschreibung). */
+    private function contentWithoutPlaceholder($page) {
+        return str_replace(self::PLAYER_PLACEHOLDER, '', (string) $page->content());
+    }
+
+    /** Player-Container: Podlove-Ziel plus HTML5-Fallback (bleibt, bis Podlove geladen ist). */
+    private function playerHtml($page) {
+        $audioAttr = htmlspecialchars($this->getEpisodeMeta($page)['audio_url'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $html  = '<div id="podcast-episode-player" class="podcast-episode-player">';
+        if ($this->playerMode() === 'podlove') {
+            $html .= '<div id="podlove-episode-player"></div>';
+        }
+        $html .= '<div class="podcast-audio-fallback">'
+            . '<audio controls preload="none" src="' . $audioAttr . '" style="width:100%"></audio>'
+            . '<p><a href="' . $audioAttr . '" download>Episode herunterladen</a></p>'
+            . '</div></div>';
+        return $html;
+    }
+
+    /** Startet den Podlove-Player (embed.js ist im Kopf geladen). */
+    public function siteBodyEnd() {
+        $page = $this->currentEpisode();
+        if (!$page || $this->playerMode() !== 'podlove') return;
 
         $meta = $this->getEpisodeMeta($page);
-        if (empty($meta['audio_url'])) return;
-
-        $get = function ($k) use ($meta) { return isset($meta[$k]) ? $meta[$k] : ''; };
+        $get  = function ($k) use ($meta) { return isset($meta[$k]) ? $meta[$k] : ''; };
 
         $audioUrl    = $get('audio_url');
         $audioLength = (int) $get('audio_length');
-        $audioExt    = strtolower(pathinfo(parse_url($audioUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
+        $audioExt    = strtolower(pathinfo((string) parse_url($audioUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
         $mime        = $this->audioMimeType($audioExt);
         $duration    = $get('itunes_duration');
         $poster      = $get('itunes_image') ?: $this->setting('cover');
-        $mode        = $this->playerMode();
         // Podlove rendert die Beschreibung als HTML — daher als escapten Text übergeben.
         // Titel zeigt er als Text an: Klartext übergeben (json_encode escaped für JavaScript).
-        $summary     = trim(html_entity_decode(strip_tags($page->content()), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+        // Vom eigenen Inhalt nur den Text, ohne den eingefügten Player.
+        $summary     = trim(html_entity_decode(strip_tags($this->contentWithoutPlaceholder($this->freshPage($page))), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         $summaryHtml = nl2br(htmlspecialchars($summary, ENT_QUOTES | ENT_HTML5, 'UTF-8'), false);
         $showSummary = nl2br(htmlspecialchars($this->setting('feedDesc'), ENT_QUOTES | ENT_HTML5, 'UTF-8'), false);
 
@@ -294,57 +397,34 @@ class Podcast extends Plugin {
         $episodeJson = json_encode($episodeConfig, $flags);
         $playerJson  = json_encode($playerConfig,  $flags);
         if ($episodeJson === false || $playerJson === false) return;
-
-        $audioAttr = htmlspecialchars($audioUrl, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         ?>
-        <div id="podcast-episode-player">
-          <?php if ($mode === 'podlove'): ?>
-          <div id="podlove-episode-player"></div>
-          <?php endif ?>
-          <div class="podcast-audio-fallback">
-            <audio controls preload="none" src="<?php echo $audioAttr ?>" style="width:100%"></audio>
-            <p><a href="<?php echo $audioAttr ?>" download>Episode herunterladen</a></p>
-          </div>
-        </div>
         <script>
         (function () {
-            var playerDiv = document.getElementById('podcast-episode-player');
-            var selectors = [
-                'article .post-content',
-                'article .entry-content',
-                'article .content',
-                'article',
-                '.post-content',
-                '.entry-content',
-                'main',
-                '#content'
-            ];
-            var container = null;
-            for (var i = 0; i < selectors.length; i++) {
-                var el = document.querySelector(selectors[i]);
-                if (el) { container = el; break; }
-            }
-            if (container) {
-                container.insertBefore(playerDiv, container.firstChild);
-            }
-            <?php if ($mode === 'podlove'): ?>
             // HTML5-Fallback bleibt sichtbar, bis der Podlove-Player geladen ist
-            if (typeof window.podlovePlayer === 'function') {
-                var fallback = playerDiv.querySelector('.podcast-audio-fallback');
-                Promise.resolve(window.podlovePlayer(
-                    '#podlove-episode-player',
-                    <?php echo $episodeJson ?>,
-                    <?php echo $playerJson ?>
-                )).then(function () {
-                    if (fallback && fallback.parentNode) {
-                        fallback.parentNode.removeChild(fallback);
-                    }
-                }, function () {});
-            }
-            <?php endif ?>
+            var target = document.getElementById('podlove-episode-player');
+            if (!target || typeof window.podlovePlayer !== 'function') return;
+            var fallback = document.querySelector('#podcast-episode-player .podcast-audio-fallback');
+            Promise.resolve(window.podlovePlayer(
+                '#podlove-episode-player',
+                <?php echo $episodeJson ?>,
+                <?php echo $playerJson ?>
+            )).then(function () {
+                if (fallback && fallback.parentNode) {
+                    fallback.parentNode.removeChild(fallback);
+                }
+            }, function () {});
         }());
         </script>
         <?php
+    }
+
+    /** Neues Page-Objekt derselben Seite: Inhalt ohne den eingefügten Player. */
+    private function freshPage($page) {
+        try {
+            return new Page($page->key());
+        } catch (Exception $e) {
+            return $page;
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -437,7 +517,7 @@ class Podcast extends Plugin {
             $epTitle    = $this->xml($this->plainTitle($page));
             // Beschreibung bleibt HTML-Text (Tags entfernt, Entities erhalten), wie es
             // Podcast-Apps für <description> erwarten; Klartext/Shownotes folgen mit 016
-            $epDesc     = $this->xml(strip_tags($page->content()));
+            $epDesc     = $this->xml(strip_tags($this->contentWithoutPlaceholder($page)));
             $epLink     = $this->xml($page->permalink());
             $epAudioUrl = $this->xml($audioUrl);
             $epGuid     = $this->xml($page->uuid());
@@ -1255,6 +1335,11 @@ class Podcast extends Plugin {
      */
     private function playerMode() {
         return $this->getValue('playerMode') === 'html5' ? 'html5' : 'podlove';
+    }
+
+    /** Position des Players im Inhalt; unbekannte Werte → am Anfang. */
+    private function playerPosition() {
+        return $this->getValue('playerPosition') === 'bottom' ? 'bottom' : 'top';
     }
 
     // ── Escaping: Bludit speichert Texte HTML-escaped (Sanitize::html). Gelesen

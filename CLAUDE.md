@@ -87,7 +87,13 @@ dort um passende Schritte ergänzen.
   bei fester Höhe, Auswahl- und Dateifelder werden sonst abgeschnitten.
   Plugin-Einstellungen (`form()`) ohne eigene Klassen, gestylt über
   `.plugin-form`. Eigenes CSS nur in `css/podcast-admin.css`.
-- Player-Position: Hooks `pageBegin`/`pageEnd`.
+- Player-Position: im Seiteninhalt — `beforeSiteLoad()` → `injectPlayer()` →
+  `$page->setField('content', …)` (wie Bludits custom-fields-parser), erneut in
+  `siteHead()`, falls ein anderes Plugin den Inhalt neu gebaut hat. Einstellung
+  `playerPosition` (`top`/`bottom`), Platzhalter `{{ podcast-player }}`; in
+  Listen, Feed und Player-Beschreibung wird er entfernt. `pageBegin` liegt in
+  den Core-Themes vor dem Titel, daher nicht genutzt. `siteBodyEnd()` startet nur
+  den Podlove-Player.
 - Podlove Web Player liegt lokal in `bl-plugins/podcast/player/`
   (`Podcast::PODLOVE_VERSION`, Herkunft und Prüfsummen in `player/SOURCE.md`).
   Aktualisieren nur über `scripts/update-podlove-player.sh`; keine
