@@ -98,11 +98,11 @@ dokumentiert.
 | 031 | Episodenarchiv & Sidebar-Widget „Neueste Episoden“ | niedrig | M | [#32](https://github.com/larsauswsw/bludit-podcast-plugin/issues/32) |
 | 032 | SEO: JSON-LD `PodcastEpisode` & OpenGraph-Audio | niedrig | S | [#33](https://github.com/larsauswsw/bludit-podcast-plugin/issues/33) |
 | 033 | Datenschutzfreundliche Download-Statistik | niedrig | L | [#34](https://github.com/larsauswsw/bludit-podcast-plugin/issues/34) |
-| 034 | `metadata.json`, Kompatibilität & PHP-8.2-Deprecations | hoch | S | [#35](https://github.com/larsauswsw/bludit-podcast-plugin/issues/35) |
+| 034 | `metadata.json`, Kompatibilität & PHP-8.2-Deprecations | hoch | S | [#35](https://github.com/larsauswsw/bludit-podcast-plugin/issues/35) ✅ |
 | 035 | Toten Code & Repo-Altlasten entfernen | niedrig | S | [#36](https://github.com/larsauswsw/bludit-podcast-plugin/issues/36) |
 | 036 | Automatisierte Tests & CI | mittel | M | [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37) |
 | 037 | README, Specs & CLAUDE.md aktualisieren | niedrig | S | [#38](https://github.com/larsauswsw/bludit-podcast-plugin/issues/38) |
-| 038 | Release-Prozess: CHANGELOG & ZIP-Paket | niedrig | S | [#39](https://github.com/larsauswsw/bludit-podcast-plugin/issues/39) |
+| 038 | Release-Prozess: CHANGELOG & ZIP-Paket, öffentliches Repo | mittel | M | [#39](https://github.com/larsauswsw/bludit-podcast-plugin/issues/39) |
 | 039 | Pfad-Manipulation über ungeprüften Seitenschlüssel | hoch | S | [#42](https://github.com/larsauswsw/bludit-podcast-plugin/issues/42) ✅ |
 | 040 | Episodenbeschreibung im Player als HTML ausgeführt | mittel | S | [#46](https://github.com/larsauswsw/bludit-podcast-plugin/issues/46) ✅ |
 | 041 | Podlove Subscribe Button frei platzieren | mittel | M | [#48](https://github.com/larsauswsw/bludit-podcast-plugin/issues/48) |
@@ -115,7 +115,8 @@ Bereits umgesetzt (`Status: done`): 039 (Sicherheitsfix, #41); 012 Custom Fields
 mit 005 und 006 (behebt S3); 028 lokal gehosteter Player (behebt S4) mit 040 (S8, #45); 011 Upload-Härtung
 (behebt S5); 001 Escaping; 002 Tag-Erkennung; 003 Bludit-Seitenfunktionen (mit
 Tag-Erhalt aus 007); 042 Admin-Oberfläche im Bludit-Look (übernimmt die Bootstrap-Punkte
-aus 024 und 035); 004 Unterordner und 010 Episoden-API im Admin-Bereich.
+aus 024 und 035); 004 Unterordner und 010 Episoden-API im Admin-Bereich; 034
+Plugin-Metadaten und Kompatibilität. Damit sind alle Pflichtpunkte vor 1.0 erledigt.
 Teilweise vorgezogen: URL-/Typprüfung aus 011, `CLAUDE.md` aus 037, toter Code
 aus 035 (mit 010).
 
