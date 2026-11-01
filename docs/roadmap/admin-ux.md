@@ -269,8 +269,8 @@ darunter, blenden Nebenspalten auf kleinen Bildschirmen aus
       CSS nur, wo Bludit keine Lösung hat (Datumsfeld, lange Dateinamen), in
       `css/podcast-admin.css`; Skript und CSS über `domainPath()` mit
       Cache-Version eingebunden.
-- [ ] Auf einem echten iPhone/Android-Gerät geprüft (Installationstest,
-      Abschnitt „Mobil“).
+- [x] Auf einem echten iPhone geprüft (Installationstest G21–G26,
+      2026-11-01; Datumsfeld mit #59 nachgebessert).
 
 **Betroffene Dateien**
 

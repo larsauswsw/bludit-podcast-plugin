@@ -17,14 +17,20 @@
 /*
  * Datumsfeld: booty vergrößert den Innenabstand von .form-control, die Höhe
  * bleibt die feste Bootstrap-Höhe. Bei Textfeldern fällt das nicht auf, Safari
- * auf iOS schiebt den Datumswert dadurch aber nach unten und zentriert ihn.
+ * auf iOS setzt den Datumswert aber oben in den Inhaltsbereich, ohne feste
+ * Höhe (WebKit-Bug 198959), und zentriert ihn waagerecht.
+ * Lösung wie in Bootstrap 5: Wert eine Zeile hoch (line-height 1.5), Abstand
+ * oben und unten gleich, sodass genau diese Zeile in das Feld passt
+ * (Bootstrap-Abstand .375rem, 1px weniger wegen des 2-px-Rahmens von booty).
  */
 #podcast-episode-form input[type="datetime-local"].form-control {
-    padding-top: 0;
-    padding-bottom: 0;
+    padding-top: calc(.375rem - 1px);
+    padding-bottom: calc(.375rem - 1px);
 }
 
 #podcast-episode-form input[type="datetime-local"]::-webkit-date-and-time-value {
+    height: 1.5em;
+    margin: 0;
     text-align: left;
 }
 
