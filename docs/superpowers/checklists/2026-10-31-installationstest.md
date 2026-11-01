@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone.
 
 ## Vorbereitung (SSH)
 
@@ -109,12 +109,12 @@ Erhöhen bei PHP-FPM: in der Pool-Datei (z. B. `/etc/php/8.3/fpm/pool.d/www.conf
 
 ## G · Admin auf dem Smartphone (042)
 Auf einem iPhone und möglichst einem Android-Gerät, Hochformat. Vorher die Seite neu laden (das Skript hat eine neue Cache-Version).
-- [ ] G21 **Admin → Podcast**: Überschrift „Podcast – Episoden“ ohne Umbruch neben einem Knopf, darunter „Neue Episode“ und „Kanaleinstellungen“ als Links. Liste ohne seitliches Scrollen: Titel, darunter Datum mit „Staffel · Folge“, rechts ☰.
-- [ ] G22 ☰ öffnet das Menü mit Anschauen (nur bei veröffentlichten Episoden), Bearbeiten, Im Bludit-Editor öffnen, Löschen; Tippen auf den Titel öffnet ebenfalls das Formular. Episode ohne Titel erscheint als „Kein Titel“, Entwurf mit Badge „Entwurf“.
-- [ ] G23 Formular: Typ, Explicit und Status zeigen ihren Text vollständig; Folge/Staffel und Typ/Explicit stehen paarweise nebeneinander; das Datum steht linksbündig und mittig im Feld.
-- [ ] G24 Audio → **Datei hochladen**: Feld mit „Durchsuchen“, nach der Auswahl erscheint der Dateiname (lange Namen mit „…“); Speichern lädt hoch wie bisher.
-- [ ] G25 **Kanaleinstellungen** sehen aus wie bei anderen Bludit-Plugins (Hinweise klein unter den Feldern); Speichern übernimmt die Werte, der Link im blauen Kasten führt zur Episodenliste.
-- [ ] G26 Am Desktop: Liste mit Spalten Staffel, Folge, Typ; sonst wie Bludits **Inhalte**-Liste.
+- [x] G21 **Admin → Podcast**: Überschrift „Podcast – Episoden“ ohne Umbruch neben einem Knopf, darunter „Neue Episode“ und „Kanaleinstellungen“ als Links. Liste ohne seitliches Scrollen: Titel, darunter Datum mit „Staffel · Folge“, rechts ☰.
+- [x] G22 ☰ öffnet das Menü mit Anschauen (nur bei veröffentlichten Episoden), Bearbeiten, Im Bludit-Editor öffnen, Löschen; Tippen auf den Titel öffnet ebenfalls das Formular. Episode ohne Titel erscheint als „Kein Titel“, Entwurf mit Badge „Entwurf“.
+- [ ] G23 Formular: Typ, Explicit und Status zeigen ihren Text vollständig; Folge/Staffel und Typ/Explicit stehen paarweise nebeneinander; das Datum steht linksbündig und mittig im Feld. *(Nach #58 Auswahlfelder und Paare in Ordnung, das Datum saß zu weit oben; Korrektur danach — erneut prüfen.)*
+- [x] G24 Audio → **Datei hochladen**: Feld mit „Durchsuchen“, nach der Auswahl erscheint der Dateiname (lange Namen mit „…“); Speichern lädt hoch wie bisher.
+- [x] G25 **Kanaleinstellungen** sehen aus wie bei anderen Bludit-Plugins (Hinweise klein unter den Feldern); Speichern übernimmt die Werte, der Link im blauen Kasten führt zur Episodenliste.
+- [x] G26 Am Desktop: Liste mit Spalten Staffel, Folge, Typ; sonst wie Bludits **Inhalte**-Liste.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - „&“ in Titeln oder Kategorie im Feed doppelt escaped (001).
