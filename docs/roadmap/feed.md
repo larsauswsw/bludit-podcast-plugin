@@ -16,7 +16,15 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
 - `<itunes:explicit>` wird als `yes`/`no` ausgegeben; Apple spezifiziert
   `true`/`false`.
 - Kategorie ist ein Freitextfeld ohne Unterkategorie — Tippfehler führen zur
-  Ablehnung (siehe auch 001 für das `&`-Problem).
+  Ablehnung (siehe auch 001 für das `&`-Problem). Apple hat eine feste Liste
+  (Kategorie → Unterkategorie). Im Feed stehen immer die **englischen**
+  Originalnamen, Unterkategorien verschachtelt
+  (`<itunes:category text="Kids &amp; Family"><itunes:category text="Parenting"/></itunes:category>`);
+  Apple übersetzt sie in seinen Apps selbst und wertet nur die erste Kategorie
+  aus. Eine Freitext-Unterkategorie wie `Sports > Tennis` erkennt Apple nicht.
+
+**Paket 2026-11-02:** 016 zusammen mit 017 (automatische Feed-URL) und 043
+(Kanaleinstellungen gruppieren) umsetzen — alle drei bauen `form()` um.
 - Es fehlen `<itunes:type>` (episodic/serial), `<copyright>`, das RSS-`<image>`
   und `<content:encoded>` für formatierte Shownotes; `<itunes:summary>` ist
   veraltet.
@@ -31,7 +39,12 @@ aktuellen Apple-Anforderungen ab bzw. lässt empfohlene Elemente weg:
 **Akzeptanzkriterien**
 
 - [ ] `<itunes:explicit>true|false</itunes:explicit>` auf Kanal- und Episodenebene.
-- [ ] Kategorie + Unterkategorie als Auswahlliste nach Apple-Kategorieliste.
+- [ ] Kategorie + Unterkategorie als Auswahlliste nach Apple-Kategorieliste
+      (vor der Umsetzung gegen Apples aktuelle Liste prüfen). Anzeige deutsch
+      mit englischem Namen, z. B. „Kinder & Familie (Kids & Family) →
+      Elternschaft (Parenting)“; gespeichert und im Feed nur der englische Name.
+      Bisheriger Freitext wird übernommen, wenn er einer Apple-Kategorie
+      entspricht, sonst fordert das Formular eine Auswahl.
 - [ ] Neue Kanaleinstellungen: `itunes:type`, Copyright; RSS-`<image>` wird aus
       dem Cover erzeugt.
 - [ ] Shownotes als `<content:encoded><![CDATA[…]]></content:encoded>` mit HTML,
@@ -62,10 +75,15 @@ Außerdem fehlt das `<link rel="alternate" type="application/rss+xml">` im
 `<head>`, über das Browser und Podcast-Apps den Feed automatisch finden — das
 Core-RSS-Plugin macht genau das in `siteHead()`.
 
+Folge des leeren Felds heute: Ohne Feed-URL fehlen der Abo-Button im Player
+und `<atom:link rel="self">` im Feed (auf der Live-Seite am 2026-11-01 so
+gesehen). Umsetzung zusammen mit 016 und 043.
+
 **Akzeptanzkriterien**
 
 - [ ] Ist `feedUrl` leer, wird `DOMAIN_BASE . feedSlug` verwendet (Feld bleibt
-      als Override, z. B. für FeedBurner/CDN).
+      als Override, z. B. für FeedBurner/CDN) — für Abo-Button und
+      `<atom:link rel="self">`.
 - [ ] `siteHead()` gibt auf allen Seiten einen Discovery-Link mit Podcast-Titel aus.
 - [ ] Einstellungsseite zeigt die fertige Feed-URL als Link zum Kopieren.
 - [ ] Optional: Felder für Apple-/Spotify-/Podcast-Index-Links, die als

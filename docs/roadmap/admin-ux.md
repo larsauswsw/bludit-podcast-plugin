@@ -288,3 +288,34 @@ darunter, blenden Nebenspalten auf kleinen Bildschirmen aus
 - `bl-plugins/podcast/plugin.php`, `bl-plugins/podcast/js/podcast-admin.js`,
   `bl-plugins/podcast/css/podcast-admin.css` (neu),
   `docs/superpowers/checklists/2026-10-31-installationstest.md`
+
+---
+
+## 043 · Kanaleinstellungen gruppieren
+
+Status: planned · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`form()`) · Issue: [#74](https://github.com/larsauswsw/bludit-podcast-plugin/issues/74)
+
+**Beschreibung**
+
+Die Kanaleinstellungen sind eine lange, ungeordnete Liste. Wunsch des Inhabers
+(2026-11-01): Felder für Apple/iTunes zusammen, Felder für die Website
+zusammen usw. Umsetzung zusammen mit 016 (Kategorie-Auswahl) und 017
+(automatische Feed-URL), die `form()` ohnehin umbauen.
+
+**Akzeptanzkriterien**
+
+- [ ] Gruppen mit Zwischenüberschrift im Stil der Bludit-Plugin-Einstellungen:
+  - **Podcast:** Titel, Beschreibung, Autor, Sprache, Cover
+  - **Apple Podcasts & Verzeichnisse:** Kategorie + Unterkategorie, Explicit,
+    E-Mail des Inhabers (Hinweis: steht öffentlich im Feed, Apple nutzt sie
+    zur Bestätigung), später Typ episodisch/seriell (016) und Feed-Umzug (018)
+  - **Feed:** Feed-Dateiname, fertige Feed-URL zum Kopieren, abweichende
+    Feed-URL (optional), Website-URL
+  - **Website & Player:** Player auf Episodenseiten, Position des Players
+  - **Uploads:** Max. Upload-Größe
+- [ ] Feldnamen (`name=`) bleiben gleich, gespeicherte Werte bleiben erhalten.
+- [ ] Auf dem Handy gut bedienbar (wie 042).
+
+**Betroffene Dateien**
+
+- `bl-plugins/podcast/plugin.php`
