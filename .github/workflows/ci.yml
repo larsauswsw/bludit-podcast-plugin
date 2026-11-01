@@ -1,4 +1,4 @@
-# CI für das Podcast-Plugin (Roadmap 036, Teil 1).
+# CI für das Podcast-Plugin (Roadmap 036).
 # Nur Actions der GitHub-Organisation actions/; Werkzeuge über Docker-Images mit
 # fester Version bzw. Composer/npm mit Lock-Datei (CLAUDE.md Regel 9).
 name: CI
@@ -28,8 +28,35 @@ jobs:
           docker run --rm -v "$PWD":/app -w /app php:${{ matrix.php }}-cli sh -ec '
             php -v | head -n 1
             find bl-plugins/podcast tests -name "*.php" -not -path "*/player/*" -print0 | xargs -0 -n 1 php -l
-            vendor/bin/phpunit
+            vendor/bin/phpunit --testsuite unit
           '
+
+  integration:
+    name: Integration mit Bludit 3.22
+    runs-on: ubuntu-24.04
+    env:
+      BLUDIT_URL: http://127.0.0.1:8099
+      # Nur für die frisch installierte Wegwerf-Instanz dieses Jobs
+      BLUDIT_ADMIN_PASSWORD: ci-test-12345
+    steps:
+      - uses: actions/checkout@v5
+      - name: Abhängigkeiten
+        run: composer install --no-interaction --no-progress --prefer-dist
+      - name: Bludit 3.22 mit dem Plugin
+        run: |
+          git clone --quiet --depth 1 --branch 3.22.0 https://github.com/bludit/bludit.git build/site
+          cp -R bl-plugins/podcast build/site/bl-plugins/
+      - name: Bludit installieren und Integrationstests
+        run: |
+          php -S 127.0.0.1:8099 -t build/site tests/Integration/router.php > build/server.log 2>&1 &
+          for i in $(seq 1 30); do curl -s -o /dev/null "$BLUDIT_URL/" && break; sleep 0.5; done
+          curl -sS -o /dev/null -w 'Installation: HTTP %{http_code}\n' -X POST \
+            -d "password=$BLUDIT_ADMIN_PASSWORD&timezone=Europe/Berlin&install=1" \
+            "$BLUDIT_URL/install.php?language=de_DE"
+          vendor/bin/phpunit --testsuite integration
+      - name: Server-Protokoll bei Fehler
+        if: failure()
+        run: cat build/server.log
 
   phpstan:
     name: PHPStan (Stufe 5)
@@ -61,4 +88,4 @@ jobs:
         with:
           fetch-depth: 0
       - name: Gesamte Historie prüfen
-        run: docker run --rm -v "$PWD":/repo zricethezav/gitleaks:v8.18.4 detect --source /repo --no-banner --redact --verbose
+        run: docker run --rm -v "$PWD":/repo zricethezav/gitleaks:v8.18.4 detect --source /repo --config /repo/.gitleaks.toml --no-banner --redact --verbose

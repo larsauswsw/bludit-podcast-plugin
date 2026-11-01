@@ -100,7 +100,7 @@ dokumentiert.
 | 033 | Datenschutzfreundliche Download-Statistik | niedrig | L | [#34](https://github.com/larsauswsw/bludit-podcast-plugin/issues/34) |
 | 034 | `metadata.json`, Kompatibilität & PHP-8.2-Deprecations | hoch | S | [#35](https://github.com/larsauswsw/bludit-podcast-plugin/issues/35) ✅ |
 | 035 | Toten Code & Repo-Altlasten entfernen | niedrig | S | [#36](https://github.com/larsauswsw/bludit-podcast-plugin/issues/36) ✅ |
-| 036 | Automatisierte Tests & CI | hoch | M | [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37) |
+| 036 | Automatisierte Tests & CI | hoch | M | [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37) ✅ |
 | 037 | README, Specs & CLAUDE.md aktualisieren | niedrig | S | [#38](https://github.com/larsauswsw/bludit-podcast-plugin/issues/38) ✅ |
 | 038 | Release-Prozess: CHANGELOG & ZIP-Paket, öffentliches Repo | mittel | M | [#39](https://github.com/larsauswsw/bludit-podcast-plugin/issues/39) |
 | 039 | Pfad-Manipulation über ungeprüften Seitenschlüssel | hoch | S | [#42](https://github.com/larsauswsw/bludit-podcast-plugin/issues/42) ✅ |
