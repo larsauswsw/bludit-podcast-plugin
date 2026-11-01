@@ -645,7 +645,7 @@ class Podcast extends Plugin {
                         <?php endif ?>
                       </div>
                       <p class="podcast-episode-meta m-0 text-uppercase text-muted">
-                        <?php echo $ep->date('d.m.Y') ?><?php if ($numbers): ?><span class="d-md-none"> · <?php echo htmlspecialchars(implode(' · ', $numbers)) ?></span><?php endif ?>
+                        <?php echo $type === 'scheduled' ? $ep->date('d.m.Y, H:i \U\h\r') : $ep->date('d.m.Y') ?><?php if ($numbers): ?><span class="d-md-none"> · <?php echo htmlspecialchars(implode(' · ', $numbers)) ?></span><?php endif ?>
                       </p>
                     </td>
                     <td class="pt-3 text-center d-none d-md-table-cell"><?php echo htmlspecialchars($season) ?></td>
@@ -798,8 +798,14 @@ class Podcast extends Plugin {
           <div class="form-row">
             <div class="form-group col-md-6">
               <label for="pe-date">Veröffentlichungsdatum *</label>
-              <input type="datetime-local" class="form-control" id="pe-date"
-                     value="<?php echo date('Y-m-d\TH:i') ?>">
+              <input type="datetime-local" class="form-control" id="pe-date" required
+                     value="<?php echo date('Y-m-d\TH:i') ?>"
+                     data-timezone="<?php echo htmlspecialchars(date_default_timezone_get(), ENT_QUOTES) ?>"
+                     aria-describedby="pe-date-help">
+              <small id="pe-date-help" class="form-text text-muted">
+                Zeitzone der Website: <?php echo htmlspecialchars(date_default_timezone_get(), ENT_QUOTES) ?>.
+                Ein Datum in der Zukunft plant die Episode.
+              </small>
             </div>
             <div class="form-group col-md-6">
               <label for="pe-status">Status</label>
@@ -900,11 +906,8 @@ class Podcast extends Plugin {
         // Roh übergeben: Pages::add()/edit() escapen selbst (Sanitize::html)
         $title   = trim($this->postString($post, 'title'));
         $content = $this->postString($post, 'content');
-        $rawDate = $this->postString($post, 'date') ?: date('Y-m-d\TH:i');
+        $date    = $this->episodeDate($this->postString($post, 'date'));
         $key     = $this->postString($post, 'key');
-
-        // datetime-local → Bludit-kompatibles Format
-        $date = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $rawDate)));
 
         if (!$title) {
             return ['error' => 'Titel ist erforderlich'];
@@ -913,6 +916,9 @@ class Podcast extends Plugin {
         // würde sonst stillschweigend den alten Text behalten
         if ($content === '') {
             return ['error' => 'Bitte eine Beschreibung eingeben.'];
+        }
+        if ($date === null) {
+            return ['error' => 'Bitte ein gültiges Veröffentlichungsdatum eingeben.'];
         }
 
         // Nur bestehende Podcast-Episoden dürfen bearbeitet werden — vor jedem Upload prüfen
@@ -1318,6 +1324,25 @@ class Podcast extends Plugin {
         $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
         $host   = (string) parse_url($url, PHP_URL_HOST);
         return in_array($scheme, ['http', 'https'], true) && $host !== '';
+    }
+
+    /**
+     * Datum aus dem Feld datetime-local (JJJJ-MM-TTTHH:MM, optional mit
+     * Sekunden) im Bludit-Format DB_DATE_FORMAT; Bludit liest es in der
+     * Zeitzone der Website. Null bei leerem oder ungültigem Wert (z. B. 31.02.)
+     * statt stillschweigend 1970 oder „jetzt“. Geprüft wird in UTC, damit eine
+     * Uhrzeit in der Lücke der Sommerzeitumstellung nicht verschoben wird.
+     */
+    private function episodeDate($value) {
+        if (!is_string($value) || preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?$/D', $value) !== 1) {
+            return null;
+        }
+        $format = strlen($value) === 16 ? 'Y-m-d\TH:i' : 'Y-m-d\TH:i:s';
+        $parsed = DateTime::createFromFormat('!' . $format, $value, new DateTimeZone('UTC'));
+        if ($parsed === false || $parsed->format($format) !== $value) {
+            return null;
+        }
+        return $parsed->format(DB_DATE_FORMAT);
     }
 
     /**

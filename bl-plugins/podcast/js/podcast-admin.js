@@ -59,6 +59,34 @@
             : (label.dataset.placeholder || '');
     }
 
+    function pad2(n) {
+        return (n < 10 ? '0' : '') + n;
+    }
+
+    // „Jetzt“ für das Datumsfeld (datetime-local) in der Zeitzone der Website:
+    // so liest der Server das Datum. toISOString() wäre UTC. Ohne Intl oder
+    // bei unbekannter Zeitzone gilt die Uhrzeit des Browsers.
+    function nowForDateInput() {
+        var now = new Date();
+        var tz  = peDate.dataset.timezone;
+        if (tz && window.Intl && Intl.DateTimeFormat.prototype.formatToParts) {
+            try {
+                var p = {};
+                new Intl.DateTimeFormat('en-GB', {
+                    timeZone: tz, hour12: false,
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit'
+                }).formatToParts(now).forEach(function (part) { p[part.type] = part.value; });
+                // Ältere Browser liefern um Mitternacht „24“
+                var value = p.year + '-' + p.month + '-' + p.day + 'T' +
+                    (p.hour === '24' ? '00' : p.hour) + ':' + p.minute;
+                if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return value;
+            } catch (e) { /* unbekannte Zeitzone */ }
+        }
+        return now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate()) +
+            'T' + pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+    }
+
     function clearForm() {
         peKey.value      = '';
         peTitle.value    = '';
@@ -68,7 +96,7 @@
         peType.value     = 'full';
         peExplicit.value = 'no';
         peDuration.value = '';
-        peDate.value     = new Date().toISOString().slice(0, 16);
+        peDate.value     = nowForDateInput();
         setStatus('published');
         peImageUrl.value = '';
         peAudioUrl.value = '';
@@ -231,7 +259,7 @@
         peType.value     = d.type     || 'full';
         peExplicit.value = d.explicit || 'no';
         peDuration.value = d.duration || '';
-        peDate.value     = d.date     || new Date().toISOString().slice(0, 16);
+        peDate.value     = d.date     || nowForDateInput();
         setStatus(d.status || 'published');
         peImageUrl.value = d.image    || '';
         peAudioUrl.value = d.audioUrl || '';
@@ -294,6 +322,11 @@
         }
         if (audioMode === 'file' && !audioFile) {
             showError('Bitte eine Audiodatei auswählen.');
+            return;
+        }
+        // Unvollständige Eingaben liefert das Feld als leeren Wert
+        if (!peDate.value) {
+            showError('Bitte ein gültiges Veröffentlichungsdatum eingeben.');
             return;
         }
 

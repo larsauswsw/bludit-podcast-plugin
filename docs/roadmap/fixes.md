@@ -349,7 +349,7 @@ Status: done · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`befo
 
 ## 009 · Datum/Zeitzone im Episodenformular korrigieren
 
-Status: idea · Priorität: niedrig · Aufwand: S · Bereich: `podcast-admin.js`, `plugin.php` (`handleSaveEpisode()`) · Issue: [#10](https://github.com/larsauswsw/bludit-podcast-plugin/issues/10)
+Status: done · Priorität: niedrig · Aufwand: S · Bereich: `podcast-admin.js`, `plugin.php` (`handleSaveEpisode()`) · Issue: [#10](https://github.com/larsauswsw/bludit-podcast-plugin/issues/10)
 
 **Beschreibung**
 
@@ -362,9 +362,17 @@ das wird aber nirgends angezeigt (siehe 007).
 
 **Akzeptanzkriterien**
 
-- [ ] Vorbelegung nutzt die lokale Zeit des Browsers bzw. die Bludit-Zeitzone.
-- [ ] Ungültiges Datum führt zu einer Fehlermeldung statt zu 1970.
-- [ ] Nach dem Speichern mit Zukunftsdatum zeigt die Liste „geplant“ mit Datum.
+- [x] Vorbelegung nutzt die lokale Zeit des Browsers bzw. die Bludit-Zeitzone.
+- [x] Ungültiges Datum führt zu einer Fehlermeldung statt zu 1970.
+- [x] Nach dem Speichern mit Zukunftsdatum zeigt die Liste „geplant“ mit Datum.
+
+**Umsetzung:** Das Formular belegt „jetzt“ in der Zeitzone der Website vor
+(`date_default_timezone_get()`, von Bludit aus den Einstellungen gesetzt; per
+`Intl.DateTimeFormat`, sonst Browserzeit) und nennt die Zeitzone unter dem
+Feld — so liest auch der Server das Datum. `episodeDate()` prüft das Format
+`datetime-local` samt Kalender (31.02. → Fehler); leer oder ungültig ergibt
+„Bitte ein gültiges Veröffentlichungsdatum eingeben.“, im Browser schon vor dem
+Senden. Geplante Episoden zeigen in der Liste Datum und Uhrzeit.
 
 **Betroffene Dateien**
 
