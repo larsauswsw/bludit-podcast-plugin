@@ -49,22 +49,24 @@ Status: done · Priorität: hoch · Aufwand: S · Bereich: `metadata.json`, `plu
 
 ## 035 · Toten Code & Repo-Altlasten entfernen
 
-Status: idea · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php`, `podcast-admin.js`, Repo-Wurzel · Issue: [#36](https://github.com/larsauswsw/bludit-podcast-plugin/issues/36)
+Status: done · Priorität: niedrig · Aufwand: S · Bereich: `plugin.php`, `podcast-admin.js`, Repo-Wurzel · Issue: [#36](https://github.com/larsauswsw/bludit-podcast-plugin/issues/36)
 
 **Beschreibung**
 
 - ~~`renderEpisodesPage()` wird nirgends aufgerufen; `beforeAdminLoad()` ist
-  leer~~ — mit 010 entfernt. `uninstall()` ruft nur `parent::uninstall()` auf.
+  leer~~ — mit 010 entfernt. ~~`uninstall()` ruft nur `parent::uninstall()` auf~~ — entfernt.
 - ~~`form()` verlinkt auf `admin/podcast-episodes`~~ — mit 042 behoben.
-- `podcast-admin.js:138–139`: `d.audioUrl ? 'url' : 'url'` — beide Zweige gleich.
-- `podcast.xml` (0 Byte) liegt in der Repo-Wurzel.
-- `.claude/settings.local.json` ist eingecheckt (lokale Einstellungen).
+- ~~`podcast-admin.js`: `d.audioUrl ? 'url' : 'url'` — beide Zweige gleich~~ — entfernt.
+- ~~`podcast.xml` in der Repo-Wurzel~~ — gelöscht (alter Beispiel-Feed).
+- ~~`.claude/settings.local.json` ist eingecheckt~~ — aus dem Repo entfernt,
+  in `.gitignore` (enthielt nur lokale Freigaben, keine Geheimnisse).
 - ~~Bootstrap-3-Klassen im Bootstrap-4-Admin~~ — mit 042 behoben.
 
 **Akzeptanzkriterien**
 
-- [ ] Toter Code und leere Hooks entfernt (Link in `form()` mit 042 korrigiert).
-- [ ] `podcast.xml` gelöscht, `.claude/settings.local.json` aus dem Repo
+- [x] Toter Code und leere Hooks entfernt (Link in `form()` mit 042 korrigiert).
+      Keine weiteren ungenutzten Funktionen (geprüft: übrig sind nur Bludit-Hooks).
+- [x] `podcast.xml` gelöscht, `.claude/settings.local.json` aus dem Repo
       entfernt und in `.gitignore` aufgenommen.
 - [x] Formular nutzt Bootstrap-4-Markup (`form-check form-check-inline`, mit 042).
 

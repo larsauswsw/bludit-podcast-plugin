@@ -259,7 +259,7 @@ Umgesetzt zusammen mit 012 (statt Workspace direkt Custom Fields).
 
 ## 007 · Bearbeiten überschreibt Tags, Seitentyp und Inhalt
 
-Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`handleSaveEpisode()`, `renderEpisodeSection()`), `podcast-admin.js` · Issue: [#8](https://github.com/larsauswsw/bludit-podcast-plugin/issues/8)
+Status: done · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`handleSaveEpisode()`, `renderEpisodeSection()`), `podcast-admin.js` · Issue: [#8](https://github.com/larsauswsw/bludit-podcast-plugin/issues/8)
 
 **Beschreibung**
 
@@ -277,15 +277,28 @@ Bludit-Editor gemacht wurden:
 - Ein geleerter Beschreibungstext wird nicht gespeichert, weil `Pages::edit()`
   leeren Inhalt ignoriert.
 
+**Umsetzung (2026-11-01):** Das Formular kennt „Veröffentlicht“ und „Entwurf“.
+„Geplant“ ist kein eigener Status: Bludit setzt ihn selbst bei veröffentlicht
+plus Datum in der Zukunft; das Formular zeigt dann „Veröffentlicht“. Hat eine
+Episode im Bludit-Editor den Typ „Fixiert“ (`sticky`) oder „Statisch“
+(`static`) bekommen, bietet das Formular genau diesen Typ zusätzlich an und
+behält ihn beim Speichern (Server-Whitelist: `published`, `draft` und der
+vorhandene Sondertyp). Die Liste zeigt Badges „Geplant“, „Fixiert“, „Statisch“,
+„Entwurf“. Dabei gefunden: Der Feed nahm nur `getPublishedDB()` — fixierte und
+statische Episoden fehlten, obwohl sie öffentlich sind; jetzt sind sie drin.
+Die Beschreibung ist Pflichtfeld (Formular und Server).
+
 **Akzeptanzkriterien**
 
 - [x] Bestehende Tags bleiben erhalten (mit 003: beim Bearbeiten werden keine
       Tags mehr gesendet; neue Episoden bekommen `podcast`).
-- [ ] Der Status bildet `published`, `draft`, `scheduled` (und unverändert
-      `sticky`/`static`) korrekt ab und wird korrekt angezeigt.
+- [x] Der Status bildet `published`, `draft`, `scheduled` (und unverändert
+      `sticky`/`static`) korrekt ab und wird korrekt angezeigt (lokal getestet,
+      dazu: unzulässiger Status wird `published`).
 - [x] Das Formular nutzt `contentRaw()`; Markdown bleibt nach mehrfachem Speichern
       unverändert (vorgezogen nach Test auf echter Installation).
-- [ ] Verhalten bei leerer Beschreibung ist definiert (Pflichtfeld laut Spec).
+- [x] Verhalten bei leerer Beschreibung ist definiert: Pflichtfeld, Meldung
+      „Bitte eine Beschreibung eingeben.“ in Formular und API.
 
 **Betroffene Dateien**
 

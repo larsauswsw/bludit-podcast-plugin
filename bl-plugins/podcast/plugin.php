@@ -51,10 +51,6 @@ class Podcast extends Plugin {
         }
     }
 
-    public function uninstall() {
-        parent::uninstall();
-    }
-
     // ═══════════════════════════════════════════════════════════════════
     // ADMIN NAVIGATION
     // ═══════════════════════════════════════════════════════════════════
@@ -358,8 +354,10 @@ class Podcast extends Plugin {
     private function outputFeed() {
         global $pages;
 
-        // Alle veröffentlichten Seiten mit Tag 'podcast' laden
-        $keys     = $pages->getPublishedDB(true);
+        // Alle öffentlich sichtbaren Seiten mit Tag 'podcast' (wie in der
+        // Episodenliste: veröffentlicht, fixiert, statisch); geplante und
+        // Entwürfe nicht. getPublishedDB() allein liefert nur 'published'.
+        $keys     = array_merge($pages->getPublishedDB(true), $pages->getStickyDB(true), $pages->getStaticDB(true));
         $episodes = [];
         foreach ($keys as $key) {
             $page = new Page($key);
@@ -557,7 +555,11 @@ class Podcast extends Plugin {
                           <?php endif ?>
                         </a>
                         <?php if ($type === 'scheduled'): ?>
-                          <span class="badge badge-info align-middle ml-1">geplant</span>
+                          <span class="badge badge-info align-middle ml-1">Geplant</span>
+                        <?php elseif ($type === 'sticky'): ?>
+                          <span class="badge badge-warning align-middle ml-1"><i class="fa fa-thumb-tack"></i> Fixiert</span>
+                        <?php elseif ($type === 'static'): ?>
+                          <span class="badge badge-light align-middle ml-1">Statisch</span>
                         <?php elseif (!$isPublic): ?>
                           <span class="badge badge-secondary align-middle ml-1">Entwurf</span>
                         <?php endif ?>
@@ -818,7 +820,6 @@ class Podcast extends Plugin {
         // Roh übergeben: Pages::add()/edit() escapen selbst (Sanitize::html)
         $title   = trim($this->postString($post, 'title'));
         $content = $this->postString($post, 'content');
-        $status  = $this->postString($post, 'status') === 'draft' ? 'draft' : 'published';
         $rawDate = $this->postString($post, 'date') ?: date('Y-m-d\TH:i');
         $key     = $this->postString($post, 'key');
 
@@ -827,6 +828,11 @@ class Podcast extends Plugin {
 
         if (!$title) {
             return ['error' => 'Titel ist erforderlich'];
+        }
+        // Pflichtfeld: Pages::edit() ignoriert leeren Inhalt, ein geleertes Feld
+        // würde sonst stillschweigend den alten Text behalten
+        if ($content === '') {
+            return ['error' => 'Bitte eine Beschreibung eingeben.'];
         }
 
         // Nur bestehende Podcast-Episoden dürfen bearbeitet werden — vor jedem Upload prüfen
@@ -840,6 +846,16 @@ class Podcast extends Plugin {
                 return ['error' => 'Seite gehört nicht zum Podcast'];
             }
         }
+
+        // Status: veröffentlicht oder Entwurf. „Geplant“ setzt Bludit selbst bei
+        // veröffentlicht + Datum in der Zukunft. Fixiert/statisch nur, wenn die
+        // Episode diesen Typ schon hat (im Bludit-Editor gesetzt) — bleibt dann.
+        $allowedStatus = ['published', 'draft'];
+        if ($page && in_array($page->type(), ['sticky', 'static'], true)) {
+            $allowedStatus[] = $page->type();
+        }
+        $postedStatus = $this->postString($post, 'status');
+        $status       = in_array($postedStatus, $allowedStatus, true) ? $postedStatus : 'published';
 
         if (!$this->ensureCustomFields()) {
             return ['error' => 'Podcast-Felder konnten nicht eingerichtet werden. Details stehen im Bludit-Log.'];

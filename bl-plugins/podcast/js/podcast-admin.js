@@ -69,7 +69,7 @@
         peExplicit.value = 'no';
         peDuration.value = '';
         peDate.value     = new Date().toISOString().slice(0, 16);
-        peStatus.value   = 'published';
+        setStatus('published');
         peImageUrl.value = '';
         peAudioUrl.value = '';
         peImageFile.value = '';
@@ -78,6 +78,24 @@
         updateFileLabel(peAudioFile);
         setMode('pe-audio-mode', 'url');
         setMode('pe-image-mode', 'url');
+    }
+
+    // Fixiert/statisch gibt es im Formular nur, wenn die Episode diesen Typ schon
+    // hat (im Bludit-Editor gesetzt); dann als zusätzliche Option, damit er bleibt.
+    var EXTRA_STATUS = { sticky: 'Fixiert', static: 'Statisch' };
+
+    function setStatus(type) {
+        var extra = peStatus.querySelector('option[data-extra]');
+        if (extra) peStatus.removeChild(extra);
+        if (EXTRA_STATUS.hasOwnProperty(type)) {
+            var opt = document.createElement('option');
+            opt.value = type;
+            opt.textContent = EXTRA_STATUS[type];
+            opt.setAttribute('data-extra', '');
+            peStatus.appendChild(opt);
+        }
+        // „Geplant“ = veröffentlicht mit Datum in der Zukunft (setzt Bludit)
+        peStatus.value = type === 'draft' || EXTRA_STATUS.hasOwnProperty(type) ? type : 'published';
     }
 
     function setMode(radioName, value) {
@@ -199,12 +217,11 @@
         peExplicit.value = d.explicit || 'no';
         peDuration.value = d.duration || '';
         peDate.value     = d.date     || new Date().toISOString().slice(0, 16);
-        peStatus.value   = d.status   || 'published';
+        setStatus(d.status || 'published');
         peImageUrl.value = d.image    || '';
         peAudioUrl.value = d.audioUrl || '';
-        // Audio/Bild-Modus setzen
-        setMode('pe-audio-mode', d.audioUrl ? 'url' : 'url');
-        setMode('pe-image-mode', d.image    ? 'url' : 'url');
+        // Gespeicherte Dateien stehen als URL im Feld; clearForm() hat den
+        // Modus bereits auf „URL“ gesetzt
         showForm('Episode bearbeiten');
     });
 
@@ -250,6 +267,10 @@
 
         if (!title) {
             showError('Bitte Titel eingeben.');
+            return;
+        }
+        if (!peContent.value.trim()) {
+            showError('Bitte eine Beschreibung eingeben.');
             return;
         }
         if (audioMode === 'url' && !audioUrl) {
