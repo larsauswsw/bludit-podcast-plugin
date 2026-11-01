@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70.
 
 ## Vorbereitung (SSH)
 
@@ -163,9 +163,9 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] L44 *(nur falls vorhanden; live getestet)* Eine im Bludit-Editor fixierte Episode: Badge „Fixiert“, im Formular Status „Fixiert“, bleibt nach dem Speichern fixiert und steht im Feed.
 
 ## M · Player im Seiteninhalt (029)
-- [ ] M45 Episodenseite mit deinem Theme: Player steht zwischen Titel und Text (bzw. am Anfang des Inhaltsbereichs), ohne beim Laden zu springen; genau ein Player.
-- [ ] M46 **Kanaleinstellungen → Position des Players → Am Ende des Inhalts**: Player steht unter dem Text. Danach wieder auf „Am Anfang“.
-- [ ] M47 In den Text einer Episode eine Zeile `{{ podcast-player }}` schreiben: Der Player steht genau dort. Auf der Startseite und im Feed ist der Platzhalter nicht zu sehen:
+- [x] M45 Episodenseite mit deinem Theme: Player steht zwischen Titel und Text (bzw. am Anfang des Inhaltsbereichs), ohne beim Laden zu springen; genau ein Player.
+- [x] M46 **Kanaleinstellungen → Position des Players → Am Ende des Inhalts**: Player steht unter dem Text. Danach wieder auf „Am Anfang“.
+- [x] M47 In den Text einer Episode eine Zeile `{{ podcast-player }}` schreiben: Der Player steht genau dort. Auf der Startseite und im Feed ist der Platzhalter nicht zu sehen:
   ```sh
   curl -s "$SITE/?nocache=$RANDOM" | grep -c "podcast-player"
   curl -s "$SITE/podcast.xml?nocache=$RANDOM" | grep -c "podcast-player"
