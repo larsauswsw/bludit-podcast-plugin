@@ -205,7 +205,7 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [ ] Q61 Feed-Adresse in einem Validator prüfen (z. B. [Podbase](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/)): keine Fehler zu Kategorie, Explicit, Typ oder Bild. Hinweise zu Shownotes und Dateigröße folgen mit Teil 2.
 
 ## R · Shownotes und Dateigröße im Feed (016, Teil 2)
-- [ ] R62 Eine Episode mit formatiertem Text (Absatz, Fettdruck, Liste, Link) speichern, dann:
+- [x] R62 Eine Episode mit formatiertem Text (Absatz, Fettdruck, Liste, Link) speichern, dann:
   ```sh
   curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -E "content:encoded|<description>|itunes:summary" | head
   ```
