@@ -177,7 +177,9 @@ Bludit-Plugin-Verzeichnis.
 
 **Akzeptanzkriterien**
 
-- [ ] Öffentliches Schaufenster-Repo mit README und Screenshots aus `public/`.
+- [x] Öffentliches Schaufenster-Repo mit README und Screenshots aus `public/`
+      (angelegt 2026-11-01, Inhaber hat das leere Repo erstellt; Claude darf
+      keine Repos anlegen).
 - [ ] Lizenz entschieden; `license` in `metadata.json` und Lizenzdatei bzw.
       -hinweis im öffentlichen Repo.
 - [ ] `CHANGELOG.md` nach „Keep a Changelog“, Version in `metadata.json` synchron;

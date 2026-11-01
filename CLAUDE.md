@@ -13,7 +13,9 @@ bindet den Podlove Web Player ein.
 
 - Ziel: Bludit **3.19–3.22**, PHP **≥ 8.0** (Bludit 3.22 verlangt 8.0).
 - Code: `bl-plugins/podcast/` (`plugin.php`, `js/podcast-admin.js`,
-  `css/podcast-admin.css`, `metadata.json`, `languages/`).
+  `css/podcast-admin.css`, `metadata.json`, `languages/`). Sprachdateien heißen
+  wie Bludits Sitesprache (`de_DE.json`, `de_AT.json`, `de_CH.json`, Fallback
+  `en.json`) — `de.json` würde nie geladen.
 - Noch kein veröffentlichtes Release — die Version bleibt bis dahin `1.0.0`.
 - Projektsprache Deutsch (Doku, Roadmap, UI-Texte); Commit-Messages Englisch
   wie in der bisherigen Historie.
