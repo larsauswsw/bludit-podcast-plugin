@@ -80,7 +80,7 @@ dokumentiert.
 | 013 | Feed cachen, HTTP-Caching & Performance | mittel | M | [#14](https://github.com/larsauswsw/bludit-podcast-plugin/issues/14) |
 | 014 | Mehrsprachigkeit der Admin-UI (de_DE/en über `$L`) | mittel | M | [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15) |
 | 015 | Konfigurierbare Episoden-Zuordnung (Tag oder Kategorie) | niedrig | M | [#16](https://github.com/larsauswsw/bludit-podcast-plugin/issues/16) |
-| 016 | Apple-Podcasts-Konformität des Feeds | hoch | M | [#17](https://github.com/larsauswsw/bludit-podcast-plugin/issues/17) |
+| 016 | Apple-Podcasts-Konformität des Feeds | hoch | M | [#17](https://github.com/larsauswsw/bludit-podcast-plugin/issues/17) ✅ |
 | 017 | Feed-Discovery & automatische Feed-URL | niedrig | S | [#18](https://github.com/larsauswsw/bludit-podcast-plugin/issues/18) ✅ |
 | 018 | Feed-Umzug & Steuerung (`new-feed-url`, `block`, `complete`) | niedrig | S | [#19](https://github.com/larsauswsw/bludit-podcast-plugin/issues/19) |
 | 019 | Podcasting-2.0-Namespace (`podcast:*`) | niedrig | M | [#20](https://github.com/larsauswsw/bludit-podcast-plugin/issues/20) |
@@ -120,7 +120,8 @@ aus 024 und 035); 004 Unterordner und 010 Episoden-API im Admin-Bereich; 034
 Plugin-Metadaten und Kompatibilität. Damit sind alle Pflichtpunkte vor 1.0 erledigt.
 Aus „Für 1.0 empfohlen“: 007 Seitentyp/Beschreibung, 035 Altlasten, 029 Player im
 Seiteninhalt, 008 Fehlermeldungen, 037 Doku. Außerdem 009 Datum/Zeitzone, 017 automatische Feed-URL und 043
-Kanaleinstellungen gruppiert. Offen für 1.0: 016 (Apple-Konformität).
+Kanaleinstellungen gruppiert, 016 Apple-Konformität des Feeds. Damit ist alles
+aus „Für 1.0 empfohlen“ umgesetzt; als Nächstes 038 (Release-Prozess).
 Teilweise vorgezogen: URL-/Typprüfung aus 011, `CLAUDE.md` aus 037, toter Code
 aus 035 (mit 010).
 

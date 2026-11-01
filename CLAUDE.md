@@ -92,6 +92,11 @@ dort um passende Schritte ergänzen.
 - Apple-Kategorie nur über `appleCategory()` (Whitelist `APPLE_CATEGORIES`,
   gespeichert als „Kategorie > Unterkategorie“, englische Namen), Cover über
   `coverUrl()` (nur `http(s)`), `itunes:explicit` als `true`/`false`.
+- Shownotes im Feed nur über `shownotesHtml()` (DOM-Whitelist `SHOWNOTES_TAGS`,
+  keine Attribute außer geprüftem `href`) in `cdata()`; `<description>` über
+  `episodeTextSummary()`. Dateigröße externer Audio-URLs nur über
+  `remoteAudioLength()` (SSRF-Schutz nach Regel 8: `publicTarget()`,
+  `isPublicIp()`, an die geprüfte IP gebunden, Weiterleitungen einzeln geprüft).
 - Feed-Adresse nur über `feedUrl()` (abweichende URL mit `http(s)://`, sonst
   `localFeedUrl()` = `DOMAIN_BASE` + `feedSlug()`), Website über `siteUrl()` —
   nie `setting('feedUrl')`/`setting('siteUrl')` direkt ausgeben.

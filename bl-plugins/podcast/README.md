@@ -160,7 +160,7 @@ Go to **Admin → Podcast** (microphone icon in the sidebar). The list shows all
 | **Explicit** | Explicit flag for this episode |
 | **Dauer** | `HH:MM:SS`, `MM:SS` or total seconds |
 | **Episodenbild** | External URL or file upload (JPG, PNG); the player falls back to the channel cover |
-| **Audio** | External URL or file upload (MP3, M4A, OGG, WAV) — required |
+| **Audio** | External URL or file upload (MP3, M4A, OGG, WAV) — required. Apple Podcasts does not play WAV or OGG; the form shows a hint. For an external URL the plugin asks the server for the file size when saving (see below) |
 | **Veröffentlichungsdatum** | Publication date and time |
 | **Status** | *Veröffentlicht* (published) or *Entwurf* (draft) |
 
@@ -203,6 +203,9 @@ The feed includes:
 - Standard RSS 2.0 channel and item elements with `<itunes:*>` tags (episode, season, type, duration, explicit, artwork)
 - Apple Podcasts channel tags: category and subcategory from Apple's list, `<itunes:type>`, `<itunes:explicit>true|false</itunes:explicit>`, optional `<copyright>` and the RSS `<image>` from the cover
 - `<enclosure>` tags with file size and MIME type for each episode
+- Show notes: `<content:encoded>` with the episode text as HTML (paragraphs, lists, links, emphasis; scripts, styles, embeds and attributes are removed, links only `http(s)`/`mailto`), `<description>` with the text without tags (max. 4000 characters)
+
+**File size of external audio URLs:** when an episode with an external audio URL is saved, the plugin requests the size from that server (`HEAD`, or a 1-byte `Range` request if `HEAD` is not supported). Only `http`/`https` on ports 80/443 to public addresses is requested; internal networks, redirects to them and more than three redirects are refused, the request is limited to 10 seconds. If the size cannot be determined, the episode is saved anyway with a hint above the list, and the feed shows `length="0"`. Uploaded files and unchanged URLs keep their stored size.
 - All publicly visible episodes — published, sticky and static; drafts and scheduled episodes are excluded, as are episodes without audio
 - Episodes sorted by date, newest first
 

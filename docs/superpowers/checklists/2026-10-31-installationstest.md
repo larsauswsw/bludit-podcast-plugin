@@ -204,6 +204,16 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
   Erwartet: Kategorie mit englischem Namen, Unterkategorie eingerückt darunter (`<itunes:category text="…"><itunes:category text="…" /></itunes:category>`), `<itunes:type>episodic</itunes:type>` (bzw. `serial`), `<itunes:explicit>` nur `true`/`false` (Kanal und jede Episode), `<copyright>` falls eingetragen, `<image>` mit der Cover-URL.
 - [ ] Q61 Feed-Adresse in einem Validator prüfen (z. B. [Podbase](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/)): keine Fehler zu Kategorie, Explicit, Typ oder Bild. Hinweise zu Shownotes und Dateigröße folgen mit Teil 2.
 
+## R · Shownotes und Dateigröße im Feed (016, Teil 2)
+- [ ] R62 Eine Episode mit formatiertem Text (Absatz, Fettdruck, Liste, Link) speichern, dann:
+  ```sh
+  curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -E "content:encoded|<description>|itunes:summary" | head
+  ```
+  Erwartet: `<content:encoded><![CDATA[<p>…<strong>…</strong>…<a href="https://…">…</a>…]]>` mit Absätzen und Liste, `<description>` mit dem Text ohne Tags, kein `itunes:summary` mehr.
+- [ ] R63 Episode mit externer Audio-URL (z. B. einer MP3 bei einem Hoster) neu speichern: kein Hinweis über der Liste, im Feed hat ihr `<enclosure>` eine `length` größer 0. Eine nicht erreichbare URL (z. B. `https://audio.example.invalid/x.mp3`) testweise eintragen → Hinweis „Episode gespeichert, aber die Dateigröße … ließ sich nicht ermitteln …“ über der Liste; danach die richtige URL wieder eintragen.
+- [ ] R64 Hochgeladene Episode bearbeiten, ohne eine neue Datei zu wählen, und speichern: Ihr `<enclosure length>` bleibt gleich (vorher wurde er beim Bearbeiten 0). Im Formular unter „Audio“ eine URL auf `.wav` eintippen → gelber Hinweis „Apple Podcasts spielt WAV- und OGG-Dateien nicht ab …“; mit `.mp3` verschwindet er.
+- [ ] R65 Feed-Adresse im [Podbase-Validator](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/) prüfen: keine Fehler.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 

@@ -31,9 +31,28 @@
     var peAudioFile = document.getElementById('pe-audio-file');
     var peImageFileWrap = document.getElementById('pe-image-file-wrap');
     var peAudioFileWrap = document.getElementById('pe-audio-file-wrap');
+    var peFormatHint    = document.getElementById('pe-audio-format-hint');
 
     // Nur auf der Podcast-Seite aktiv
     if (!list) return;
+
+    // Hinweis nach dem Speichern (z. B. Dateigröße nicht ermittelt): übersteht
+    // das Neuladen der Seite in sessionStorage, Anzeige nur als Text
+    var NOTICE_KEY = 'podcast-admin-notice';
+    function showStoredNotice() {
+        var text = null;
+        try {
+            text = window.sessionStorage.getItem(NOTICE_KEY);
+            window.sessionStorage.removeItem(NOTICE_KEY);
+        } catch (e) { /* Speicher nicht verfügbar */ }
+        if (!text) return;
+        var box = document.createElement('div');
+        box.className = 'alert alert-warning mt-3';
+        box.setAttribute('role', 'alert');
+        box.textContent = text;
+        list.insertBefore(box, list.firstChild);
+    }
+    showStoredNotice();
 
     // ── helpers ───────────────────────────────────────────────────────
 
@@ -87,6 +106,19 @@
             'T' + pad2(now.getHours()) + ':' + pad2(now.getMinutes());
     }
 
+    // Apple Podcasts spielt WAV/OGG nicht ab: Hinweis bei gewählter Datei oder URL
+    function updateFormatHint() {
+        if (!peFormatHint) return;
+        var mode = document.querySelector('input[name="pe-audio-mode"]:checked');
+        var name = '';
+        if (mode && mode.value === 'file') {
+            name = peAudioFile.files && peAudioFile.files[0] ? peAudioFile.files[0].name : '';
+        } else {
+            name = peAudioUrl.value.split(/[?#]/)[0];
+        }
+        peFormatHint.hidden = !/\.(wav|ogg|oga|opus)$/i.test(name.trim());
+    }
+
     function clearForm() {
         peKey.value      = '';
         peTitle.value    = '';
@@ -106,6 +138,7 @@
         updateFileLabel(peAudioFile);
         setMode('pe-audio-mode', 'url');
         setMode('pe-image-mode', 'url');
+        updateFormatHint();
     }
 
     // Fixiert/statisch gibt es im Formular nur, wenn die Episode diesen Typ schon
@@ -216,14 +249,17 @@
         .forEach(function (r) {
             r.addEventListener('change', function () {
                 updateModeVisibility(r.name);
+                updateFormatHint();
             });
         });
 
     [peImageFile, peAudioFile].forEach(function (input) {
         input.addEventListener('change', function () {
             updateFileLabel(input);
+            updateFormatHint();
         });
     });
+    peAudioUrl.addEventListener('input', updateFormatHint);
 
     // ── new episode ───────────────────────────────────────────────────
 
@@ -265,6 +301,7 @@
         peAudioUrl.value = d.audioUrl || '';
         // Gespeicherte Dateien stehen als URL im Feld; clearForm() hat den
         // Modus bereits auf „URL“ gesetzt
+        updateFormatHint();
         showForm('Episode bearbeiten');
     });
 
@@ -373,6 +410,13 @@
                 if (data.error) {
                     showError(data.error);
                     return;
+                }
+                if (data.warning) {
+                    try {
+                        window.sessionStorage.setItem(NOTICE_KEY, String(data.warning));
+                    } catch (e) {
+                        window.alert(String(data.warning));
+                    }
                 }
                 location.reload();
             })
