@@ -39,6 +39,8 @@ dort um passende Schritte ergänzen.
 - `$page->uuid()` ist stabil, der Page-Key ändert sich mit dem Slug.
 - `Plugin::post()`, `Pages::add/edit` und `getValue()` arbeiten mit bereits
   HTML-escapten Werten (`Sanitize::html`); Rohwert: `getValue($f, false)`.
+  Im Plugin: an Bludit roh übergeben (nie vorher `Sanitize::html`), dekodiert
+  lesen über `setting()` bzw. `plainTitle()`, Feed-Werte über `xml()` ausgeben.
 - URLs: `DOMAIN_BASE`, `DOMAIN_UPLOADS`, `$this->domainPath()`,
   `$this->includeJS()`; Routing: `$this->webhook()` — nie `DOMAIN` + Pfad.
 - Plugin-Daten: Custom Fields oder `$this->workspace()` (per `.htaccess`

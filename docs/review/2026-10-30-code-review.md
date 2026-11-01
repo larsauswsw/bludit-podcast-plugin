@@ -65,6 +65,7 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
   (Einstellungsformular), `588–598` (`data-*`). Nachgestellt:
   `Tom & Jerry` → gespeichert `Tom &amp;amp; Jerry` → Feed
   `Tom &amp;amp;amp; Jerry`; Kategorie im Feed `Society &amp;amp; Culture`.
+  **Behoben** mit 001 (#2).
 - **002 Tag-Erkennung** — `plugin.php:990`; `Page::tags()` gibt
   `"podcast,Technik"` zurück, `(array)` macht daraus ein Element.
 - **003 Low-Level-Pages-API** — `plugin.php:840`, `846`, `872`.

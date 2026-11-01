@@ -135,9 +135,10 @@ class Podcast extends Plugin {
         // Aufbau wie bei Bludits eigenen Plugins: Felder ohne eigene Klassen,
         // gestylt über .plugin-form (bl-kernel/admin/views/configure-plugin.php),
         // Hinweise als span.tip. Beschriftungen und Hinweise sind feste Texte.
+        // Werte dekodiert lesen und genau einmal escapen (Plugin::post() escaped beim Speichern).
         $text = function ($name, $label, $tip = '', $value = null, $attrs = '') {
             if ($value === null) {
-                $value = $this->getValue($name);
+                $value = $this->setting($name);
             }
             return '<div>'
                 . '<label for="podcast-' . $name . '">' . $label . '</label>'
@@ -158,12 +159,12 @@ class Podcast extends Plugin {
         echo $text('feedSlug', 'Feed-Dateiname', 'z. B. podcast.xml');
         echo $text('feedTitle', 'Podcast-Titel');
         echo $text('feedUrl', 'Feed-URL', 'Vollständige Adresse, z. B. https://example.com/podcast.xml', null, ' inputmode="url"');
-        echo $text('siteUrl', 'Website-URL', '', $this->getValue('siteUrl') ?: DOMAIN, ' inputmode="url"');
+        echo $text('siteUrl', 'Website-URL', '', $this->setting('siteUrl') ?: DOMAIN, ' inputmode="url"');
         ?>
         <div>
             <label for="podcast-feedDesc">Beschreibung</label>
             <textarea id="podcast-feedDesc" name="feedDesc" rows="3"><?php
-                echo htmlspecialchars($this->getValue('feedDesc')) ?></textarea>
+                echo htmlspecialchars($this->setting('feedDesc'), ENT_QUOTES) ?></textarea>
         </div>
         <?php
         echo $text('feedLang', 'Sprache', 'z. B. de-de');
@@ -254,7 +255,7 @@ class Podcast extends Plugin {
         }
 
         // ── RSS-Feed ──────────────────────────────────────────────────
-        $feedSlug = $this->getValue('feedSlug') ?: 'podcast.xml';
+        $feedSlug = $this->setting('feedSlug') ?: 'podcast.xml';
         $feedPath = rtrim('/' . ltrim($feedSlug, '/'), '/');
 
         if ($requestPath === $feedPath) {
@@ -298,21 +299,23 @@ class Podcast extends Plugin {
         $audioExt    = strtolower(pathinfo(parse_url($audioUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
         $mime        = $this->audioMimeType($audioExt);
         $duration    = $get('itunes_duration');
-        $poster      = $get('itunes_image') ?: $this->getValue('cover');
+        $poster      = $get('itunes_image') ?: $this->setting('cover');
         $mode        = $this->playerMode();
-        // Podlove rendert die Beschreibung als HTML — daher als escapten Text übergeben
+        // Podlove rendert die Beschreibung als HTML — daher als escapten Text übergeben.
+        // Titel zeigt er als Text an: Klartext übergeben (json_encode escaped für JavaScript).
         $summary     = trim(html_entity_decode(strip_tags($page->content()), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         $summaryHtml = nl2br(htmlspecialchars($summary, ENT_QUOTES | ENT_HTML5, 'UTF-8'), false);
+        $showSummary = nl2br(htmlspecialchars($this->setting('feedDesc'), ENT_QUOTES | ENT_HTML5, 'UTF-8'), false);
 
         $episodeConfig = [
             'show' => [
-                'title'    => $this->getValue('feedTitle'),
+                'title'    => $this->setting('feedTitle'),
                 'subtitle' => '',
-                'summary'  => $this->getValue('feedDesc'),
-                'poster'   => $this->getValue('cover'),
-                'link'     => $this->getValue('siteUrl') ?: DOMAIN,
+                'summary'  => $showSummary,
+                'poster'   => $this->setting('cover'),
+                'link'     => $this->setting('siteUrl') ?: DOMAIN,
             ],
-            'title'           => $page->title(),
+            'title'           => $this->plainTitle($page),
             'subtitle'        => '',
             'summary'         => $summaryHtml,
             'publicationDate' => ($ts = strtotime($page->dateRaw())) !== false ? date('c', $ts) : '',
@@ -330,7 +333,7 @@ class Podcast extends Plugin {
 
         // Assets (Layouts, Player-Bundle, Abo-Button) aus dem Plugin-Ordner laden
         $playerConfig = ['base' => $this->playerBaseUrl()];
-        $feedUrl = $this->getValue('feedUrl');
+        $feedUrl = $this->setting('feedUrl');
         if ($feedUrl) {
             $playerConfig['subscribe-button'] = ['feed' => $feedUrl];
         }
@@ -414,15 +417,17 @@ class Podcast extends Plugin {
             return strtotime($b->dateRaw()) - strtotime($a->dateRaw());
         });
 
-        $title     = htmlspecialchars($this->getValue('feedTitle'),           ENT_XML1, 'UTF-8');
-        $feedUrl   = htmlspecialchars($this->getValue('feedUrl'),             ENT_XML1, 'UTF-8');
-        $siteUrl   = htmlspecialchars($this->getValue('siteUrl') ?: DOMAIN,  ENT_XML1, 'UTF-8');
-        $desc      = htmlspecialchars($this->getValue('feedDesc'),            ENT_XML1, 'UTF-8');
-        $lang      = htmlspecialchars($this->getValue('feedLang') ?: 'de-de', ENT_XML1, 'UTF-8');
-        $author    = htmlspecialchars($this->getValue('author'),              ENT_XML1, 'UTF-8');
-        $email     = htmlspecialchars($this->getValue('email'),               ENT_XML1, 'UTF-8');
-        $category  = htmlspecialchars($this->getValue('category'),            ENT_XML1, 'UTF-8');
-        $cover     = htmlspecialchars($this->getValue('cover'),               ENT_XML1, 'UTF-8');
+        // Einstellungen und Titel sind HTML-escaped gespeichert: dekodieren, dann
+        // genau einmal für XML escapen
+        $title     = $this->xml($this->setting('feedTitle'));
+        $feedUrl   = $this->xml($this->setting('feedUrl'));
+        $siteUrl   = $this->xml($this->setting('siteUrl') ?: DOMAIN);
+        $desc      = $this->xml($this->setting('feedDesc'));
+        $lang      = $this->xml($this->setting('feedLang') ?: 'de-de');
+        $author    = $this->xml($this->setting('author'));
+        $email     = $this->xml($this->setting('email'));
+        $category  = $this->xml($this->setting('category'));
+        $cover     = $this->xml($this->setting('cover'));
         $explicit  = $this->getValue('explicit') === 'yes' ? 'yes' : 'no';
         $buildDate = date('r');
 
@@ -475,18 +480,20 @@ class Podcast extends Plugin {
             $audioExt    = strtolower(pathinfo(parse_url($audioUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
             $mime        = $this->audioMimeType($audioExt);
 
-            $epTitle    = htmlspecialchars($page->title(),                                        ENT_XML1, 'UTF-8');
-            $epDesc     = htmlspecialchars(strip_tags($page->content()),                          ENT_XML1, 'UTF-8');
-            $epLink     = htmlspecialchars($page->permalink(),                                    ENT_XML1, 'UTF-8');
-            $epAudioUrl = htmlspecialchars($audioUrl,                                             ENT_XML1, 'UTF-8');
-            $epGuid     = htmlspecialchars($page->uuid(),                                         ENT_XML1, 'UTF-8');
+            $epTitle    = $this->xml($this->plainTitle($page));
+            // Beschreibung bleibt HTML-Text (Tags entfernt, Entities erhalten), wie es
+            // Podcast-Apps für <description> erwarten; Klartext/Shownotes folgen mit 016
+            $epDesc     = $this->xml(strip_tags($page->content()));
+            $epLink     = $this->xml($page->permalink());
+            $epAudioUrl = $this->xml($audioUrl);
+            $epGuid     = $this->xml($page->uuid());
             $epDate     = $page->date('r');
-            $epNum      = htmlspecialchars($get('itunes_episode'),                                ENT_XML1, 'UTF-8');
-            $epSeason   = htmlspecialchars($get('itunes_season'),                                 ENT_XML1, 'UTF-8');
-            $epDur      = htmlspecialchars($get('itunes_duration'),                               ENT_XML1, 'UTF-8');
-            $epType     = htmlspecialchars($get('itunes_type') ?: 'full',                         ENT_XML1, 'UTF-8');
+            $epNum      = $this->xml($get('itunes_episode'));
+            $epSeason   = $this->xml($get('itunes_season'));
+            $epDur      = $this->xml($get('itunes_duration'));
+            $epType     = $this->xml($get('itunes_type') ?: 'full');
             $epExpl     = $get('itunes_explicit') === 'yes' ? 'yes' : 'no';
-            $epImage    = htmlspecialchars($get('itunes_image'),                                   ENT_XML1, 'UTF-8');
+            $epImage    = $this->xml($get('itunes_image'));
 
             echo '  <item>' . "\n";
             echo '    <title>' . $epTitle . '</title>' . "\n";
@@ -610,7 +617,7 @@ class Podcast extends Plugin {
                       $stored = $this->getStoredEpisodeMeta($ep);
                       $raw    = function ($k) use ($stored) { return isset($stored[$k]) ? $stored[$k] : ''; };
 
-                      $title    = (string) $ep->title();
+                      $title    = $this->plainTitle($ep);
                       $type     = $ep->type();
                       $isPublic = in_array($type, $publicTypes, true);
                       $season   = $get('itunes_season');
@@ -636,7 +643,7 @@ class Podcast extends Plugin {
                       <div class="text-break">
                         <a href="#" class="podcast-edit-btn podcast-episode-title" role="button">
                           <?php if ($title !== ''): ?>
-                            <?php echo htmlspecialchars($title) ?>
+                            <?php echo htmlspecialchars($title, ENT_QUOTES) ?>
                           <?php else: ?>
                             <span class="label-empty-title">Kein Titel</span>
                           <?php endif ?>
@@ -845,7 +852,8 @@ class Podcast extends Plugin {
     private function handleSaveEpisode($post, $files = []) {
         global $pages;
 
-        $title   = trim(Sanitize::html($this->postString($post, 'title')));
+        // Roh übergeben: Pages::add()/edit() escapen selbst (Sanitize::html)
+        $title   = trim($this->postString($post, 'title'));
         $content = $this->postString($post, 'content');
         $status  = $this->postString($post, 'status') === 'draft' ? 'draft' : 'published';
         $rawDate = $this->postString($post, 'date') ?: date('Y-m-d\TH:i');
@@ -1254,6 +1262,30 @@ class Podcast extends Plugin {
      */
     private function playerMode() {
         return $this->getValue('playerMode') === 'html5' ? 'html5' : 'podlove';
+    }
+
+    // ── Escaping: Bludit speichert Texte HTML-escaped (Sanitize::html). Gelesen
+    // wird dekodiert, ausgegeben genau einmal passend zum Ziel (Regel 4).
+
+    /** Text-Einstellung als Klartext (Plugin::post() hat sie escaped gespeichert). */
+    private function setting($field) {
+        $value = $this->getValue($field, false);
+        return is_string($value) ? $value : '';
+    }
+
+    /** Seitentitel als Klartext (Pages::add()/edit() haben ihn escaped gespeichert). */
+    private function plainTitle($page) {
+        $title = $page->title();
+        return is_string($title) ? Sanitize::htmlDecode($title) : '';
+    }
+
+    /**
+     * Klartext für XML-Inhalt und -Attribute, genau einmal escaped. Ungültiges
+     * UTF-8 und in XML 1.0 unzulässige Zeichen werden ersetzt, damit ein
+     * einzelner Wert nicht den ganzen Feed unlesbar macht.
+     */
+    private function xml($value) {
+        return htmlspecialchars((string) $value, ENT_XML1 | ENT_QUOTES | ENT_SUBSTITUTE | ENT_DISALLOWED, 'UTF-8');
     }
 
     private function playerBaseUrl() {

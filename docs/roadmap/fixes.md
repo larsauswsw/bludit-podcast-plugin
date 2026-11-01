@@ -6,7 +6,7 @@ gefunden wurden. Alle Punkte sind mit Code-Stellen belegt. Siehe
 
 ## 001 · Doppeltes HTML-Escaping in Feed, Formularen und Titeln
 
-Status: idea · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`form()`, `outputFeed()`, `renderEpisodeSection()`, `handleSaveEpisode()`) · Issue: [#2](https://github.com/larsauswsw/bludit-podcast-plugin/issues/2)
+Status: done · Priorität: hoch · Aufwand: S · Bereich: `plugin.php` (`form()`, `outputFeed()`, `renderEpisodeSection()`, `handleSaveEpisode()`) · Issue: [#2](https://github.com/larsauswsw/bludit-podcast-plugin/issues/2)
 
 **Beschreibung**
 
@@ -30,19 +30,35 @@ mehreren Stellen zusätzlich:
 Nachgestellt mit der Kernel-Logik (`Sanitize::html` + Plugin-Code):
 `Tom & Jerry` → gespeichert `Tom &amp;amp; Jerry` → Feed `Tom &amp;amp;amp; Jerry`.
 
+**Umsetzung (2026-11-01):** Gelesen wird dekodiert — Einstellungen über
+`setting()` (`getValue($f, false)`), Seitentitel über `plainTitle()`
+(`Sanitize::htmlDecode`) —, ausgegeben genau einmal: HTML mit
+`htmlspecialchars(…, ENT_QUOTES)`, Feed über `xml()` (`ENT_XML1 | ENT_QUOTES`,
+dazu `ENT_SUBSTITUTE | ENT_DISALLOWED`, damit ungültiges UTF-8 oder ein
+Steuerzeichen den Feed nicht unlesbar macht), Player per `json_encode`.
+Die Episodenbeschreibung im Feed bleibt HTML-Text (Tags entfernt, Entities
+erhalten), wie Podcast-Apps `<description>` lesen; Klartext-Kurzfassung und
+formatierte Shownotes kommen mit 016.
+
 **Akzeptanzkriterien**
 
-- [ ] Rohwerte werden genau einmal escaped: an `createPage()`/`editPage()`
+- [x] Rohwerte werden genau einmal escaped: an `Pages::add()`/`editPage()`
       unescaped übergeben (Bludit escaped selbst).
-- [ ] Im Feed: `getValue($field, false)` bzw. `html_entity_decode($page->title())`
-      lesen und erst dann mit `htmlspecialchars(..., ENT_XML1)` ausgeben.
-- [ ] Im Einstellungsformular `getValue()` direkt ausgeben (wie die
-      Core-Plugins, z. B. `bl-plugins/rss/plugin.php`), in `data-*`-Attributen
-      den dekodierten Wert escapen.
-- [ ] Mit „Tom & Jerry“ und „Society & Culture“ getestet: Website, Admin-Formular
-      (mehrfach speichern) und Feed zeigen den Text korrekt; Feed besteht einen
-      Validator (z. B. Podbase/Cast Feed Validator).
-- [ ] Optional: einmalige Bereinigung bereits mehrfach escapter Titel/Einstellungen.
+- [x] Im Feed: `getValue($field, false)` bzw. dekodierten Titel lesen und erst
+      dann für XML escapen (auch Attribute mit `ENT_QUOTES`).
+- [x] Einstellungsformular und `data-*`-Attribute geben den dekodierten Wert
+      einmal escaped aus; ebenso Episodenliste und Player (Titel als Klartext,
+      Beschreibungen HTML-escaped).
+- [x] Mit `Tom & Jerry "Folge" <1> it's`, „Society & Culture“ und einer URL mit
+      `&` getestet (lokal, Bludit 3.22): Einstellungen dreimal, Episode dreimal
+      gespeichert — Datenbank einfach escaped, Formulare, Liste, Website, Player
+      und Feed zeigen den Originaltext; der Feed ist gültiges XML, auch mit
+      Steuerzeichen im Titel. Validator-Prüfung auf der echten Installation:
+      Installationstest H27–H30.
+- [ ] ~~Optional: einmalige Bereinigung bereits mehrfach escapter Titel/Einstellungen.~~
+      Bewusst nicht automatisch (ein gewolltes `&amp;` im Text ist nicht
+      unterscheidbar). Betroffene Werte zeigt der Befehl in H30; sie werden
+      einmal von Hand korrigiert.
 
 **Betroffene Dateien**
 
