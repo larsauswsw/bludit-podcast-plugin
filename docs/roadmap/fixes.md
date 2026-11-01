@@ -308,7 +308,7 @@ Die Beschreibung ist Pflichtfeld (Formular und Server).
 
 ## 008 · Upload-Fehler klar melden statt stumm verwerfen
 
-Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`beforeAll()`, `handleUpload()`), `podcast-admin.js` · Issue: [#9](https://github.com/larsauswsw/bludit-podcast-plugin/issues/9)
+Status: done · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`beforeAll()`, `handleUpload()`), `podcast-admin.js` · Issue: [#9](https://github.com/larsauswsw/bludit-podcast-plugin/issues/9)
 
 **Beschreibung**
 
@@ -331,8 +331,11 @@ Status: idea · Priorität: mittel · Aufwand: S · Bereich: `plugin.php` (`befo
       antwortet erst nach der Login-Prüfung und behandelt `post_max_size = 0`
       (unbegrenzt) korrekt (vorher wurde dann jeder Frontend-POST abgewiesen).
       Umgesetzt mit S6: Kennung `?podcast_api=1` in der API-URL, nur bei POST.
-- [ ] Das JS prüft `response.ok`/Content-Type und zeigt bei Nicht-JSON eine
-      sinnvolle Meldung.
+- [x] Das JS prüft Content-Type, Status und Umleitung und zeigt bei Nicht-JSON
+      eine passende Meldung: Umleitung zur Anmeldung → „Sitzung abgelaufen …“,
+      HTTP 413 → Limit des Webservers, sonstiger Fehlerstatus → „Serverfehler
+      (HTTP …)“, sonst „Unerwartete Antwort …“; ohne Antwort „Netzwerkfehler“
+      (2026-11-01, im Browser mit simulierten Antworten getestet).
 - [x] Das Upload-Limit im Formular zeigt das Minimum aus Plugin-Einstellung,
       `upload_max_filesize` und `post_max_size`.
       Umgesetzt nach Test auf echter Installation; dazu Prüfung im Browser vor dem

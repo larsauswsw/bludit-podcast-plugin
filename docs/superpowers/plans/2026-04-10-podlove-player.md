@@ -1,5 +1,9 @@
 # Podlove Web Player Implementation Plan
 
+> **Historischer Umsetzungsplan (April 2026).** Code und Architektur haben sich
+> seitdem geändert — siehe die Hinweise in `docs/superpowers/specs/`, `CLAUDE.md`
+> und `docs/roadmap/`. Nicht mehr als Anleitung verwenden.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Embed the Podlove Web Player v5 on individual podcast episode pages so visitors can listen directly on the site.

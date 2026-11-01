@@ -72,7 +72,7 @@ dokumentiert.
 | 005 | Episoden-Metadaten an UUID statt Page-Key binden (Slug-Änderung, GUID) | hoch | M | [#6](https://github.com/larsauswsw/bludit-podcast-plugin/issues/6) ✅ |
 | 006 | Datenverlust bei Plugin-Update: `episodes.json` aus dem Plugin-Ordner verlagern | hoch | S | [#7](https://github.com/larsauswsw/bludit-podcast-plugin/issues/7) ✅ |
 | 007 | Bearbeiten überschreibt Tags, Seitentyp und Inhalt | mittel | S | [#8](https://github.com/larsauswsw/bludit-podcast-plugin/issues/8) ✅ |
-| 008 | Upload-Fehler klar melden statt stumm verwerfen | mittel | S | [#9](https://github.com/larsauswsw/bludit-podcast-plugin/issues/9) |
+| 008 | Upload-Fehler klar melden statt stumm verwerfen | mittel | S | [#9](https://github.com/larsauswsw/bludit-podcast-plugin/issues/9) ✅ |
 | 009 | Datum/Zeitzone im Episodenformular korrigieren | niedrig | S | [#10](https://github.com/larsauswsw/bludit-podcast-plugin/issues/10) |
 | 010 | CSRF-Schutz: Episoden-API in `adminController()` verlagern | hoch | M | [#11](https://github.com/larsauswsw/bludit-podcast-plugin/issues/11) ✅ |
 | 011 | Upload- und Eingabe-Härtung | mittel | S | [#12](https://github.com/larsauswsw/bludit-podcast-plugin/issues/12) ✅ |
@@ -101,7 +101,7 @@ dokumentiert.
 | 034 | `metadata.json`, Kompatibilität & PHP-8.2-Deprecations | hoch | S | [#35](https://github.com/larsauswsw/bludit-podcast-plugin/issues/35) ✅ |
 | 035 | Toten Code & Repo-Altlasten entfernen | niedrig | S | [#36](https://github.com/larsauswsw/bludit-podcast-plugin/issues/36) ✅ |
 | 036 | Automatisierte Tests & CI | mittel | M | [#37](https://github.com/larsauswsw/bludit-podcast-plugin/issues/37) |
-| 037 | README, Specs & CLAUDE.md aktualisieren | niedrig | S | [#38](https://github.com/larsauswsw/bludit-podcast-plugin/issues/38) |
+| 037 | README, Specs & CLAUDE.md aktualisieren | niedrig | S | [#38](https://github.com/larsauswsw/bludit-podcast-plugin/issues/38) ✅ |
 | 038 | Release-Prozess: CHANGELOG & ZIP-Paket, öffentliches Repo | mittel | M | [#39](https://github.com/larsauswsw/bludit-podcast-plugin/issues/39) |
 | 039 | Pfad-Manipulation über ungeprüften Seitenschlüssel | hoch | S | [#42](https://github.com/larsauswsw/bludit-podcast-plugin/issues/42) ✅ |
 | 040 | Episodenbeschreibung im Player als HTML ausgeführt | mittel | S | [#46](https://github.com/larsauswsw/bludit-podcast-plugin/issues/46) ✅ |
@@ -118,7 +118,7 @@ Tag-Erhalt aus 007); 042 Admin-Oberfläche im Bludit-Look (übernimmt die Bootst
 aus 024 und 035); 004 Unterordner und 010 Episoden-API im Admin-Bereich; 034
 Plugin-Metadaten und Kompatibilität. Damit sind alle Pflichtpunkte vor 1.0 erledigt.
 Aus „Für 1.0 empfohlen“: 007 Seitentyp/Beschreibung, 035 Altlasten, 029 Player im
-Seiteninhalt.
+Seiteninhalt, 008 Fehlermeldungen, 037 Doku. Offen für 1.0: 016.
 Teilweise vorgezogen: URL-/Typprüfung aus 011, `CLAUDE.md` aus 037, toter Code
 aus 035 (mit 010).
 

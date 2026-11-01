@@ -56,8 +56,9 @@ dort um passende Schritte ergänzen.
   HTML-escapten Werten (`Sanitize::html`); Rohwert: `getValue($f, false)`.
   Im Plugin: an Bludit roh übergeben (nie vorher `Sanitize::html`), dekodiert
   lesen über `setting()` bzw. `plainTitle()`, Feed-Werte über `xml()` ausgeben.
-- URLs: `DOMAIN_BASE`, `DOMAIN_UPLOADS`, `$this->domainPath()`,
-  `$this->includeJS()`; Routing: `$this->webhook()` — nie `DOMAIN` + Pfad.
+- URLs: `DOMAIN_BASE`, `DOMAIN_ADMIN`, `DOMAIN_UPLOADS`, `$this->domainPath()`;
+  Skript/CSS des Plugins über `assetUrl()` (Änderungszeit als Cache-Version);
+  Routing: `$this->webhook()` — nie `DOMAIN` + Pfad.
 - Plugin-Daten: Custom Fields oder `$this->workspace()` (per `.htaccess`
   gesperrt; `Plugin::uninstall()` löscht ihn). Dateien im Workspace als `.php`
   mit Schutzzeile `<?php defined('BLUDIT') or die('Bludit CMS.'); ?>` anlegen.

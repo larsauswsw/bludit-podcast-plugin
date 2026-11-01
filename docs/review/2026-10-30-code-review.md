@@ -88,7 +88,8 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
   **Behoben** mit 003 und 007 (#8).
 - **008** Stille Upload-Fehler (`911–913`, `927–929`); `post_max_size`-Prüfung
   greift für jeden Frontend-POST (`218–227`); JS wertet Nicht-JSON als
-  Netzwerkfehler (`podcast-admin.js:157`, `219`).
+  Netzwerkfehler (`podcast-admin.js:157`, `219`). **Behoben** mit 011, S6, 010
+  und 008 (#9).
 - **011** Nur Endungsprüfung bei Uploads, keine URL-Schema-Prüfung,
   `episodes.json` ohne Lock, Fehlermeldung mit Server-Pfad (`947`).
 - **013** O(n log n) Dateizugriffe beim Sortieren (`971–980`),
@@ -105,7 +106,7 @@ Kernprobleme liegen an den Stellen, an denen es Bludit-Konventionen umgeht:
   (`plugin.php:199`), No-op-Ternary (`podcast-admin.js:138–139`),
   `podcast.xml` (0 Byte) und `.claude/settings.local.json` im Repo.
   **Behoben** mit 010, 042 und 035 (#36).
-- **037** README/Specs weichen vom Code ab.
+- **037** README/Specs weichen vom Code ab. **Behoben** mit 037 (#38).
 
 ## Was gut ist
 

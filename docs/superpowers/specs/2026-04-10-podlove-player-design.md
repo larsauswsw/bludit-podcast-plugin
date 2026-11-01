@@ -1,4 +1,12 @@
 # Podlove Web Player – Design Spec
+
+> **Stand 2026-11-01 — umgesetzt abweichend.** Der Player wird lokal aus
+> `bl-plugins/podcast/player/` ausgeliefert statt vom CDN (028). Bedingung ist
+> das Custom Field `podcast_audio_url` statt `episodes.json` (012). Der Player
+> steht im Seiteninhalt (`$page->setField('content', …)`, Position einstellbar,
+> Platzhalter `{{ podcast-player }}`) statt per Selektorliste verschoben zu
+> werden (029). `summary` wird als HTML-escapter Text übergeben (040).
+> Aktueller Stand: `CLAUDE.md`.
 Date: 2026-04-10
 
 ## Goal
