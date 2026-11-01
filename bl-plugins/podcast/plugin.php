@@ -32,6 +32,8 @@ class Podcast extends Plugin {
             'category'    => '',
             'cover'       => '',
             'explicit'    => 'no',
+            'showType'    => 'episodic',
+            'copyright'   => '',
             'maxUploadMB' => '512',
             'playerMode'  => 'podlove',
             'playerPosition' => 'top',
@@ -200,11 +202,21 @@ class Podcast extends Plugin {
         <?php
         echo $text('author', 'Autor');
         echo $text('feedLang', 'Sprache', 'z. B. de-de');
-        echo $text('cover', 'Cover-URL', 'JPG oder PNG, 1400 × 1400 px empfohlen', null, ' inputmode="url"');
+        echo $text('cover', 'Cover-URL', 'JPG oder PNG, 1400 × 1400 px empfohlen (Apple: 1400 bis 3000 px, quadratisch).' . $ignoredUrl('cover'),
+            null, ' inputmode="url"');
+        echo $text('copyright', 'Copyright', 'Optional, z. B. © 2026 Max Mustermann');
 
         echo $group('Apple Podcasts &amp; Verzeichnisse');
-        echo $text('category', 'Kategorie', 'Englischer Name der Apple-Kategorie, z. B. Society &amp; Culture');
+        echo $this->categorySelect();
         ?>
+        <div>
+            <label for="podcast-showType">Art des Podcasts</label>
+            <select id="podcast-showType" name="showType">
+                <option value="episodic" <?php echo $this->showType() === 'episodic' ? 'selected' : '' ?>>Episodisch – neueste Folge zuerst</option>
+                <option value="serial"   <?php echo $this->showType() === 'serial'   ? 'selected' : '' ?>>Seriell – Folgen der Reihe nach, älteste zuerst</option>
+            </select>
+            <span class="tip">Seriell passt zu Staffeln, die man von Anfang an hört; dann Staffel und Folge bei jeder Episode angeben.</span>
+        </div>
         <div>
             <label for="podcast-explicit">Explicit</label>
             <select id="podcast-explicit" name="explicit">
@@ -423,7 +435,7 @@ class Podcast extends Plugin {
         $audioExt    = strtolower(pathinfo((string) parse_url($audioUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
         $mime        = $this->audioMimeType($audioExt);
         $duration    = $get('itunes_duration');
-        $poster      = $get('itunes_image') ?: $this->setting('cover');
+        $poster      = $get('itunes_image') ?: $this->coverUrl();
         // Podlove rendert die Beschreibung als HTML — daher als escapten Text übergeben.
         // Titel zeigt er als Text an: Klartext übergeben (json_encode escaped für JavaScript).
         // Vom eigenen Inhalt nur den Text, ohne den eingefügten Player.
@@ -436,7 +448,7 @@ class Podcast extends Plugin {
                 'title'    => $this->setting('feedTitle'),
                 'subtitle' => '',
                 'summary'  => $showSummary,
-                'poster'   => $this->setting('cover'),
+                'poster'   => $this->coverUrl(),
                 'link'     => $this->siteUrl(),
             ],
             'title'           => $this->plainTitle($page),
@@ -530,9 +542,11 @@ class Podcast extends Plugin {
         $lang      = $this->xml($this->setting('feedLang') ?: 'de-de');
         $author    = $this->xml($this->setting('author'));
         $email     = $this->xml($this->setting('email'));
-        $category  = $this->xml($this->setting('category'));
-        $cover     = $this->xml($this->setting('cover'));
-        $explicit  = $this->getValue('explicit') === 'yes' ? 'yes' : 'no';
+        $category  = $this->appleCategory();
+        $cover     = $this->xml($this->coverUrl());
+        $copyright = $this->xml($this->setting('copyright'));
+        // Apple erwartet true/false (nicht mehr yes/no)
+        $explicit  = $this->getValue('explicit') === 'yes' ? 'true' : 'false';
         $buildDate = date('r');
 
         header('Content-Type: application/rss+xml; charset=UTF-8');
@@ -550,6 +564,9 @@ class Podcast extends Plugin {
         echo '  <link>' . $siteUrl . '</link>' . "\n";
         echo '  <description>' . $desc . '</description>' . "\n";
         echo '  <language>' . $lang . '</language>' . "\n";
+        if ($copyright !== '') {
+            echo '  <copyright>' . $copyright . '</copyright>' . "\n";
+        }
         if ($email) {
             echo '  <managingEditor>' . $email . '</managingEditor>' . "\n";
         }
@@ -565,10 +582,24 @@ class Podcast extends Plugin {
         echo '  </itunes:owner>' . "\n";
         if ($cover) {
             echo '  <itunes:image href="' . $cover . '" />' . "\n";
+            // RSS-2.0-Bild für Apps und Reader ohne iTunes-Namespace
+            echo '  <image>' . "\n";
+            echo '    <url>' . $cover . '</url>' . "\n";
+            echo '    <title>' . $title . '</title>' . "\n";
+            echo '    <link>' . $siteUrl . '</link>' . "\n";
+            echo '  </image>' . "\n";
         }
+        // Englische Originalnamen, Unterkategorie verschachtelt (Apple-Vorgabe)
         if ($category) {
-            echo '  <itunes:category text="' . $category . '" />' . "\n";
+            if ($category[1] !== '') {
+                echo '  <itunes:category text="' . $this->xml($category[0]) . '">' . "\n";
+                echo '    <itunes:category text="' . $this->xml($category[1]) . '" />' . "\n";
+                echo '  </itunes:category>' . "\n";
+            } else {
+                echo '  <itunes:category text="' . $this->xml($category[0]) . '" />' . "\n";
+            }
         }
+        echo '  <itunes:type>' . $this->showType() . '</itunes:type>' . "\n";
         echo '  <itunes:explicit>' . $explicit . '</itunes:explicit>' . "\n";
 
         foreach ($episodes as $page) {
@@ -594,7 +625,7 @@ class Podcast extends Plugin {
             $epSeason   = $this->xml($get('itunes_season'));
             $epDur      = $this->xml($get('itunes_duration'));
             $epType     = $this->xml($get('itunes_type') ?: 'full');
-            $epExpl     = $get('itunes_explicit') === 'yes' ? 'yes' : 'no';
+            $epExpl     = $get('itunes_explicit') === 'yes' ? 'true' : 'false';
             $epImage    = $this->xml($get('itunes_image'));
 
             echo '  <item>' . "\n";
@@ -1520,6 +1551,148 @@ class Podcast extends Plugin {
     /** Position des Players im Inhalt; unbekannte Werte → am Anfang. */
     private function playerPosition() {
         return $this->getValue('playerPosition') === 'bottom' ? 'bottom' : 'top';
+    }
+
+    // ── Apple-Kanalangaben (Roadmap 016)
+
+    /**
+     * Apple-Podcasts-Kategorien: englischer Name (so im Feed) => [deutscher
+     * Name, [Unterkategorie englisch => deutsch]]. Namen und Reihenfolge wie auf
+     * Apples Seite „Apple Podcasts-Kategorien“ (podcasters.apple.com/support/1691,
+     * Stand 2026), deutsche Namen wie in Apple Podcasts.
+     */
+    private const APPLE_CATEGORIES = [
+        'Arts' => ['Kunst', ['Books' => 'Bücher', 'Design' => 'Design', 'Fashion & Beauty' => 'Mode und Schönheit',
+            'Food' => 'Essen', 'Performing Arts' => 'Darstellende Kunst', 'Visual Arts' => 'Bildende Kunst']],
+        'Business' => ['Wirtschaft', ['Careers' => 'Karriere', 'Entrepreneurship' => 'Firmengründung',
+            'Investing' => 'Geldanlage', 'Management' => 'Management', 'Marketing' => 'Marketing',
+            'Non-Profit' => 'Gemeinnützig']],
+        'Comedy' => ['Comedy', ['Comedy Interviews' => 'Comedy-Interviews', 'Improv' => 'Impro-Comedy',
+            'Stand-Up' => 'Stand-Up-Comedy']],
+        'Education' => ['Bildung', ['Courses' => 'Kurse', 'How To' => 'So geht’s',
+            'Language Learning' => 'Sprachen lernen', 'Self-Improvement' => 'Selbstverwirklichung']],
+        'Fiction' => ['Fiktion', ['Comedy Fiction' => 'Comedy-Fiction', 'Drama' => 'Drama',
+            'Science Fiction' => 'Science-Fiction']],
+        'Government' => ['Regierung', []],
+        'History' => ['Geschichte', []],
+        'Health & Fitness' => ['Gesundheit und Fitness', ['Alternative Health' => 'Alternative Therapien',
+            'Fitness' => 'Fitness', 'Medicine' => 'Medizin', 'Mental Health' => 'Mentale Gesundheit',
+            'Nutrition' => 'Ernährung', 'Sexuality' => 'Sexualität']],
+        'Kids & Family' => ['Kinder und Familie', ['Education for Kids' => 'Bildung für Kinder',
+            'Parenting' => 'Kindererziehung', 'Pets & Animals' => 'Haus- und Wildtiere',
+            'Stories for Kids' => 'Geschichten für Kinder']],
+        'Leisure' => ['Freizeit', ['Animation & Manga' => 'Animation und Manga', 'Automotive' => 'Rund ums Auto',
+            'Aviation' => 'Luftfahrt', 'Crafts' => 'Basteln', 'Games' => 'Spiele', 'Hobbies' => 'Hobbys',
+            'Home & Garden' => 'Heim und Garten', 'Video Games' => 'Videospiele']],
+        'Music' => ['Musik', ['Music Commentary' => 'Musikrezensionen', 'Music History' => 'Musikgeschichte',
+            'Music Interviews' => 'Musikinterviews']],
+        'News' => ['Nachrichten', ['Business News' => 'Wirtschaftsnachrichten', 'Daily News' => 'Nachrichten des Tages',
+            'Entertainment News' => 'Neues aus der Unterhaltung', 'News Commentary' => 'Kommentare',
+            'Politics' => 'Politik', 'Sports News' => 'Sportnews', 'Tech News' => 'Neues aus der Technik']],
+        'Religion & Spirituality' => ['Religion und Spiritualität', ['Buddhism' => 'Buddhismus',
+            'Christianity' => 'Christentum', 'Hinduism' => 'Hinduismus', 'Islam' => 'Islam', 'Judaism' => 'Judentum',
+            'Religion' => 'Religion', 'Spirituality' => 'Spiritualität']],
+        'Science' => ['Wissenschaft', ['Astronomy' => 'Astronomie', 'Chemistry' => 'Chemie',
+            'Earth Sciences' => 'Geowissenschaften', 'Life Sciences' => 'Biowissenschaften',
+            'Mathematics' => 'Mathematik', 'Natural Sciences' => 'Naturwissenschaften', 'Nature' => 'Natur',
+            'Physics' => 'Physik', 'Social Sciences' => 'Sozialwissenschaften']],
+        'Society & Culture' => ['Gesellschaft und Kultur', ['Documentary' => 'Dokumentation',
+            'Personal Journals' => 'Tagebücher', 'Philosophy' => 'Philosophie',
+            'Places & Travel' => 'Reisen und Orte', 'Relationships' => 'Beziehungen']],
+        'Sports' => ['Sport', ['Baseball' => 'Baseball', 'Basketball' => 'Basketball', 'Cricket' => 'Cricket',
+            'Fantasy Sports' => 'Fantasy Sport', 'Football' => 'American Football', 'Golf' => 'Golf',
+            'Hockey' => 'Eishockey', 'Rugby' => 'Rugby', 'Running' => 'Laufen', 'Soccer' => 'Fußball',
+            'Swimming' => 'Schwimmen', 'Tennis' => 'Tennis', 'Volleyball' => 'Volleyball',
+            'Wilderness' => 'Abenteuer Natur', 'Wrestling' => 'Wrestling']],
+        'Technology' => ['Technologie', []],
+        'True Crime' => ['Wahre Kriminalfälle', []],
+        'TV & Film' => ['TV und Film', ['After Shows' => 'Backstage', 'Film History' => 'Filmgeschichte',
+            'Film Interviews' => 'Filminterviews', 'Film Reviews' => 'Filmrezensionen', 'TV Reviews' => 'TV-Rezensionen']],
+    ];
+
+    /**
+     * Gewählte Apple-Kategorie als [Kategorie, Unterkategorie] mit den englischen
+     * Namen aus APPLE_CATEGORIES (Unterkategorie '' = keine), null ohne gültige
+     * Auswahl. Gespeichert als „Kategorie > Unterkategorie“; ein früherer
+     * Freitext gilt, wenn er so einer Kategorie entspricht (Groß-/Kleinschreibung egal).
+     */
+    private function appleCategory() {
+        $value = trim($this->setting('category'));
+        if ($value === '') {
+            return null;
+        }
+        $parts = array_map('trim', explode('>', $value, 2));
+        foreach (self::APPLE_CATEGORIES as $category => $info) {
+            if (strcasecmp($category, $parts[0]) !== 0) {
+                continue;
+            }
+            if (!isset($parts[1]) || $parts[1] === '') {
+                return [$category, ''];
+            }
+            foreach (array_keys($info[1]) as $sub) {
+                if (strcasecmp($sub, $parts[1]) === 0) {
+                    return [$category, $sub];
+                }
+            }
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * Auswahlliste der Apple-Kategorien für form(): deutsch angezeigt mit dem
+     * englischen Namen, nach deutscher Bezeichnung sortiert, je Kategorie eine
+     * Gruppe mit der Kategorie selbst und ihren Unterkategorien.
+     */
+    private function categorySelect() {
+        $esc      = function ($value) { return htmlspecialchars((string) $value, ENT_QUOTES); };
+        $selected = $this->appleCategory();
+        $current  = $selected ? $selected[0] . ($selected[1] !== '' ? ' > ' . $selected[1] : '') : '';
+        $option   = function ($value, $label) use ($esc, $current) {
+            return '<option value="' . $esc($value) . '"' . ($value === $current ? ' selected' : '') . '>'
+                . $esc($label) . '</option>';
+        };
+        $byLabel  = function ($a, $b) { return strnatcasecmp($a, $b); };
+        // Englischen Namen nur zeigen, wenn er sich vom deutschen unterscheidet
+        $name     = function ($de, $en) { return $de === $en ? $de : $de . ' (' . $en . ')'; };
+
+        $categories = [];
+        foreach (self::APPLE_CATEGORIES as $category => $info) {
+            $categories[$category] = $info[0];
+        }
+        uasort($categories, $byLabel);
+
+        $html = '<div><label for="podcast-category">Kategorie</label>'
+            . '<select id="podcast-category" name="category">'
+            . $option('', 'Bitte wählen …');
+        foreach ($categories as $category => $label) {
+            $html .= '<optgroup label="' . $esc($name($label, $category)) . '">'
+                . $option($category, $name($label, $category));
+            $subs = self::APPLE_CATEGORIES[$category][1];
+            uasort($subs, $byLabel);
+            foreach ($subs as $sub => $subLabel) {
+                $html .= $option($category . ' > ' . $sub, $label . ' → ' . $name($subLabel, $sub));
+            }
+            $html .= '</optgroup>';
+        }
+        $html .= '</select><span class="tip">Apple wertet die Kategorie für Suche und Charts aus; im Feed steht der englische Name.';
+        $stored = trim($this->setting('category'));
+        if ($stored !== '' && $selected === null) {
+            $html .= ' <strong>Bisheriger Eintrag „' . $esc($stored) . '“ ist keine Apple-Kategorie – bitte eine auswählen.'
+                . ' Bis dahin steht keine Kategorie im Feed.</strong>';
+        }
+        return $html . '</span></div>';
+    }
+
+    /** Art des Podcasts für <itunes:type>: episodic (Standard) oder serial. */
+    private function showType() {
+        return $this->getValue('showType') === 'serial' ? 'serial' : 'episodic';
+    }
+
+    /** Cover-Adresse, wenn sie mit http(s):// beginnt, sonst ''. */
+    private function coverUrl() {
+        $url = trim($this->setting('cover'));
+        return $url !== '' && $this->isHttpUrl($url) ? $url : '';
     }
 
     // ── Feed- und Website-Adresse (Roadmap 017)

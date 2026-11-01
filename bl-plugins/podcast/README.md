@@ -120,9 +120,11 @@ The settings are grouped like Bludit's own settings pages.
 | | **Beschreibung** | Short summary of your podcast | `A show about...` |
 | | **Autor** | Podcast author name | `Jane Doe` |
 | | **Sprache** | RSS language code | `en-us`, `de-de` |
-| | **Cover-URL** | URL of your podcast artwork (1400×1400 px JPG/PNG recommended) | `https://example.com/cover.jpg` |
-| **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category (English name) | `Society & Culture` |
-| | **Explicit** | Whether the podcast contains explicit content | `Nein` |
+| | **Cover-URL** | URL of your podcast artwork (1400×1400 px JPG/PNG recommended; Apple: 1400–3000 px, square). Also used as the RSS `<image>` | `https://example.com/cover.jpg` |
+| | **Copyright** | Optional copyright notice (`<copyright>`) | `© 2026 Jane Doe` |
+| **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category with optional subcategory, chosen from Apple's list (shown with Apple's German names plus the English name; the feed contains the English names, subcategory nested). A previous free-text entry is kept if it matches an Apple category | `Kinder und Familie → Kindererziehung (Parenting)` |
+| | **Art des Podcasts** | `<itunes:type>`: episodic (newest first) or serial (in order, oldest first) | Episodisch |
+| | **Explicit** | Whether the podcast contains explicit content (`true`/`false` in the feed) | `Nein` |
 | | **E-Mail des Inhabers** | Owner email (`itunes:owner`, `managingEditor`). Public in the feed; directories such as Apple Podcasts and Spotify use it to verify ownership | `jane@example.com` |
 | | **Apple Podcasts**, **Spotify**, **Pocket Casts**, **Deezer**, **Castbox** | Optional: the podcast's public link on that service (in the app: *Share → Copy link*). Shown in the player's subscribe button. The Apple link also adds Castro and – if no own link is set – Pocket Casts | `https://podcasts.apple.com/de/podcast/my-podcast/id1234567890` |
 | **Feed** | **Feed-Dateiname** | Path at which the RSS feed is served | `podcast.xml` |
@@ -199,6 +201,7 @@ The feed is served at the configured feed filename, e.g. `https://example.com/po
 
 The feed includes:
 - Standard RSS 2.0 channel and item elements with `<itunes:*>` tags (episode, season, type, duration, explicit, artwork)
+- Apple Podcasts channel tags: category and subcategory from Apple's list, `<itunes:type>`, `<itunes:explicit>true|false</itunes:explicit>`, optional `<copyright>` and the RSS `<image>` from the cover
 - `<enclosure>` tags with file size and MIME type for each episode
 - All publicly visible episodes — published, sticky and static; drafts and scheduled episodes are excluded, as are episodes without audio
 - Episodes sorted by date, newest first

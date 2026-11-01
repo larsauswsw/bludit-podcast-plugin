@@ -195,6 +195,15 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] P57 **Kanaleinstellungen → Apple Podcasts & Verzeichnisse**: Link deines Podcasts bei Apple Podcasts eintragen (in der App: Teilen → Link kopieren; ist der Podcast dort noch nicht, testweise den Link eines beliebigen Podcasts) und speichern. Im Abo-Fenster stehen oben Apple Podcasts, Pocket Casts und auf dem iPhone Castro. Antippen öffnet jeweils den Podcast im Dienst bzw. in der App — bei Pocket Casts prüfen, ob die richtige Sendung erscheint (Link `pca.st/itunes/…`).
 - [x] P58 Weitere Links (Spotify, Pocket Casts, Deezer, Castbox) wie P57 prüfen, soweit vorhanden. Ein unpassender Link (z. B. `https://example.com`) zeigt unter dem Feld „Wird nicht verwendet …“ und erscheint nicht im Abo-Fenster. Testweise eingetragene fremde Links danach wieder entfernen.
 
+## Q · Apple-Angaben im Feed (016, Teil 1)
+- [ ] Q59 **Kanaleinstellungen**: „Kategorie“ ist eine Auswahlliste (deutsch, mit englischem Namen). Dein bisheriger Eintrag ist vorausgewählt — oder unter dem Feld steht „Bisheriger Eintrag „…“ ist keine Apple-Kategorie“. Kategorie (gern mit Unterkategorie) wählen, „Art des Podcasts“ prüfen, optional Copyright eintragen und speichern; die Auswahl bleibt erhalten.
+- [ ] Q60 Feed prüfen:
+  ```sh
+  curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -E "itunes:category|itunes:type|itunes:explicit|<copyright>|<image>|<url>"
+  ```
+  Erwartet: Kategorie mit englischem Namen, Unterkategorie eingerückt darunter (`<itunes:category text="…"><itunes:category text="…" /></itunes:category>`), `<itunes:type>episodic</itunes:type>` (bzw. `serial`), `<itunes:explicit>` nur `true`/`false` (Kanal und jede Episode), `<copyright>` falls eingetragen, `<image>` mit der Cover-URL.
+- [ ] Q61 Feed-Adresse in einem Validator prüfen (z. B. [Podbase](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/)): keine Fehler zu Kategorie, Explicit, Typ oder Bild. Hinweise zu Shownotes und Dateigröße folgen mit Teil 2.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 
