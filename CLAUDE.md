@@ -97,6 +97,9 @@ dort um passende Schritte ergänzen.
   `episodeTextSummary()`. Dateigröße externer Audio-URLs nur über
   `remoteAudioLength()` (SSRF-Schutz nach Regel 8: `publicTarget()`,
   `isPublicIp()`, an die geprüfte IP gebunden, Weiterleitungen einzeln geprüft).
+- `podcast:guid` über `podcastGuid()`: einmal per `ensurePodcastGuid()` (in
+  `post()` und `adminController()`) aus der Feed-Adresse erzeugt und
+  gespeichert, danach unverändert; `podcast:locked` aus `feedLocked()`.
 - Feed-Adresse nur über `feedUrl()` (abweichende URL mit `http(s)://`, sonst
   `localFeedUrl()` = `DOMAIN_BASE` + `feedSlug()`), Website über `siteUrl()` —
   nie `setting('feedUrl')`/`setting('siteUrl')` direkt ausgeben.

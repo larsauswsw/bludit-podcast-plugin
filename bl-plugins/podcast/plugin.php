@@ -34,6 +34,9 @@ class Podcast extends Plugin {
             'explicit'    => 'no',
             'showType'    => 'episodic',
             'copyright'   => '',
+            // Podcasting 2.0: Kennung einmal erzeugt und gespeichert, Sperre (yes/no)
+            'podcastGuid' => '',
+            'feedLocked'  => 'no',
             'maxUploadMB' => '512',
             'playerMode'  => 'podlove',
             'playerPosition' => 'top',
@@ -93,6 +96,7 @@ class Podcast extends Plugin {
         if ($this->ensureCustomFields()) {
             $this->migrateLegacyMeta();
         }
+        $this->ensurePodcastGuid();
     }
 
     /**
@@ -224,6 +228,14 @@ class Podcast extends Plugin {
                 <option value="yes" <?php echo $this->getValue('explicit') === 'yes' ? 'selected' : '' ?>>Ja</option>
             </select>
         </div>
+        <div>
+            <label for="podcast-feedLocked">Feed gegen Übernahme sperren</label>
+            <select id="podcast-feedLocked" name="feedLocked">
+                <option value="no"  <?php echo !$this->feedLocked() ? 'selected' : '' ?>>Nein</option>
+                <option value="yes" <?php echo $this->feedLocked()  ? 'selected' : '' ?>>Ja</option>
+            </select>
+            <span class="tip">Ja: Andere Plattformen übernehmen den Podcast erst, wenn über die E-Mail des Inhabers bestätigt ist, wem er gehört (<code>podcast:locked</code>). Vor einem Umzug zu einem anderen Anbieter auf Nein stellen.</span>
+        </div>
         <?php
         echo $text('email', 'E-Mail des Inhabers',
             'Steht öffentlich im Feed. Verzeichnisse wie Apple Podcasts und Spotify prüfen darüber, wem der Podcast gehört.',
@@ -252,6 +264,11 @@ class Podcast extends Plugin {
             <input type="text" id="podcast-feedAddress" value="<?php echo $esc($feedUrl) ?>" readonly>
             <span class="tip">Diese Adresse bei Apple Podcasts, Spotify und anderen Verzeichnissen eintragen.
                 <a href="<?php echo $esc($feedUrl) ?>" target="_blank" rel="noopener">Feed öffnen</a></span>
+        </div>
+        <div>
+            <label for="podcast-guidDisplay">Podcast-GUID</label>
+            <input type="text" id="podcast-guidDisplay" value="<?php echo $esc($this->podcastGuid()) ?>" readonly>
+            <span class="tip">Dauerhafte Kennung des Podcasts (<code>podcast:guid</code>), beim ersten Speichern aus der Feed-Adresse erzeugt. Sie bleibt auch bei einem Umzug gleich.</span>
         </div>
         <?php
         echo $text('feedUrl', 'Abweichende Feed-URL (optional)',
@@ -285,8 +302,16 @@ class Podcast extends Plugin {
         return ob_get_clean();
     }
 
-    // Kanaleinstellungen werden von parent::post() gespeichert (dbFields aus $_POST)
-    // Kein formSave() nötig — Bludit ruft post() auf, nicht formSave()
+    /**
+     * Speichert die Kanaleinstellungen (parent::post(): dbFields aus $_POST;
+     * Bludit ruft post() auf, nicht formSave()) und legt beim ersten Speichern
+     * die Podcast-GUID fest.
+     */
+    public function post() {
+        $saved = parent::post();
+        $this->ensurePodcastGuid();
+        return $saved;
+    }
 
     // ═══════════════════════════════════════════════════════════════════
     // BEFORE ALL: FEED
@@ -604,6 +629,11 @@ class Podcast extends Plugin {
         }
         echo '  <itunes:type>' . $this->showType() . '</itunes:type>' . "\n";
         echo '  <itunes:explicit>' . $explicit . '</itunes:explicit>' . "\n";
+        // Podcasting 2.0 (Roadmap 019): Kennung und Sperre gegen Übernahme
+        echo '  <podcast:guid>' . $this->xml($this->podcastGuid()) . '</podcast:guid>' . "\n";
+        $ownerEmail = filter_var($this->setting('email'), FILTER_VALIDATE_EMAIL);
+        echo '  <podcast:locked' . ($ownerEmail !== false ? ' owner="' . $this->xml($ownerEmail) . '"' : '') . '>'
+            . ($this->feedLocked() ? 'yes' : 'no') . '</podcast:locked>' . "\n";
 
         foreach ($episodes as $page) {
             $meta = $this->getEpisodeMeta($page);
@@ -2143,6 +2173,48 @@ class Podcast extends Plugin {
     private function coverUrl() {
         $url = trim($this->setting('cover'));
         return $url !== '' && $this->isHttpUrl($url) ? $url : '';
+    }
+
+    // ── Podcasting 2.0 (Roadmap 019)
+
+    /** Namensraum für podcast:guid laut Podcasting-2.0-Standard (UUIDv5). */
+    private const PODCAST_GUID_NAMESPACE = 'ead4c236-bf58-58c6-a2c6-a6b28d128cb6';
+
+    /**
+     * podcast:guid: die gespeicherte Kennung, sonst (vor dem ersten Speichern)
+     * die aus der aktuellen Feed-Adresse berechnete. UUIDv5 aus der Adresse
+     * ohne Schema und ohne Schrägstriche am Ende.
+     */
+    private function podcastGuid() {
+        $stored = $this->setting('podcastGuid');
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/D', $stored) === 1) {
+            return $stored;
+        }
+        $name = rtrim((string) preg_replace('~^[a-z][a-z0-9+.-]*://~i', '', $this->feedUrl()), '/');
+        return $this->uuidV5(self::PODCAST_GUID_NAMESPACE, $name);
+    }
+
+    /** Legt die Podcast-GUID einmalig fest, damit sie sich mit der Feed-Adresse nicht mehr ändert. */
+    private function ensurePodcastGuid() {
+        if ($this->setting('podcastGuid') === '') {
+            $this->setField('podcastGuid', $this->podcastGuid());
+        }
+    }
+
+    /** UUID Version 5 (SHA-1, RFC 4122) aus Namensraum-UUID und Name. */
+    private function uuidV5($namespace, $name) {
+        $hash = sha1(hex2bin(str_replace('-', '', $namespace)) . $name);
+        return sprintf('%s-%s-%04x-%04x-%s',
+            substr($hash, 0, 8),
+            substr($hash, 8, 4),
+            (hexdec(substr($hash, 12, 4)) & 0x0fff) | 0x5000,
+            (hexdec(substr($hash, 16, 4)) & 0x3fff) | 0x8000,
+            substr($hash, 20, 12));
+    }
+
+    /** Feed gegen Übernahme gesperrt (podcast:locked yes)? Standard: nein. */
+    private function feedLocked() {
+        return $this->getValue('feedLocked') === 'yes';
     }
 
     // ── Feed- und Website-Adresse (Roadmap 017)
