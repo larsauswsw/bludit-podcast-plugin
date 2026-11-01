@@ -196,23 +196,23 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] P58 Weitere Links (Spotify, Pocket Casts, Deezer, Castbox) wie P57 prüfen, soweit vorhanden. Ein unpassender Link (z. B. `https://example.com`) zeigt unter dem Feld „Wird nicht verwendet …“ und erscheint nicht im Abo-Fenster. Testweise eingetragene fremde Links danach wieder entfernen.
 
 ## Q · Apple-Angaben im Feed (016, Teil 1)
-- [ ] Q59 **Kanaleinstellungen**: „Kategorie“ ist eine Auswahlliste (deutsch, mit englischem Namen). Dein bisheriger Eintrag ist vorausgewählt — oder unter dem Feld steht „Bisheriger Eintrag „…“ ist keine Apple-Kategorie“. Kategorie (gern mit Unterkategorie) wählen, „Art des Podcasts“ prüfen, optional Copyright eintragen und speichern; die Auswahl bleibt erhalten.
-- [ ] Q60 Feed prüfen:
+- [x] Q59 **Kanaleinstellungen**: „Kategorie“ ist eine Auswahlliste (deutsch, mit englischem Namen). Dein bisheriger Eintrag ist vorausgewählt — oder unter dem Feld steht „Bisheriger Eintrag „…“ ist keine Apple-Kategorie“. Kategorie (gern mit Unterkategorie) wählen, „Art des Podcasts“ prüfen, optional Copyright eintragen und speichern; die Auswahl bleibt erhalten.
+- [x] Q60 Feed prüfen:
   ```sh
   curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -E "itunes:category|itunes:type|itunes:explicit|<copyright>|<image>|<url>"
   ```
   Erwartet: Kategorie mit englischem Namen, Unterkategorie eingerückt darunter (`<itunes:category text="…"><itunes:category text="…" /></itunes:category>`), `<itunes:type>episodic</itunes:type>` (bzw. `serial`), `<itunes:explicit>` nur `true`/`false` (Kanal und jede Episode), `<copyright>` falls eingetragen, `<image>` mit der Cover-URL.
-- [ ] Q61 Feed-Adresse in einem Validator prüfen (z. B. [Podbase](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/)): keine Fehler zu Kategorie, Explicit, Typ oder Bild. Hinweise zu Shownotes und Dateigröße folgen mit Teil 2.
+- [x] Q61 Feed-Adresse in einem Validator prüfen (z. B. [Podbase](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/)): keine Fehler zu Kategorie, Explicit, Typ oder Bild. Hinweise zu Shownotes und Dateigröße folgen mit Teil 2.
 
 ## R · Shownotes und Dateigröße im Feed (016, Teil 2)
-- [ ] R62 Eine Episode mit formatiertem Text (Absatz, Fettdruck, Liste, Link) speichern, dann:
+- [x] R62 Eine Episode mit formatiertem Text (Absatz, Fettdruck, Liste, Link) speichern, dann:
   ```sh
   curl -s "$SITE/podcast.xml?t=$(date +%s)" | grep -E "content:encoded|<description>|itunes:summary" | head
   ```
   Erwartet: `<content:encoded><![CDATA[<p>…<strong>…</strong>…<a href="https://…">…</a>…]]>` mit Absätzen und Liste, `<description>` mit dem Text ohne Tags, kein `itunes:summary` mehr.
-- [ ] R63 Episode mit externer Audio-URL (z. B. einer MP3 bei einem Hoster) neu speichern: kein Hinweis über der Liste, im Feed hat ihr `<enclosure>` eine `length` größer 0. Eine nicht erreichbare URL (z. B. `https://audio.example.invalid/x.mp3`) testweise eintragen → Hinweis „Episode gespeichert, aber die Dateigröße … ließ sich nicht ermitteln …“ über der Liste; danach die richtige URL wieder eintragen.
-- [ ] R64 Hochgeladene Episode bearbeiten, ohne eine neue Datei zu wählen, und speichern: Ihr `<enclosure length>` bleibt gleich (vorher wurde er beim Bearbeiten 0). Im Formular unter „Audio“ eine URL auf `.wav` eintippen → gelber Hinweis „Apple Podcasts spielt WAV- und OGG-Dateien nicht ab …“; mit `.mp3` verschwindet er.
-- [ ] R65 Feed-Adresse im [Podbase-Validator](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/) prüfen: keine Fehler.
+- [x] R63 Episode mit externer Audio-URL (z. B. einer MP3 bei einem Hoster) neu speichern: kein Hinweis über der Liste, im Feed hat ihr `<enclosure>` eine `length` größer 0. Eine nicht erreichbare URL (z. B. `https://audio.example.invalid/x.mp3`) testweise eintragen → Hinweis „Episode gespeichert, aber die Dateigröße … ließ sich nicht ermitteln …“ über der Liste; danach die richtige URL wieder eintragen.
+- [x] R64 Hochgeladene Episode bearbeiten, ohne eine neue Datei zu wählen, und speichern: Ihr `<enclosure length>` bleibt gleich (vorher wurde er beim Bearbeiten 0). Im Formular unter „Audio“ eine URL auf `.wav` eintippen → gelber Hinweis „Apple Podcasts spielt WAV- und OGG-Dateien nicht ab …“; mit `.mp3` verschwindet er.
+- [ ] R65 Feed-Adresse im [Podbase-Validator](https://podba.se/validate/) oder [Cast Feed Validator](https://castfeedvalidator.com/) prüfen: keine Fehler. Hinweise (blaues ℹ️) zu `podcast:locked`, `podcast:guid`, `podcast:transcript` sind erwartet (Roadmap 019/030), ebenso zu `itunes:duration`/`itunes:image` bei Episoden ohne Dauer bzw. eigenes Bild. *(Erster Durchlauf: nur PSP-1 „Podcast-Namespace fehlt“ als Fehler; Namespace mit dem folgenden PR ergänzt.)*
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.

@@ -188,7 +188,8 @@ Transkripte). Sinnvolle erste Elemente:
 
 **Akzeptanzkriterien**
 
-- [ ] Namespace `xmlns:podcast="https://podcastindex.org/namespace/1.0"` eingebunden.
+- [x] Namespace `xmlns:podcast="https://podcastindex.org/namespace/1.0"` eingebunden
+      (vorgezogen mit 016: PSP-1 verlangt ihn, Validator-Befund im Installationstest R65).
 - [ ] `podcast:guid`, `podcast:locked` und `podcast:funding` konfigurierbar.
 - [ ] Transkript- und Kapitel-URLs pro Episode (sobald 030 umgesetzt ist).
 - [ ] Feed validiert weiterhin bei Apple (unbekannte Namespaces werden ignoriert).
