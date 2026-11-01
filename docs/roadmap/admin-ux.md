@@ -70,7 +70,9 @@ noch beim Episodenbild geprüft.
 **Akzeptanzkriterien**
 
 - [ ] Cover-Upload in den Kanaleinstellungen (eigene `post()`-Implementierung,
-      ruft `parent::post()` auf) mit Vorschaubild.
+      ruft `parent::post()` auf) mit Vorschaubild; Ablage über `handleUpload()`
+      in `uploads/podcast/images/`, damit das Cover in der Medienverwaltung
+      (025) erscheint und dort als „Kanal-Cover“ benutzt gilt.
 - [ ] Prüfung per `getimagesize()`: quadratisch, 1400–3000 px; Warnung statt
       harter Ablehnung bei Episodenbildern.
 - [ ] Vorschaubild auch im Episodenformular.
@@ -149,15 +151,21 @@ Idee: ein eigener Bereich „Medien“ unter Admin → Podcast.
 
 - [ ] Bereich „Medien“ (Rollen `admin`, `editor`): Liste aller Dateien in
       `uploads/podcast/audio/` und `images/` mit Name, Typ, Größe, Datum und
-      Verwendung (welche Episode(n), ermittelt über die Custom Fields) sowie
-      die belegte Gesamtgröße.
+      Verwendung sowie die belegte Gesamtgröße. Verwendung umfasst Audio und
+      Episodenbilder (Custom Fields) **und das Kanal-Cover** (Einstellung
+      `cover`) — ein Cover darf nie als „unbenutzt“ gelten.
+- [ ] Bilder mit Vorschau; Covers (Kanal und Episode) als solche erkennbar
+      (z. B. Kennzeichnung „Kanal-Cover“ / „Episodenbild: Folge 3“).
 - [ ] Filter „Unbenutzt“; Einzel- und Sammel-Löschen für unbenutzte Dateien.
       Benutzte Dateien lassen sich nicht löschen, ohne die Episode anzupassen.
 - [ ] Beim Löschen einer Episode oder beim Ersetzen ihrer Datei Rückfrage
       „Zugehörige Dateien ebenfalls löschen?“ — nur für Dateien, die keine
       andere Episode nutzt.
 - [ ] Im Episodenformular eine vorhandene Datei aus der Mediathek wählen (Audio
-      und Bild); Dateigröße und Dauer (sofern bekannt) werden übernommen.
+      und Episodenbild); Dateigröße und Dauer (sofern bekannt) werden übernommen.
+- [ ] In den Kanaleinstellungen das Cover ebenfalls aus der Mediathek wählen
+      oder hochladen (Upload aus 022 landet in `uploads/podcast/images/` und
+      erscheint damit in der Mediathek).
 - [ ] Optional: Datei direkt in der Mediathek hochladen oder ersetzen.
 - [ ] Schutzdateien (`index.php`, `.htaccess`) werden nie angezeigt oder
       gelöscht; fehlen sie, legt das Öffnen der Medienseite sie neu an
@@ -168,6 +176,9 @@ Idee: ein eigener Bereich „Medien“ unter Admin → Podcast.
       Fehlermeldungen ohne Server-Pfade.
 - [ ] README empfiehlt, Dateien über die Medienverwaltung statt per Shell
       aufzuräumen.
+
+**Verwandt:** 022 (Kanal-Cover per Upload, Bildprüfung) — am besten zusammen
+oder 022 zuerst umsetzen, damit Cover-Uploads denselben Weg nehmen.
 
 **Betroffene Dateien**
 

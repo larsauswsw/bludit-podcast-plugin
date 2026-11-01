@@ -162,6 +162,16 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] L43 Beschreibung leeren und speichern → Meldung „Bitte eine Beschreibung eingeben.“, nichts wird geändert.
 - [x] L44 *(nur falls vorhanden; live getestet)* Eine im Bludit-Editor fixierte Episode: Badge „Fixiert“, im Formular Status „Fixiert“, bleibt nach dem Speichern fixiert und steht im Feed.
 
+## M · Player im Seiteninhalt (029)
+- [ ] M45 Episodenseite mit deinem Theme: Player steht zwischen Titel und Text (bzw. am Anfang des Inhaltsbereichs), ohne beim Laden zu springen; genau ein Player.
+- [ ] M46 **Kanaleinstellungen → Position des Players → Am Ende des Inhalts**: Player steht unter dem Text. Danach wieder auf „Am Anfang“.
+- [ ] M47 In den Text einer Episode eine Zeile `{{ podcast-player }}` schreiben: Der Player steht genau dort. Auf der Startseite und im Feed ist der Platzhalter nicht zu sehen:
+  ```sh
+  curl -s "$SITE/?nocache=$RANDOM" | grep -c "podcast-player"
+  curl -s "$SITE/podcast.xml?nocache=$RANDOM" | grep -c "podcast-player"
+  ```
+  Erwartet: beide `0`. Danach die Zeile wieder entfernen.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 

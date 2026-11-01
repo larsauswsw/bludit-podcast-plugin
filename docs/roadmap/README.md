@@ -93,7 +93,7 @@ dokumentiert.
 | 026 | Shownotes-Editor mit Markdown & Vorschau | niedrig | M | [#27](https://github.com/larsauswsw/bludit-podcast-plugin/issues/27) |
 | 027 | Einreichung durch Autoren mit Freigabe-Workflow | niedrig | L | [#28](https://github.com/larsauswsw/bludit-podcast-plugin/issues/28) |
 | 028 | DSGVO: Podlove-Player lokal hosten / 2-Klick-Lösung | hoch | M | [#29](https://github.com/larsauswsw/bludit-podcast-plugin/issues/29) ✅ |
-| 029 | Player über `pageBegin`-Hook statt DOM-Selektoren einbinden | mittel | S | [#30](https://github.com/larsauswsw/bludit-podcast-plugin/issues/30) |
+| 029 | Player über `pageBegin`-Hook statt DOM-Selektoren einbinden | mittel | S | [#30](https://github.com/larsauswsw/bludit-podcast-plugin/issues/30) ✅ |
 | 030 | Kapitelmarken & Transkripte | niedrig | M | [#31](https://github.com/larsauswsw/bludit-podcast-plugin/issues/31) |
 | 031 | Episodenarchiv & Sidebar-Widget „Neueste Episoden“ | niedrig | M | [#32](https://github.com/larsauswsw/bludit-podcast-plugin/issues/32) |
 | 032 | SEO: JSON-LD `PodcastEpisode` & OpenGraph-Audio | niedrig | S | [#33](https://github.com/larsauswsw/bludit-podcast-plugin/issues/33) |
@@ -117,7 +117,8 @@ mit 005 und 006 (behebt S3); 028 lokal gehosteter Player (behebt S4) mit 040 (S8
 Tag-Erhalt aus 007); 042 Admin-Oberfläche im Bludit-Look (übernimmt die Bootstrap-Punkte
 aus 024 und 035); 004 Unterordner und 010 Episoden-API im Admin-Bereich; 034
 Plugin-Metadaten und Kompatibilität. Damit sind alle Pflichtpunkte vor 1.0 erledigt.
-Aus „Für 1.0 empfohlen“: 007 Seitentyp/Beschreibung, 035 Altlasten.
+Aus „Für 1.0 empfohlen“: 007 Seitentyp/Beschreibung, 035 Altlasten, 029 Player im
+Seiteninhalt.
 Teilweise vorgezogen: URL-/Typprüfung aus 011, `CLAUDE.md` aus 037, toter Code
 aus 035 (mit 010).
 
