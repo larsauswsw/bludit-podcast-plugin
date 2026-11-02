@@ -14,6 +14,7 @@ abstract class PodcastTestCase extends TestCase
     protected function setUp(): void
     {
         $GLOBALS['testRole'] = 'admin';
+        $GLOBALS['site']->lang = 'de_DE';
         Log::$messages = [];
         $this->plugin = new Podcast();
     }

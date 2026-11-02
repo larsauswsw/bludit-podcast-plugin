@@ -141,6 +141,23 @@ abstract class Plugin
     }
 }
 
+/**
+ * Website-Einstellungen, soweit das Plugin sie liest. Sprache wie die
+ * Testinstallation der CI (de_DE); Tests für andere Sprachen setzen
+ * $GLOBALS['site']->lang und erzeugen das Plugin neu.
+ */
+class Site
+{
+    /** @var string */
+    public $lang = 'de_DE';
+
+    public function language()
+    {
+        return $this->lang;
+    }
+}
+$GLOBALS['site'] = new Site();
+
 /** Rolle des angemeldeten Nutzers im Test: $GLOBALS['testRole'] (Standard admin). */
 function checkRole($allowRoles, $redirect = true)
 {

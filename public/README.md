@@ -29,7 +29,7 @@ Run a podcast with [Bludit](https://www.bludit.com): manage episodes in the admi
 - Bludit 3.19 – 3.22
 - PHP 8.0 or newer with the `fileinfo` extension (for uploads)
 
-The admin interface is currently in German; an English translation is planned.
+The admin interface follows the language of your Bludit site: English or German (Germany, Austria, Switzerland).
 
 ## License
 
@@ -39,6 +39,6 @@ All rights reserved. The license for the first release will be announced here.
 
 ## Deutsch
 
-Podcast-Plugin für [Bludit](https://www.bludit.com): Episoden im Admin-Bereich verwalten, RSS-Feed mit iTunes-Tags, Podlove Web Player direkt vom eigenen Server – ohne CDN und ohne Drittanbieter. Episoden sind normale Bludit-Seiten mit dem Tag `podcast`. Die Oberfläche ist auf Deutsch.
+Podcast-Plugin für [Bludit](https://www.bludit.com): Episoden im Admin-Bereich verwalten, RSS-Feed mit iTunes-Tags, Podlove Web Player direkt vom eigenen Server – ohne CDN und ohne Drittanbieter. Episoden sind normale Bludit-Seiten mit dem Tag `podcast`. Die Oberfläche folgt der Sprache der Bludit-Website: Deutsch oder Englisch.
 
 Version 1.0 ist in Vorbereitung; Plugin-Dateien und Downloads erscheinen hier. Voraussetzungen: Bludit 3.19–3.22, PHP 8.0 oder neuer.

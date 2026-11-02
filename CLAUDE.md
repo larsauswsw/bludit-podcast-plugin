@@ -15,7 +15,9 @@ bindet den Podlove Web Player ein.
 - Code: `bl-plugins/podcast/` (`plugin.php`, `js/podcast-admin.js`,
   `css/podcast-admin.css`, `metadata.json`, `languages/`). Sprachdateien heißen
   wie Bludits Sitesprache (`de_DE.json`, `de_AT.json`, `de_CH.json`, Fallback
-  `en.json`) — `de.json` würde nie geladen.
+  `en.json`) — `de.json` würde nie geladen. `de_DE.json` ist die Vorlage:
+  `de_AT.json` eine Kopie, `de_CH.json` mit „ss“ statt „ß“
+  (`sed 's/ß/ss/g' de_DE.json > de_CH.json`); ein Unit-Test prüft das.
 - Noch kein veröffentlichtes Release — die Version bleibt bis dahin `1.0.0`.
 - Projektsprache Deutsch (Doku, Roadmap, UI-Texte); Commit-Messages Englisch
   wie in der bisherigen Historie.
@@ -91,8 +93,20 @@ dort um passende Schritte ergänzen.
   Plugin-Einstellungen (`form()`) ohne eigene Klassen, gestylt über
   `.plugin-form`, Gruppen per `Bootstrap::formTitle()`. Eigenes CSS nur in
   `css/podcast-admin.css`.
+- Texte der Oberfläche (Admin, API-Meldungen, Player-Link) in der Sitesprache
+  nur über `text()` (Klartext) bzw. `html()` (escaped; HTML aus dem Code wie
+  `<code>` nur per drittem Argument), Upload-Meldungen je Art über
+  `uploadText()`. Schlüssel unter `podcast-texts` in `languages/*.json` (nicht
+  auf oberster Ebene: Bludit mischt die Datei in `$L` und würde eigene
+  Übersetzungen überschreiben); `language()` lädt sie selbst, weil der
+  Konstruktor vor Bludits Sprachdatei läuft, fehlende Schlüssel englisch.
+  `js-…`-Texte gibt `adminScript()` als `PODCAST_TEXTS` an das Skript (`t()`
+  in `podcast-admin.js`). Neue Texte in `en.json` und `de_DE.json` mit
+  denselben Platzhaltern `{name}` und nur als Literal im Aufruf, sonst schlägt
+  `LanguageTest` an. Log-Einträge bleiben englisch.
 - Apple-Kategorie nur über `appleCategory()` (Whitelist `APPLE_CATEGORIES`,
-  gespeichert als „Kategorie > Unterkategorie“, englische Namen), Cover über
+  gespeichert als „Kategorie > Unterkategorie“, englische Namen; angezeigt per
+  `categoryName()`, Übersetzungen unter `podcast-apple-categories`), Cover über
   `coverUrl()` (nur `http(s)`), `itunes:explicit` als `true`/`false`.
 - Shownotes im Feed nur über `shownotesHtml()` (DOM-Whitelist `SHOWNOTES_TAGS`,
   keine Attribute außer geprüftem `href`) in `cdata()`; `<description>` über
@@ -158,9 +172,11 @@ geschützte Admin-Seiten ohne Anmeldung mit HTTP 200 als Anmeldeformular.
 
 Unit-Tests in `tests/Unit/` rufen private Methoden per Reflection auf
 (`PodcastTestCase::call()`); `tests/bootstrap.php` bildet nur die nötige
-Bludit-Umgebung nach. Neue Hilfsfunktionen und jeder Sicherheitsfix bekommen
-einen Test. Entwicklungsdateien (`composer.json`, `package.json`, `tests/`,
-`.github/`) gehören nicht ins Release-ZIP.
+Bludit-Umgebung nach (Sitesprache `de_DE`, andere Sprache über
+`$GLOBALS['site']->lang` und ein neues Plugin-Objekt). Neue Hilfsfunktionen
+und jeder Sicherheitsfix bekommen einen Test. Entwicklungsdateien
+(`composer.json`, `package.json`, `tests/`, `.github/`) gehören nicht ins
+Release-ZIP.
 
 ## Sicherheitsregeln (verbindlich für jede Änderung)
 
