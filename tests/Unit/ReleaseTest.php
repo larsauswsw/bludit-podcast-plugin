@@ -34,6 +34,20 @@ class ReleaseTest extends TestCase
         $this->assertIsString($meta['license'] ?? null);
     }
 
+    /** MIT verlangt den Lizenztext in jeder Kopie: er liegt im Plugin-Ordner (ZIP). */
+    public function testLicenseMatchesMetadata(): void
+    {
+        $meta    = $this->metadata();
+        $license = PATH_PLUGINS . 'podcast' . DS . 'LICENSE';
+        if (($meta['license'] ?? '') === '') {
+            $this->assertFileDoesNotExist($license, 'Lizenzdatei ohne Eintrag in metadata.json');
+            return;
+        }
+        $this->assertSame('MIT', $meta['license']);
+        $this->assertFileExists($license);
+        $this->assertStringStartsWith("MIT License\n\nCopyright (c) ", (string) file_get_contents($license));
+    }
+
     public function testChangelogMatchesMetadata(): void
     {
         $meta     = $this->metadata();

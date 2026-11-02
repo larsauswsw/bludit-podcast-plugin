@@ -201,17 +201,20 @@ Bludit-Plugin-Verzeichnis.
 - [x] Öffentliches Schaufenster-Repo mit README und Screenshots aus `public/`
       (angelegt 2026-11-01, Inhaber hat das leere Repo erstellt; Claude darf
       keine Repos anlegen).
-- [ ] Lizenz entschieden; `license` in `metadata.json` und Lizenzdatei bzw.
-      -hinweis im öffentlichen Repo.
+- [x] Lizenz entschieden; `license` in `metadata.json` und Lizenzdatei bzw.
+      -hinweis im öffentlichen Repo. (2026-11-02: **MIT**, Variante (a); Text in
+      `bl-plugins/podcast/LICENSE`, liegt im ZIP und wird ins öffentliche Repo
+      kopiert.)
 - [x] `CHANGELOG.md` nach „Keep a Changelog“, Version in `metadata.json` synchron;
       erster Eintrag ist `1.0.0` (erstes Release).
 - [x] Ein Skript (oder eine GitHub Action) überträgt bei einem Release
       `bl-plugins/podcast/` und `public/` ins öffentliche Repo, setzt
       `releaseDate` in `metadata.json`, legt Tag und GitHub-Release mit
       `podcast-<version>.zip` an.
-- [ ] README verlinkt auf die Releases als bevorzugten Installationsweg.
+- [x] README verlinkt auf die Releases als bevorzugten Installationsweg.
 - [ ] Mit dem Release 1.0 ist dieses Repository privat; Update-Befehl für Tests
-      mit Lesetoken dokumentiert (Installationstest, Vorbereitung).
+      mit Lesetoken dokumentiert (Installationstest, Vorbereitung — erledigt
+      2026-11-02, GitHub-API mit fine-grained Token, „Contents: Read-only“).
 
 **Umsetzung (Teil, 2026-11-02):** `CHANGELOG.md` auf Englisch, weil es mit
 ins öffentliche Repo und in die Release-Texte geht; Änderungen stehen bis zum
@@ -224,13 +227,16 @@ Entwicklungsdateien), ersetzt den Inhalt des öffentlichen Repos durch
 `podcast/`, `public/` und `CHANGELOG.md` (ein Commit je Version), setzt dort und
 hier das Tag `v<version>` und legt per `gh` das Release mit dem ZIP und dem
 CHANGELOG-Abschnitt an. Veröffentlicht wird nur mit Lizenz (`license` in
-`metadata.json` und `public/LICENSE`), grüner CI auf dem Commit und
+`metadata.json` und `bl-plugins/podcast/LICENSE`), grüner CI auf dem Commit und
 Schreibrecht; `--dry-run` baut alles lokal und warnt nur. `ReleaseTest` prüft,
 dass `metadata.json` und CHANGELOG zusammenpassen. Getestet in einer Sandbox
 (lokales origin, nachgebautes öffentliches Repo, `gh`-Attrappe); der erste
-echte Lauf ist das Release 1.0.0. Offen: Lizenz, README (Releases als
-Installationsweg; die Plugin-README nennt noch die deutschen Bezeichnungen der
-Oberfläche), Privatstellen.
+echte Lauf ist das Release 1.0.0. READMEs (2026-11-02): öffentliche README
+mit Installation aus dem Release, Update-Hinweis und den neuen Funktionen;
+Plugin-README mit den englischen Bezeichnungen der Oberfläche, Abschnitt
+„Updating the plugin“, ohne Hinweise auf Entwicklungsversionen und interne
+Skripte. Lizenz MIT (Lizenzabschnitte beider READMEs). Offen: Release
+ausführen, Privatstellen.
 
 **Betroffene Dateien**
 

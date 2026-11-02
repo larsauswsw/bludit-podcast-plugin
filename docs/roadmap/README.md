@@ -28,14 +28,13 @@ Screenshots (#97) und die Release-Vorbereitung (#96).
   036 (Unit-, Integrationstests, PHPStan, ESLint, gitleaks in der CI) und 014
   (Oberfläche Deutsch/Englisch, Texte in `languages/*.json`). Vorgezogen aus
   019: Namespace, `podcast:guid`, `podcast:locked`.
-- **Als Nächstes: 038** (Release). Offen beim Inhaber: Lizenzentscheidung, Repository
-  auf privat stellen. Vorbereitet: `CHANGELOG.md` und `scripts/release.sh`
-  (`prepare`, `publish`, `--dry-run`). Noch vorzubereiten: öffentliche README in
-  `public/` um die neuen Funktionen ergänzen (Apple-Kategorien, Abo-Dienste,
-  Cover-Upload, Shownotes, GUID/locked, Tests) und auf die Releases verweisen;
-  die Sprachen und englische Screenshots (#97) stehen dort schon, im
-  öffentlichen Repo noch nicht. Die Plugin-README nennt noch die deutschen
-  Bezeichnungen der Oberfläche.
+- **Als Nächstes: 038** (Release). Lizenz: MIT (entschieden 2026-11-02). Offen beim
+  Inhaber: Release auslösen, danach Repository auf privat stellen. Vorbereitet: `CHANGELOG.md` und `scripts/release.sh`
+  (`prepare`, `publish`, `--dry-run`), beide READMEs für das Release
+  (Installation aus dem Release-ZIP, englische Bezeichnungen, Screenshots aus
+  #97) und die MIT-Lizenz; ins öffentliche Repo kommt alles erst mit `publish`.
+  Ablauf: `scripts/release.sh prepare`, PR, Merge, `publish --dry-run`,
+  `publish` (Inhaber), dann privat stellen.
 - **Installationstest offen:** nur F19 (Meldung bei Datei über dem Limit, nicht
   live geprüft); C12/J39 optional, I35 trifft nicht zu. Teil U (Sprache, 014)
   bestanden.

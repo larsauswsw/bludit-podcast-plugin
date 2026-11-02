@@ -9,7 +9,10 @@ A podcast plugin for [Bludit](https://www.bludit.com/) CMS. Manage episodes in t
 - **File upload or URL** — upload audio (MP3, M4A, OGG, WAV) and episode artwork (JPG, PNG) or link to external files; uploads are checked for size, file type and content
 - **RSS feed** with `<itunes:*>` tags for episode, season, type, duration, explicit and artwork
 - **Embedded audio player** — [Podlove Web Player 5](https://podlove.org/podlove-web-player/), served from your own server (no CDN), placed inside the page content of every episode; a plain HTML5 player is available as an alternative and as fallback
+- **Apple Podcasts ready** — category from Apple's list, podcast type, cover check (square, 1400–3000 px, RGB), show notes as HTML, file sizes of external audio, Podcasting 2.0 `podcast:guid` and `podcast:locked`
+- **Subscribe button** in the player with podcast apps and your links on Apple Podcasts, Spotify, Pocket Casts, Deezer and Castbox
 - **Role-based access** — admins and editors can manage episodes; channel settings are admin-only
+- **English and German** — the admin interface follows the language of your Bludit site
 - Works with Bludit installed in a subdirectory
 
 ---
@@ -26,7 +29,7 @@ A podcast plugin for [Bludit](https://www.bludit.com/) CMS. Manage episodes in t
 
 ### 1. Download the plugin
 
-Download or clone this repository. You only need the `podcast` folder.
+Download `podcast-<version>.zip` from the [releases page](https://github.com/larsauswsw/bludit-plugin-podcast/releases) and unzip it. It contains the `podcast` folder.
 
 ### 2. Copy to your Bludit installation
 
@@ -45,8 +48,8 @@ your-bludit/
 ### 3. Activate the plugin
 
 1. Log in to your Bludit admin panel.
-2. Go to **Einstellungen → Plugins** (*Settings → Plugins*).
-3. Find **Podcast** in the list and click **Aktivieren** (*Activate*).
+2. Go to **Settings → Plugins** (German: *Einstellungen → Plugins*).
+3. Find **Podcast** in the list and click **Activate** (*Aktivieren*).
 
 ### 4. Configure upload limits (important for audio files)
 
@@ -104,97 +107,92 @@ location ^~ /bl-content/uploads/podcast/ {
 
 (Adjust the path if Bludit runs in a subdirectory.)
 
+### Updating the plugin
+
+Download the new release and copy its `podcast` folder over the existing `bl-plugins/podcast/` folder. Episodes, settings and uploads are stored in `bl-content/`, not in the plugin folder, so they are kept. The changes of each version are listed in the [changelog](https://github.com/larsauswsw/bludit-plugin-podcast/blob/main/CHANGELOG.md).
+
 ---
 
 ## Channel Settings
 
-The admin interface is in German; menu names are given in German below.
+The admin interface follows the language of your Bludit site: English or German (Germany, Austria, Switzerland); other languages show English. Names below are the English ones.
 
-Before publishing episodes, configure your podcast channel: **Admin → Podcast → Kanaleinstellungen** (admins only), or **Einstellungen → Plugins → Podcast → Einstellungen**.
+Before publishing episodes, configure your podcast channel: **Admin → Podcast → Channel settings** (admins only), or **Settings → Plugins → Podcast → Settings**.
 
 The settings are grouped like Bludit's own settings pages.
 
 | Group | Setting | Description | Example |
 |---|---|---|---|
-| **Podcast** | **Podcast-Titel** | The name of your podcast | `My Podcast` |
-| | **Beschreibung** | Short summary of your podcast | `A show about...` |
-| | **Autor** | Podcast author name | `Jane Doe` |
-| | **Sprache** | RSS language code | `en-us`, `de-de` |
-| | **Cover-URL** | URL of your podcast artwork; Apple requires a square JPG/PNG in RGB with 1400–3000 px. Also used as the RSS `<image>`. A cover uploaded to this site is checked and the form names any problem | `https://example.com/cover.jpg` |
-| | **Cover hochladen** | Upload a cover (admins only). It is checked before it is stored — not square, too small/large or CMYK is refused with a message — and entered as *Cover-URL* with a preview; then click **Speichern** | – |
+| **Podcast** | **Podcast title** | The name of your podcast | `My Podcast` |
+| | **Description** | Short summary of your podcast | `A show about...` |
+| | **Author** | Podcast author name | `Jane Doe` |
+| | **Language** | RSS language code | `en-us`, `de-de` |
+| | **Cover URL** | URL of your podcast artwork; Apple requires a square JPG/PNG in RGB with 1400–3000 px. Also used as the RSS `<image>`. A cover uploaded to this site is checked and the form names any problem | `https://example.com/cover.jpg` |
+| | **Upload cover** | Upload a cover (admins only). It is checked before it is stored — not square, too small/large or CMYK is refused with a message — and entered as *Cover URL* with a preview; then click **Save** | – |
 | | **Copyright** | Optional copyright notice (`<copyright>`) | `© 2026 Jane Doe` |
-| **Apple Podcasts & Verzeichnisse** | **Kategorie** | Apple Podcasts category with optional subcategory, chosen from Apple's list (shown with Apple's German names plus the English name; the feed contains the English names, subcategory nested). A previous free-text entry is kept if it matches an Apple category | `Kinder und Familie → Kindererziehung (Parenting)` |
-| | **Art des Podcasts** | `<itunes:type>`: episodic (newest first) or serial (in order, oldest first) | Episodisch |
-| | **Explicit** | Whether the podcast contains explicit content (`true`/`false` in the feed) | `Nein` |
-| | **Feed gegen Übernahme sperren** | `<podcast:locked>`: *Ja* means other platforms only import the podcast after ownership is confirmed via the owner email. Set to *Nein* before moving to another host | `Nein` |
-| | **E-Mail des Inhabers** | Owner email (`itunes:owner`, `managingEditor`). Public in the feed; directories such as Apple Podcasts and Spotify use it to verify ownership | `jane@example.com` |
-| | **Apple Podcasts**, **Spotify**, **Pocket Casts**, **Deezer**, **Castbox** | Optional: the podcast's public link on that service (in the app: *Share → Copy link*). Shown in the player's subscribe button. The Apple link also adds Castro and – if no own link is set – Pocket Casts | `https://podcasts.apple.com/de/podcast/my-podcast/id1234567890` |
-| **Feed** | **Feed-Dateiname** | Path at which the RSS feed is served | `podcast.xml` |
-| | **Adresse des Feeds** | Read-only: the public feed URL to submit to Apple Podcasts, Spotify etc., with a link to open the feed | `https://example.com/podcast.xml` |
-| | **Abweichende Feed-URL (optional)** | Only if the feed is served from another address (e.g. a CDN); leave empty to use the site address | `https://cdn.example.com/podcast.xml` |
-| | **Podcast-GUID** | Read-only: permanent podcast ID (`<podcast:guid>`), generated once from the feed URL (UUIDv5 as defined by Podcasting 2.0) and kept when the feed moves | `5c3f1a80-…` |
-| | **Website-URL** | Your podcast website; leave empty for the Bludit site | `https://example.com` |
-| **Website & Player** | **Player auf Episodenseiten** | Podlove Web Player (served locally) or a plain HTML5 player | Podlove |
-| | **Position des Players** | At the start of the page content (below the title) or at the end | start |
-| **Uploads** | **Max. Upload-Größe (MB)** | Plugin-level upload limit; the server's PHP limits apply as well | `512` |
+| **Apple Podcasts & directories** | **Category** | Apple Podcasts category with optional subcategory, chosen from Apple's list (in German with the English name added; the feed contains the English names, subcategory nested). A previous free-text entry is kept if it matches an Apple category | `Kids & Family → Parenting` |
+| | **Podcast type** | `<itunes:type>`: episodic (newest first) or serial (in order, oldest first) | Episodic |
+| | **Explicit** | Whether the podcast contains explicit content (`true`/`false` in the feed) | `No` |
+| | **Lock feed against transfer** | `<podcast:locked>`: *Yes* means other platforms only take over the podcast after ownership is confirmed via the owner email. Set to *No* before moving to another host | `No` |
+| | **Owner email** | Owner email (`itunes:owner`, `managingEditor`). Public in the feed; directories such as Apple Podcasts and Spotify use it to verify ownership | `jane@example.com` |
+| | **Apple Podcasts**, **Spotify**, **Pocket Casts**, **Deezer**, **Castbox** | Optional: the podcast's public link on that service (in the app: *Share → Copy link*). Shown in the player's subscribe button. The Apple link also adds Castro and – if no own link is set – Pocket Casts | `https://podcasts.apple.com/us/podcast/my-podcast/id1234567890` |
+| **Feed** | **Feed file name** | Path at which the RSS feed is served | `podcast.xml` |
+| | **Feed address** | Read-only: the public feed URL to submit to Apple Podcasts, Spotify etc., with a link to open the feed | `https://example.com/podcast.xml` |
+| | **Podcast GUID** | Read-only: permanent podcast ID (`<podcast:guid>`), generated once from the feed URL (UUIDv5 as defined by Podcasting 2.0) and kept when the feed moves | `5c3f1a80-…` |
+| | **Different feed URL (optional)** | Only if the feed is served from another address (e.g. a CDN); leave empty to use the site address | `https://cdn.example.com/podcast.xml` |
+| | **Website URL** | Your podcast website; leave empty for the Bludit site | `https://example.com` |
+| **Website & player** | **Player on episode pages** | Podlove Web Player (served locally) or a simple HTML5 player | Podlove |
+| | **Player position** | At the start of the page content (below the title) or at the end | start |
+| **Uploads** | **Max. upload size (MB)** | Plugin-level upload limit; the server's PHP limits apply as well | `512` |
 
 The feed URL is built from the Bludit site address and the feed filename (subdirectory installations included). URLs that do not start with `http://` or `https://` are not used; the form marks them. Every page of the site links to the feed in its `<head>` (`<link rel="alternate" type="application/rss+xml">`), so browsers and podcast apps can find it from the website address.
 
-Click **Speichern** after making changes.
+Click **Save** after making changes.
 
 ---
 
 ## Managing Episodes
 
-Go to **Admin → Podcast** (microphone icon in the sidebar). The list shows all episodes, sorted by episode number (highest first), with badges for drafts (*Entwurf*), scheduled (*Geplant*), sticky (*Fixiert*) and static (*Statisch*) episodes. It works on phones as well.
+Go to **Admin → Podcast** (microphone icon in the sidebar). The list shows all episodes, sorted by episode number (highest first), with badges for drafts (*Draft*), scheduled (*Scheduled*), sticky (*Sticky*) and static (*Static*) episodes. It works on phones as well.
 
 ### Creating a new episode
 
-1. Click **Neue Episode**.
+1. Click **New episode**.
 2. Fill in the episode details:
 
 | Field | Description |
 |---|---|
-| **Titel** | Episode title (required) |
-| **Beschreibung** | Show notes / episode description (required) |
-| **Folge** | Episode number, used for `<itunes:episode>` |
-| **Staffel** | Season, used for `<itunes:season>` |
-| **Typ** | `full`, `trailer` or `bonus` |
+| **Title** | Episode title (required) |
+| **Description** | Show notes / episode description (required) |
+| **Episode** | Episode number, used for `<itunes:episode>` |
+| **Season** | Season, used for `<itunes:season>` |
+| **Type** | Full, Trailer or Bonus (`full`, `trailer`, `bonus` in the feed) |
 | **Explicit** | Explicit flag for this episode |
-| **Dauer** | `HH:MM:SS`, `MM:SS` or total seconds |
-| **Episodenbild** | External URL or file upload (JPG, PNG) with a preview; the player falls back to the channel cover. An uploaded image that does not meet Apple's cover rules is saved with a warning |
+| **Duration** | `HH:MM:SS`, `MM:SS` or total seconds |
+| **Episode image** | External URL or file upload (JPG, PNG) with a preview; the player falls back to the channel cover. An uploaded image that does not meet Apple's cover rules is saved with a warning |
 | **Audio** | External URL or file upload (MP3, M4A, OGG, WAV) — required. Apple Podcasts does not play WAV or OGG; the form shows a hint. For an external URL the plugin asks the server for the file size when saving (see below) |
-| **Veröffentlichungsdatum** | Publication date and time |
-| **Status** | *Veröffentlicht* (published) or *Entwurf* (draft) |
+| **Publication date** | Publication date and time, in the website's time zone |
+| **Status** | *Published* or *Draft* |
 
-3. Click **Speichern**. The episode appears in the list and, if published, on your site.
+3. Click **Save**. The episode appears in the list and, if published, on your site.
 
-A published episode with a date in the future becomes *Geplant* (scheduled) in Bludit and appears on the site and in the feed at that time. If you set an episode to *Fixiert* (sticky) or *Statisch* (static) in the Bludit editor, the podcast form keeps that type.
+A published episode with a date in the future becomes *Scheduled* in Bludit and appears on the site and in the feed at that time. If you set an episode to *Sticky* or *Static* in the Bludit editor, the podcast form keeps that type.
 
 ### Editing an episode
 
-Click the episode title, or open the **☰** menu of the episode and choose **Bearbeiten**. The same menu offers **Anschauen** (view the page) and **Im Bludit-Editor öffnen**. Tags you add in the Bludit editor are kept when you save in the podcast form.
+Click the episode title, or open the **☰** menu of the episode and choose **Edit**. The same menu offers **View** and **Open in the Bludit editor**. Tags you add in the Bludit editor are kept when you save in the podcast form.
 
 ### Deleting an episode
 
-Open the **☰** menu and choose **Löschen**, then confirm. The episode disappears from your site and the feed. Episodes that have child pages cannot be deleted from the plugin (like in Bludit's own content list).
+Open the **☰** menu and choose **Delete**, then confirm. The episode disappears from your site and the feed. Episodes that have child pages cannot be deleted from the plugin (like in Bludit's own content list).
 
 ### Where episode data is stored
 
-Episode metadata (audio URL, file size, duration, episode/season number, type, explicit flag, episode image) is stored as **Bludit custom fields** directly in each page (`podcast_audio_url`, `podcast_audio_length`, `podcast_duration`, `podcast_episode`, `podcast_season`, `podcast_type`, `podcast_explicit`, `podcast_image`). The plugin registers these fields automatically under **Settings → General → Custom fields**; existing custom fields are left untouched.
+Episode metadata (audio URL, file size, duration, episode/season number, type, explicit flag, episode image) is stored as **Bludit custom fields** directly in each page (`podcast_audio_url`, `podcast_audio_length`, `podcast_duration`, `podcast_episode`, `podcast_season`, `podcast_type`, `podcast_explicit`, `podcast_image`). The plugin registers these fields automatically under **Settings → General → Custom fields**, labelled in the site language at that time; existing custom fields are left untouched.
 
 - The data lives in `bl-content/` together with your pages, so it is included in normal Bludit backups, survives plugin updates and follows the page when its slug changes.
 - The fields also appear in the Bludit editor under **Options → Custom** for every page. Pages only become episodes when they are tagged `podcast`; any user who can edit a page in Bludit can also edit these fields there. Bludit does not validate custom fields in its editor: invalid values (e.g. a duration like `47:99` or a non-`http(s)` URL) are saved there, but ignored by the feed and the player. The plugin's edit form shows the stored value and asks for a valid one when you save.
 - Deactivating the plugin does **not** delete episode data.
-
-### Updating from a version with `metadata/episodes.json`
-
-Earlier development versions stored metadata in `bl-plugins/podcast/metadata/episodes.json`, a location that is reachable over HTTP. To migrate:
-
-1. Copy the new plugin files **over** the existing `podcast` folder — do not delete the old folder first, otherwise `episodes.json` is lost.
-2. Open **Admin → Podcast** once as admin or editor.
-
-The plugin then copies the data into the custom fields, moves the old file as a protected backup to `bl-content/workspaces/podcast/episodes-legacy-<date>.php` and deletes `metadata/episodes.json`. Episodes that already have an audio URL in their custom fields are not overwritten. Note: Bludit deletes the workspace folder (and with it this backup) when the plugin is deactivated.
 
 ---
 
@@ -221,14 +219,12 @@ The feed includes:
 
 ## Frontend Player
 
-The [Podlove Web Player](https://podlove.org/podlove-web-player/) is added to every episode page automatically — no changes to your theme are required. The plugin inserts it into the page content, so it appears wherever your theme prints the content: at the start (below the title, default) or at the end, see **Position des Players**. To place it anywhere else, write a line `{{ podcast-player }}` into the episode text; the player appears exactly there. The placeholder is removed on list pages and in the feed.
+The [Podlove Web Player](https://podlove.org/podlove-web-player/) is added to every episode page automatically — no changes to your theme are required. The plugin inserts it into the page content, so it appears wherever your theme prints the content: at the start (below the title, default) or at the end, see **Player position**. To place it anywhere else, write a line `{{ podcast-player }}` into the episode text; the player appears exactly there. The placeholder is removed on list pages and in the feed.
 
 - **Served locally:** the plugin ships Podlove Web Player 5.13.0 in `bl-plugins/podcast/player/` (MIT license, unmodified subset of the npm package; provenance and checksums in `player/SOURCE.md`). Visitors' browsers do **not** connect to a Podlove CDN.
 - **Fallback:** a plain HTML5 `<audio>` player with a download link is shown until the Podlove player has loaded, and stays visible if JavaScript is disabled or the player cannot load.
-- **Plain HTML5 player:** choose *Player auf Episodenseiten → Einfacher HTML5-Player* in the channel settings to skip the Podlove player entirely.
+- **Simple HTML5 player:** choose *Player on episode pages → Simple HTML5 player* in the channel settings to skip the Podlove player entirely.
 - The player shows a subscribe button for the podcast feed. It lists the services whose link is set in the channel settings (Apple Podcasts, Spotify, Pocket Casts, Castro, Deezer, Castbox), podcast apps that subscribe via the feed URL (Overcast, Downcast, AntennaPod, Podcast Addict and others, filtered by the visitor's platform), Player.fm and the plain RSS link.
-
-To update the bundled player, run `scripts/update-podlove-player.sh <version>` from the development repository (verifies the npm integrity hash and copies only the needed files).
 
 ### Privacy policy note
 
@@ -240,32 +236,31 @@ The player itself sends no data to third parties. The audio file is loaded from 
 
 ## Troubleshooting
 
-**"…-Datei ist größer als … MB" or "Upload zu groß: …" when saving**
+**"… file is larger than … MB" or "Upload too large: …" when saving**
 
 The file exceeds the plugin setting or PHP's `upload_max_filesize` / `post_max_size`. The episode form shows the effective limit below the audio field. See [Configure upload limits](#4-configure-upload-limits-important-for-audio-files) above.
 
-**"Die Anfrage ist für den Webserver zu groß (HTTP 413)"**
+**"The request is too large for the web server (HTTP 413)"**
 
 The web server rejected the request before PHP saw it. Raise its limit as well (Apache `LimitRequestBody`, Nginx `client_max_body_size`).
 
-**"Sitzung abgelaufen oder Sicherheits-Token ungültig"**
+**"Session expired or security token invalid"**
 
 Your Bludit session has expired. Log in again and repeat the action.
 
-**"Serverfehler (HTTP 500)"**
+**"Server error (HTTP 500)"**
 
 A PHP error occurred. Check the PHP error log and `bl-content/databases/syslog.php`.
 
 **Feed is empty or missing episodes**
 
-- Make sure your episodes are published (not *Entwurf*) and their date is not in the future.
+- Make sure your episodes are published (not *Draft*) and their date is not in the future.
 - Check that the feed filename in the channel settings matches the URL you are accessing.
 - Verify that the episode has audio — episodes without an audio URL are excluded from the feed.
 
 **Player does not appear on episode pages**
 
 - The episode must have an `http(s)` audio URL in its custom field `podcast_audio_url`.
-- After updating from an older version, open **Admin → Podcast** once so existing data is migrated (see *Updating from a version with `metadata/episodes.json`*).
 - The page must have the tag `podcast` (set automatically when you create episodes through the plugin; other tags may be added).
 - Check the browser console for errors loading `bl-plugins/podcast/player/embed.js`; if it fails, the HTML5 fallback player is shown instead.
 
@@ -273,4 +268,4 @@ A PHP error occurred. Check the PHP error log and `bl-content/databases/syslog.p
 
 ## License
 
-The license has not been decided yet; until it is announced, all rights are reserved. The bundled Podlove Web Player in `player/` is MIT-licensed (see `player/LICENSE`).
+The plugin is released under the [MIT License](LICENSE). The bundled Podlove Web Player in `player/` is MIT-licensed as well (see `player/LICENSE`).

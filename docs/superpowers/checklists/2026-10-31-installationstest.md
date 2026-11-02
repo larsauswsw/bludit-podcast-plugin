@@ -17,15 +17,27 @@ vorher löschen (sonst geht eine alte `metadata/episodes.json` verloren). Das
 Plugin dabei **nicht deaktivieren**: Bludit löscht sonst die Kanaleinstellungen
 und den Workspace.
 
+Das Repository ist privat: `main` lädt nur mit einem Lesetoken (GitHub →
+Settings → Developer settings → Fine-grained tokens: nur dieses Repository,
+Berechtigung „Contents: Read-only“, kurze Laufzeit). Token nicht in die
+Shell-History schreiben, sondern abfragen lassen:
+
 ```sh
+read -rsp "GitHub-Token: " GH_TOKEN; echo
 tar czf ~/podcast-backup-$(date +%F).tgz -C "$BLUDIT" bl-plugins/podcast bl-content/databases
 cd /tmp && rm -rf podcast-main && mkdir podcast-main && \
-curl -fsSL https://github.com/larsauswsw/bludit-podcast-plugin/archive/refs/heads/main.tar.gz \
+curl -fsSL -H "Authorization: Bearer $GH_TOKEN" \
+  https://api.github.com/repos/larsauswsw/bludit-podcast-plugin/tarball/main \
   | tar xz -C podcast-main --strip-components=1 && \
 cp -R podcast-main/bl-plugins/podcast/. "$BLUDIT/bl-plugins/podcast/"
 chown -R "$(stat -c '%U:%G' "$BLUDIT/bl-content")" "$BLUDIT/bl-plugins/podcast"
 cd "$BLUDIT/bl-plugins/podcast/player" && sha256sum -c --quiet CHECKSUMS.sha256 && echo OK
+unset GH_TOKEN
 ```
+
+Veröffentlichte Versionen stattdessen aus dem Release-ZIP des öffentlichen
+Repos (ohne Token): `podcast-<version>.zip` entpacken und den Ordner `podcast`
+über `$BLUDIT/bl-plugins/podcast` kopieren.
 
 Zurück zum alten Stand: `tar xzf ~/podcast-backup-*.tgz -C "$BLUDIT"`
 
