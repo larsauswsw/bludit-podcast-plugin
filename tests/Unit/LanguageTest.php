@@ -163,6 +163,20 @@ class LanguageTest extends PodcastTestCase
         $this->assertLessThan(strpos($english, 'label="Comedy"'), strpos($english, 'label="Business"'));
     }
 
+    /** Episodentyp: Apples Wert bleibt gespeichert, angezeigt wird die Übersetzung. */
+    public function testEpisodeTypeIsShownInSiteLanguage(): void
+    {
+        $this->assertSame('Vollständig', $this->call('episodeTypeLabel', 'full'));
+        $this->assertSame('Trailer', $this->call('episodeTypeLabel', 'trailer'));
+        $this->assertSame('Vollständig', $this->call('episodeTypeLabel', ''), 'unbekannt = full');
+        $form = $this->call('renderEpisodeForm');
+        $this->assertStringContainsString('<option value="full">Vollständig</option>', $form);
+        $this->assertStringContainsString('<option value="bonus">Bonus</option>', $form);
+
+        $this->useLanguage('en');
+        $this->assertSame('Full', $this->call('episodeTypeLabel', 'full'));
+    }
+
     public function testNumbersUseDecimalSeparatorOfLanguage(): void
     {
         $this->assertSame('0,5', $this->call('formatMB', 524288));
