@@ -33,8 +33,9 @@ gemergt; 014 liegt auf `claude/admin-i18n`.
   um die neuen Funktionen ergänzen (Apple-Kategorien, Abo-Dienste,
   Cover-Upload, Shownotes, GUID/locked, Tests); die Sprachen stehen dort schon
   (mit 014), im öffentlichen Repo noch nicht.
-- **Installationstest offen:** U70/U71 (Sprache, 014) und F19 (Meldung bei
-  Datei über dem Limit, nicht live geprüft); C12/J39 optional, I35 trifft nicht zu.
+- **Installationstest offen:** nur F19 (Meldung bei Datei über dem Limit, nicht
+  live geprüft); C12/J39 optional, I35 trifft nicht zu. Teil U (Sprache, 014)
+  bestanden.
 - **Arbeitsweise:** PR anlegen und mergen nur auf Zuruf des Inhabers; bestandene
   Installationstests als kleiner Doku-PR abhaken; vor dem Merge grüne CI.
 
