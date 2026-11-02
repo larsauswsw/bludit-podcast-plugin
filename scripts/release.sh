@@ -26,6 +26,8 @@
 # gh (angemeldet, Schreibrecht auf das öffentliche Repo, Lesen der CI hier)
 # und git-Zugangsdaten für den Push dorthin (z. B. nach „gh auth setup-git“).
 # PUBLIC_REPO, PUBLIC_URL und DEV_REPO lassen sich für Tests überschreiben.
+# Ohne Rechner: GitHub Action „Release“ (.github/workflows/release.yml),
+# Anleitung in docs/release.md.
 set -euo pipefail
 
 PUBLIC_REPO="${PUBLIC_REPO:-larsauswsw/bludit-plugin-podcast}"
@@ -172,7 +174,8 @@ publish() {
                 ADMIN|MAINTAIN|WRITE) ;;
                 *) problems+=("kein Schreibrecht auf $PUBLIC_REPO") ;;
             esac
-            [[ "$(gh run list --repo "$DEV_REPO" --workflow ci.yml --commit "$head" --json conclusion \
+            # GH_CI_TOKEN: eigener Token zum Lesen der CI (GitHub Action), sonst der von gh
+            [[ "$(GH_TOKEN="${GH_CI_TOKEN:-${GH_TOKEN:-}}" gh run list --repo "$DEV_REPO" --workflow ci.yml --commit "$head" --json conclusion \
                 -q '.[0].conclusion' 2>/dev/null || true)" == success ]] \
                 || problems+=("CI ist für ${head:0:7} nicht grün (oder noch nicht fertig)")
         fi
