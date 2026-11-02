@@ -3,7 +3,7 @@
 Test auf einer laufenden Bludit-Installation (Apache, Bludit 3.x) nach einem
 Plugin-Update. Alles ist per Browser und SSH machbar, auch vom Handy aus.
 Erster Durchlauf: 2026-10-31 mit Stand `main` nach #52 (Teil F nach #55) —
-Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79), Teil Q nach #81, Teil R nach #82 (R65/R66 nach #84), Teil S nach #86, Teil T nach #89.
+Ergebnis unten abgehakt. Teil G am 2026-11-01 nach #58 auf dem iPhone, Teil H nach #60, Teil I nach #62, Teil J nach #64, Teil K nach #66, Teil L nach #68, Teil M nach #70, Teil N nach #72, Teil O nach #76, Teil P nach #78 (P55, P57, P58 nach #79), Teil Q nach #81, Teil R nach #82 (R65/R66 nach #84), Teil S nach #86, Teil T nach #89, Teil U nach #94.
 
 ## Vorbereitung (SSH)
 
@@ -230,8 +230,8 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
 - [x] T69 **Episode bearbeiten → Episodenbild**: Bei einer `https://`-Adresse oder einer gewählten Datei erscheint eine kleine Vorschau. Ein zu kleines Bild (z. B. 800 × 800 px) hochladen und speichern → Hinweis über der Liste „Episodenbild gespeichert, aber es passt nicht zu Apples Vorgaben …“; die Episode ist trotzdem gespeichert.
 
 ## U · Sprache der Oberfläche (014)
-- [ ] U70 Website auf Deutsch: **Admin → Podcast**, Formular und **Kanaleinstellungen** sehen aus wie bisher (z. B. „Neue Episode“, „Kanaleinstellungen“, Kategorie „Kinder und Familie → Kindererziehung (Parenting)“); Spalte und Auswahl „Typ“ zeigen „Vollständig“, „Trailer“, „Bonus“ statt `full`/`trailer`/`bonus`. Der Browser-Tab heißt jetzt „Podcast – Episoden - Bludit“ (vorher „Bludit“). Leeres Formular speichern → „Bitte Titel eingeben.“
-- [ ] U71 **Einstellungen → Allgemein → Sprache → English** speichern. **Admin → Podcast**: „New episode“, „Channel settings“, Datum als `2026-11-02`, Typ „Full“; Formular englisch, leeres Formular speichern → „Please enter a title.“; ☰ → **Delete** → Rückfrage „Really delete the episode “…”?“ (abbrechen). **Kanaleinstellungen**: englische Texte, die Kategorie nur mit englischem Namen, gewählte Werte unverändert; nach **Save** ist der Feed unverändert. Danach die Sprache zurück auf Deutsch.
+- [x] U70 Website auf Deutsch: **Admin → Podcast**, Formular und **Kanaleinstellungen** sehen aus wie bisher (z. B. „Neue Episode“, „Kanaleinstellungen“, Kategorie „Kinder und Familie → Kindererziehung (Parenting)“); Spalte und Auswahl „Typ“ zeigen „Vollständig“, „Trailer“, „Bonus“ statt `full`/`trailer`/`bonus`. Der Browser-Tab heißt jetzt „Podcast – Episoden - Bludit“ (vorher „Bludit“). Leeres Formular speichern → „Bitte Titel eingeben.“
+- [x] U71 **Einstellungen → Allgemein → Sprache → English** speichern. **Admin → Podcast**: „New episode“, „Channel settings“, Datum als `2026-11-02`, Typ „Full“; Formular englisch, leeres Formular speichern → „Please enter a title.“; ☰ → **Delete** → Rückfrage „Really delete the episode “…”?“ (abbrechen). **Kanaleinstellungen**: englische Texte, die Kategorie nur mit englischem Namen, gewählte Werte unverändert; nach **Save** ist der Feed unverändert. Danach die Sprache zurück auf Deutsch.
 
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
