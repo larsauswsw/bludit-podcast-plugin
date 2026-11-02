@@ -28,6 +28,25 @@ class FeedTest extends PodcastTestCase
         $this->assertSame('https://example.org/c.jpg', $this->call('coverUrl'));
     }
 
+    /** Ohne Podcast-Titel gilt der Titel der Website (Apple verlangt <title>). */
+    public function testFeedTitleFallsBackToSiteTitle(): void
+    {
+        $this->assertSame('Meine & Website', $this->call('feedTitle'));
+        $this->setting('feedTitle', 'Tom & Jerry');
+        $this->assertSame('Tom & Jerry', $this->call('feedTitle'));
+    }
+
+    /** Standard-Sprache des Feeds aus der Sitesprache. */
+    public function testFeedLanguageFollowsSiteLanguage(): void
+    {
+        foreach (['de_DE' => 'de-de', 'de_CH' => 'de-ch', 'en' => 'en', 'pt_BR' => 'pt-br', 'ckb' => 'ckb',
+            '../x' => 'en', '' => 'en'] as $site => $expected) {
+            $GLOBALS['site']->lang = $site;
+            $plugin = new Podcast();
+            $this->assertSame($expected, $plugin->getValue('feedLang'), $site);
+        }
+    }
+
     public function testAppleCategoryListMatchesApple(): void
     {
         $reflection = new ReflectionClassConstant(Podcast::class, 'APPLE_CATEGORIES');

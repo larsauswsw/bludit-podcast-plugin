@@ -107,7 +107,7 @@ Medienverwaltung (Roadmap 025) da ist.
 
 ## F · Zu großer Upload
 - [x] F18 Unter dem Audio-Feld steht das tatsächliche Limit, z. B. „Max. 2 MB pro Datei — vom Server begrenzt (upload_max_filesize = 2M, post_max_size = 8M …)“ — nicht einfach die Plugin-Einstellung. *(Live geprüft: nach Erhöhen auf 512M/520M „Max. 512 MB pro Datei“ ohne Server-Hinweis. Die Anzeige im begrenzten Fall nur im Harness getestet.)*
-- [ ] F19 Datei über dem Limit wählen und speichern → sofort „Die Datei „…“ (X MB) ist größer als das Upload-Limit von Y MB.“, ohne dass hochgeladen wird. *(Nicht live geprüft, Limits waren schon erhöht; in Node mit 7 Fällen getestet.)*
+- [x] F19 Datei über dem Limit wählen und speichern → sofort „Die Datei „…“ (X MB) ist größer als das Upload-Limit von Y MB.“, ohne dass hochgeladen wird. *(Live geprüft 2026-11-02 mit „Max. Upload-Größe“ = 1 MB, danach zurückgesetzt.)*
 - [x] F20 Rückfallebene ohne Prüfung im Browser (Version vor #55, Limits 2M/8M): zu große Datei → serverseitige Meldung „zu groß“ statt „Netzwerkfehler“. *(Live geprüft.)*
 
 Die PHP-Limits der Website (nicht der Kommandozeile) prüfen:

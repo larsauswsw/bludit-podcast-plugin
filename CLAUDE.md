@@ -119,6 +119,8 @@ dort um passende Schritte ergänzen.
 - Kanal-Cover: Upload nur über die API-Aktion `upload_cover`
   (`handleCoverUpload()`, nur Admins), Prüfung per `coverProblems()` vor dem
   Speichern; Bilder dieser Website über `localImagePath()` (Muster + `realpath()`).
+- Podcast-Titel nur über `feedTitle()` (ohne Eintrag der Titel der Website),
+  Standard der Feed-Sprache aus der Sitesprache (`siteFeedLanguage()`).
 - Feed-Adresse nur über `feedUrl()` (abweichende URL mit `http(s)://`, sonst
   `localFeedUrl()` = `DOMAIN_BASE` + `feedSlug()`), Website über `siteUrl()` —
   nie `setting('feedUrl')`/`setting('siteUrl')` direkt ausgeben.

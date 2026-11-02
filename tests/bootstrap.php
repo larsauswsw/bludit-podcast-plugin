@@ -150,10 +150,17 @@ class Site
 {
     /** @var string */
     public $lang = 'de_DE';
+    /** @var string wie Bludit gespeichert (HTML-escaped) */
+    public $siteTitle = 'Meine &amp; Website';
 
     public function language()
     {
         return $this->lang;
+    }
+
+    public function title()
+    {
+        return $this->siteTitle;
     }
 }
 $GLOBALS['site'] = new Site();

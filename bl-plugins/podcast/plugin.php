@@ -26,7 +26,8 @@ class Podcast extends Plugin {
             'feedUrl'     => '',
             'siteUrl'     => '',
             'feedDesc'    => '',
-            'feedLang'    => 'de-de',
+            // Standard aus der Sitesprache (de_DE → de-de, en → en)
+            'feedLang'    => $this->siteFeedLanguage(),
             'author'      => '',
             'email'       => '',
             'category'    => '',
@@ -471,9 +472,8 @@ class Podcast extends Plugin {
         // Feed-Discovery auf allen Seiten (wie das Core-RSS-Plugin), damit
         // Browser und Podcast-Apps den Feed über die Website-Adresse finden
         global $site;
-        $feedTitle = $this->setting('feedTitle') ?: Sanitize::htmlDecode((string) $site->title());
         echo '<link rel="alternate" type="application/rss+xml" title="'
-            . htmlspecialchars($feedTitle, ENT_QUOTES, 'UTF-8') . '" href="'
+            . htmlspecialchars($this->feedTitle(), ENT_QUOTES, 'UTF-8') . '" href="'
             . htmlspecialchars($this->feedUrl(), ENT_QUOTES, 'UTF-8') . '">' . "\n";
 
         $page = $this->currentEpisode();
@@ -591,7 +591,7 @@ class Podcast extends Plugin {
 
         $episodeConfig = [
             'show' => [
-                'title'    => $this->setting('feedTitle'),
+                'title'    => $this->feedTitle(),
                 'subtitle' => '',
                 'summary'  => $showSummary,
                 'poster'   => $this->coverUrl(),
@@ -681,11 +681,11 @@ class Podcast extends Plugin {
 
         // Einstellungen und Titel sind HTML-escaped gespeichert: dekodieren, dann
         // genau einmal für XML escapen
-        $title     = $this->xml($this->setting('feedTitle'));
+        $title     = $this->xml($this->feedTitle());
         $feedUrl   = $this->xml($this->feedUrl());
         $siteUrl   = $this->xml($this->siteUrl());
         $desc      = $this->xml($this->setting('feedDesc'));
-        $lang      = $this->xml($this->setting('feedLang') ?: 'de-de');
+        $lang      = $this->xml($this->setting('feedLang') ?: $this->siteFeedLanguage());
         $author    = $this->xml($this->setting('author'));
         $email     = $this->xml($this->setting('email'));
         $category  = $this->appleCategory();
@@ -2401,6 +2401,29 @@ class Podcast extends Plugin {
     /** Art des Podcasts für <itunes:type>: episodic (Standard) oder serial. */
     private function showType() {
         return $this->getValue('showType') === 'serial' ? 'serial' : 'episodic';
+    }
+
+    /** Titel des Podcasts; ohne Eintrag der Titel der Website (Apple verlangt einen). */
+    private function feedTitle() {
+        global $site;
+        $title = trim($this->setting('feedTitle'));
+        if ($title === '' && is_object($site) && method_exists($site, 'title')) {
+            $title = trim(Sanitize::htmlDecode((string) $site->title()));
+        }
+        return $title;
+    }
+
+    /**
+     * Sprachcode für <language> aus der Sitesprache: de_DE → de-de, en → en;
+     * ohne gültige Sitesprache en.
+     */
+    private function siteFeedLanguage() {
+        global $site;
+        $code = is_object($site) && method_exists($site, 'language') ? $site->language() : '';
+        if (!is_string($code) || preg_match('/^([a-z]{2,3})(?:_([A-Z]{2}))?$/D', $code, $m) !== 1) {
+            return 'en';
+        }
+        return isset($m[2]) ? $m[1] . '-' . strtolower($m[2]) : $m[1];
     }
 
     /** Cover-Adresse, wenn sie mit http(s):// beginnt, sonst ''. */

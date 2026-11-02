@@ -15,6 +15,7 @@ abstract class PodcastTestCase extends TestCase
     {
         $GLOBALS['testRole'] = 'admin';
         $GLOBALS['site']->lang = 'de_DE';
+        $GLOBALS['site']->siteTitle = 'Meine &amp; Website';
         Log::$messages = [];
         $this->plugin = new Podcast();
     }
