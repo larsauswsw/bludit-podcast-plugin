@@ -6,6 +6,8 @@ and the plugin uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-02
+
 First public release.
 
 ### Added

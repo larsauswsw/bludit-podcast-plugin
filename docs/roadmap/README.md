@@ -33,8 +33,10 @@ Screenshots (#97) und die Release-Vorbereitung (#96).
   (`prepare`, `publish`, `--dry-run`), beide READMEs für das Release
   (Installation aus dem Release-ZIP, englische Bezeichnungen, Screenshots aus
   #97) und die MIT-Lizenz; ins öffentliche Repo kommt alles erst mit `publish`.
-  Ablauf: `scripts/release.sh prepare`, PR, Merge, `publish --dry-run`,
-  `publish` (Inhaber), dann privat stellen.
+  Ablauf (Anleitung `docs/release.md`): `scripts/release.sh prepare`, PR,
+  Merge, Action „Release“ als Probelauf und dann echt (oder `publish` am
+  Rechner), dann privat stellen. Für die Action braucht es einmalig das
+  Secret `PUBLIC_REPO_TOKEN`.
 - **Installationstest:** alles bestanden (F19 und Teil U am 2026-11-02);
   C12/J39 optional, I35 trifft nicht zu.
 - **Vor dem Release ergänzt (2026-11-02):** Feed-Sprache als Standard aus der

@@ -1,0 +1,65 @@
+# Release ins öffentliche Repo (Roadmap 038), von Hand gestartet: Actions →
+# „Release“ → Run workflow (auch im Handy-Browser). Führt scripts/release.sh
+# publish auf main aus; Anleitung in docs/release.md.
+# Secret PUBLIC_REPO_TOKEN: fine-grained Token nur für bludit-plugin-podcast,
+# „Contents: Read and write“. Nur Actions der GitHub-Organisation actions/.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Probelauf: nur bauen und prüfen, nichts veröffentlichen'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write   # Tag v<version> in diesem Repository
+  actions: read     # CI-Ergebnis des Release-Commits lesen
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: ${{ inputs.dry_run && 'Probelauf' || 'Veröffentlichen' }}
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Git-Identität für den Commit im öffentlichen Repo
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Zugang zum öffentlichen Repo
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Secret PUBLIC_REPO_TOKEN fehlt (Einrichtung: docs/release.md)"
+            exit 1
+          fi
+          gh auth setup-git
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          GH_CI_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            scripts/release.sh publish --dry-run
+          else
+            scripts/release.sh publish
+          fi
+      - name: ZIP und Release-Text zum Herunterladen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: build/release/
+          if-no-files-found: ignore
+          retention-days: 14
