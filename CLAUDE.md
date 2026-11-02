@@ -174,8 +174,9 @@ Unit-Tests in `tests/Unit/` rufen private Methoden per Reflection auf
 (`PodcastTestCase::call()`); `tests/bootstrap.php` bildet nur die nötige
 Bludit-Umgebung nach (Sitesprache `de_DE`, andere Sprache über
 `$GLOBALS['site']->lang` und ein neues Plugin-Objekt). Neue Hilfsfunktionen
-und jeder Sicherheitsfix bekommen einen Test. Entwicklungsdateien (`composer.json`, `package.json`, `tests/`,
-`.github/`) gehören nicht ins Release-ZIP.
+und jeder Sicherheitsfix bekommen einen Test. Entwicklungsdateien
+(`composer.json`, `package.json`, `tests/`, `.github/`) gehören nicht ins
+Release-ZIP.
 
 ## Sicherheitsregeln (verbindlich für jede Änderung)
 
