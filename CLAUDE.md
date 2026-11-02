@@ -178,6 +178,18 @@ und jeder Sicherheitsfix bekommen einen Test. Entwicklungsdateien
 (`composer.json`, `package.json`, `tests/`, `.github/`) gehören nicht ins
 Release-ZIP.
 
+## Release (Roadmap 038)
+
+Änderungen für Nutzer laufend in `CHANGELOG.md` unter `## [Unreleased]`
+eintragen (Englisch, „Keep a Changelog“; geht ins öffentliche Repo, daher ohne
+Roadmap-IDs, Issue-Links oder Interna). Release mit `scripts/release.sh`:
+`prepare [<version>]` (Version, `releaseDate`, CHANGELOG-Abschnitt auf Branch
+`release/<version>`, dann PR), nach dem Merge `publish --dry-run` und `publish`
+(ZIP nur aus `bl-plugins/podcast/`, ein Commit je Version ins öffentliche Repo,
+Tags, GitHub-Release). `publish` ohne `--dry-run` startet nur der Inhaber; es
+verlangt Lizenz, grüne CI und `gh` mit Schreibrecht. `ReleaseTest` prüft, dass
+`metadata.json` und CHANGELOG zusammenpassen.
+
 ## Sicherheitsregeln (verbindlich für jede Änderung)
 
 Jede Änderung muss frei von bekannten Schwachstellen sein. Wird beim Arbeiten

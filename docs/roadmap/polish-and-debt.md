@@ -203,15 +203,34 @@ Bludit-Plugin-Verzeichnis.
       keine Repos anlegen).
 - [ ] Lizenz entschieden; `license` in `metadata.json` und Lizenzdatei bzw.
       -hinweis im öffentlichen Repo.
-- [ ] `CHANGELOG.md` nach „Keep a Changelog“, Version in `metadata.json` synchron;
+- [x] `CHANGELOG.md` nach „Keep a Changelog“, Version in `metadata.json` synchron;
       erster Eintrag ist `1.0.0` (erstes Release).
-- [ ] Ein Skript (oder eine GitHub Action) überträgt bei einem Release
+- [x] Ein Skript (oder eine GitHub Action) überträgt bei einem Release
       `bl-plugins/podcast/` und `public/` ins öffentliche Repo, setzt
       `releaseDate` in `metadata.json`, legt Tag und GitHub-Release mit
       `podcast-<version>.zip` an.
 - [ ] README verlinkt auf die Releases als bevorzugten Installationsweg.
 - [ ] Mit dem Release 1.0 ist dieses Repository privat; Update-Befehl für Tests
       mit Lesetoken dokumentiert (Installationstest, Vorbereitung).
+
+**Umsetzung (Teil, 2026-11-02):** `CHANGELOG.md` auf Englisch, weil es mit
+ins öffentliche Repo und in die Release-Texte geht; Änderungen stehen bis zum
+Release unter `## [Unreleased]`. `scripts/release.sh` in zwei Schritten:
+`prepare [<version>]` setzt Version, `releaseDate` und den CHANGELOG-Abschnitt
+auf dem Branch `release/<version>` (PR, CI, Merge — der Release-Commit läuft
+durch die CI); `publish` baut auf `main` `podcast-<version>.zip` per
+`git archive` nur aus `bl-plugins/podcast/` (versionierte Dateien, keine
+Entwicklungsdateien), ersetzt den Inhalt des öffentlichen Repos durch
+`podcast/`, `public/` und `CHANGELOG.md` (ein Commit je Version), setzt dort und
+hier das Tag `v<version>` und legt per `gh` das Release mit dem ZIP und dem
+CHANGELOG-Abschnitt an. Veröffentlicht wird nur mit Lizenz (`license` in
+`metadata.json` und `public/LICENSE`), grüner CI auf dem Commit und
+Schreibrecht; `--dry-run` baut alles lokal und warnt nur. `ReleaseTest` prüft,
+dass `metadata.json` und CHANGELOG zusammenpassen. Getestet in einer Sandbox
+(lokales origin, nachgebautes öffentliches Repo, `gh`-Attrappe); der erste
+echte Lauf ist das Release 1.0.0. Offen: Lizenz, README (Releases als
+Installationsweg; die Plugin-README nennt noch die deutschen Bezeichnungen der
+Oberfläche), Privatstellen.
 
 **Betroffene Dateien**
 

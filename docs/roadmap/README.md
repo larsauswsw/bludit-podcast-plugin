@@ -28,11 +28,12 @@ gemergt; 014 liegt auf `claude/admin-i18n`.
   (Oberfläche Deutsch/Englisch, Texte in `languages/*.json`). Vorgezogen aus
   019: Namespace, `podcast:guid`, `podcast:locked`.
 - **Als Nächstes: 038** (Release). Offen beim Inhaber: Lizenzentscheidung, Repository
-  auf privat stellen. Vorbereiten kann Claude: `CHANGELOG.md` (1.0.0),
-  Release-Skript (öffentliches Repo, Tag, ZIP), öffentliche README in `public/`
-  um die neuen Funktionen ergänzen (Apple-Kategorien, Abo-Dienste,
-  Cover-Upload, Shownotes, GUID/locked, Tests); die Sprachen stehen dort schon
-  (mit 014), im öffentlichen Repo noch nicht.
+  auf privat stellen. Vorbereitet: `CHANGELOG.md` und `scripts/release.sh`
+  (`prepare`, `publish`, `--dry-run`). Noch vorzubereiten: öffentliche README in
+  `public/` um die neuen Funktionen ergänzen (Apple-Kategorien, Abo-Dienste,
+  Cover-Upload, Shownotes, GUID/locked, Tests) und auf die Releases verweisen;
+  die Sprachen stehen dort schon (mit 014), im öffentlichen Repo noch nicht. Die
+  Plugin-README nennt noch die deutschen Bezeichnungen der Oberfläche.
 - **Installationstest offen:** U70/U71 (Sprache, 014) und F19 (Meldung bei
   Datei über dem Limit, nicht live geprüft); C12/J39 optional, I35 trifft nicht zu.
 - **Arbeitsweise:** PR anlegen und mergen nur auf Zuruf des Inhabers; bestandene
