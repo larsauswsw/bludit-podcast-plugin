@@ -187,7 +187,8 @@ Roadmap-IDs, Issue-Links oder Interna). Release mit `scripts/release.sh`:
 `release/<version>`, dann PR), nach dem Merge `publish --dry-run` und `publish`
 (ZIP nur aus `bl-plugins/podcast/`, ein Commit je Version ins öffentliche Repo,
 Tags, GitHub-Release). `publish` ohne `--dry-run` startet nur der Inhaber; es
-verlangt Lizenz, grüne CI und `gh` mit Schreibrecht. `ReleaseTest` prüft, dass
+verlangt Lizenz (MIT: `license` in `metadata.json`, Text in
+`bl-plugins/podcast/LICENSE`), grüne CI und `gh` mit Schreibrecht. `ReleaseTest` prüft, dass
 `metadata.json` und CHANGELOG zusammenpassen.
 
 ## Sicherheitsregeln (verbindlich für jede Änderung)

@@ -19,7 +19,8 @@
 #     meldet fehlende Voraussetzungen als Warnung und pusht nichts.
 #
 # Veröffentlicht wird nur mit Lizenz („license“ in metadata.json und
-# public/LICENSE bzw. public/LICENSE.md) und grüner CI auf main.
+# bl-plugins/podcast/LICENSE; die Datei liegt im ZIP und wird zusätzlich als
+# LICENSE ins Hauptverzeichnis des öffentlichen Repos kopiert) und grüner CI.
 #
 # Benötigt: bash, git, php (CLI), tar; für publish ohne --dry-run zusätzlich
 # gh (angemeldet, Schreibrecht auf das öffentliche Repo, Lesen der CI hier)
@@ -154,8 +155,8 @@ publish() {
         problems+=("CHANGELOG.md: Abschnitt „## [$version] - $released“ fehlt")
     fi
     [[ -n "$license" ]] || problems+=("metadata.json: license ist leer (Lizenz noch nicht entschieden)")
-    git_ ls-tree --name-only HEAD public/ | grep -qE '^public/LICENSE(\.md)?$' \
-        || problems+=("public/LICENSE fehlt (Lizenztext für das öffentliche Repo)")
+    git_ cat-file -e "HEAD:bl-plugins/podcast/LICENSE" 2>/dev/null \
+        || problems+=("bl-plugins/podcast/LICENSE fehlt (Lizenztext)")
     git_ rev-parse -q --verify "refs/tags/v$version" >/dev/null && problems+=("Tag v$version gibt es hier schon")
     git ls-remote --exit-code --tags "$PUBLIC_URL" "refs/tags/v$version" >/dev/null 2>&1 \
         && problems+=("Tag v$version gibt es im öffentlichen Repo schon")
@@ -212,6 +213,7 @@ publish() {
     git_ archive --format=tar "HEAD:public" | tar -x -C "$pub"
     git_ archive --format=tar --prefix=podcast/ "HEAD:bl-plugins/podcast" | tar -x -C "$pub"
     git_ show "HEAD:CHANGELOG.md" > "$pub/CHANGELOG.md"
+    git_ show "HEAD:bl-plugins/podcast/LICENSE" > "$pub/LICENSE" 2>/dev/null || true
     git -C "$pub" add -A
     git -C "$pub" diff --cached --quiet && die "Keine Änderung gegenüber dem öffentlichen Repo."
     git -C "$pub" commit -q -m "Release $version"

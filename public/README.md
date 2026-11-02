@@ -42,7 +42,7 @@ Audio files are usually larger than PHP's default upload limit of 2 MB. The [doc
 
 ## License
 
-All rights reserved. The license for the first release will be announced here.
+The plugin is released under the [MIT License](LICENSE). The bundled Podlove Web Player is MIT-licensed as well (`podcast/player/LICENSE`).
 
 ---
 
@@ -50,4 +50,4 @@ All rights reserved. The license for the first release will be announced here.
 
 Podcast-Plugin für [Bludit](https://www.bludit.com): Episoden im Admin-Bereich verwalten, RSS-Feed für Apple Podcasts und Spotify, Podlove Web Player direkt vom eigenen Server – ohne CDN und ohne Drittanbieter. Episoden sind normale Bludit-Seiten mit dem Tag `podcast`. Die Oberfläche folgt der Sprache der Bludit-Website: Deutsch oder Englisch.
 
-**Installation:** `podcast-<version>.zip` aus dem [neuesten Release](https://github.com/larsauswsw/bludit-plugin-podcast/releases/latest) entpacken, den Ordner `podcast` nach `bl-plugins/` kopieren und unter **Einstellungen → Plugins** aktivieren. Für Updates den Ordner einfach ersetzen; Episoden und Einstellungen bleiben erhalten. Voraussetzungen: Bludit 3.19–3.22, PHP 8.0 oder neuer.
+**Installation:** `podcast-<version>.zip` aus dem [neuesten Release](https://github.com/larsauswsw/bludit-plugin-podcast/releases/latest) entpacken, den Ordner `podcast` nach `bl-plugins/` kopieren und unter **Einstellungen → Plugins** aktivieren. Für Updates den Ordner einfach ersetzen; Episoden und Einstellungen bleiben erhalten. Voraussetzungen: Bludit 3.19–3.22, PHP 8.0 oder neuer. Lizenz: MIT.

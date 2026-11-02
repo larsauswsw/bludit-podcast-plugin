@@ -268,4 +268,4 @@ A PHP error occurred. Check the PHP error log and `bl-content/databases/syslog.p
 
 ## License
 
-The license has not been decided yet; until it is announced, all rights are reserved. The bundled Podlove Web Player in `player/` is MIT-licensed (see `player/LICENSE`).
+The plugin is released under the [MIT License](LICENSE). The bundled Podlove Web Player in `player/` is MIT-licensed as well (see `player/LICENSE`).
