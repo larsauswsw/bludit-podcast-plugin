@@ -35,9 +35,11 @@ Screenshots (#97) und die Release-Vorbereitung (#96).
   #97) und die MIT-Lizenz; ins öffentliche Repo kommt alles erst mit `publish`.
   Ablauf: `scripts/release.sh prepare`, PR, Merge, `publish --dry-run`,
   `publish` (Inhaber), dann privat stellen.
-- **Installationstest offen:** nur F19 (Meldung bei Datei über dem Limit, nicht
-  live geprüft); C12/J39 optional, I35 trifft nicht zu. Teil U (Sprache, 014)
-  bestanden.
+- **Installationstest:** alles bestanden (F19 und Teil U am 2026-11-02);
+  C12/J39 optional, I35 trifft nicht zu.
+- **Vor dem Release ergänzt (2026-11-02):** Feed-Sprache als Standard aus der
+  Sitesprache (`siteFeedLanguage()`), ohne Podcast-Titel gilt der Titel der
+  Website (`feedTitle()`).
 - **Arbeitsweise:** PR anlegen und mergen nur auf Zuruf des Inhabers; bestandene
   Installationstests als kleiner Doku-PR abhaken; vor dem Merge grüne CI.
 
