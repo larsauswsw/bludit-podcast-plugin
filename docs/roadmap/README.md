@@ -30,12 +30,11 @@ Screenshots (#97) und die Release-Vorbereitung (#96).
   019: Namespace, `podcast:guid`, `podcast:locked`.
 - **Als Nächstes: 038** (Release). Offen beim Inhaber: Lizenzentscheidung, Repository
   auf privat stellen. Vorbereitet: `CHANGELOG.md` und `scripts/release.sh`
-  (`prepare`, `publish`, `--dry-run`). Noch vorzubereiten: öffentliche README in
-  `public/` um die neuen Funktionen ergänzen (Apple-Kategorien, Abo-Dienste,
-  Cover-Upload, Shownotes, GUID/locked, Tests) und auf die Releases verweisen;
-  die Sprachen und englische Screenshots (#97) stehen dort schon, im
-  öffentlichen Repo noch nicht. Die Plugin-README nennt noch die deutschen
-  Bezeichnungen der Oberfläche.
+  (`prepare`, `publish`, `--dry-run`), beide READMEs für das Release
+  (Installation aus dem Release-ZIP, englische Bezeichnungen, Screenshots aus
+  #97); ins öffentliche Repo kommen sie erst mit `publish`. Nach der
+  Lizenzentscheidung: `license` in `metadata.json`, `public/LICENSE`, die
+  Lizenzabschnitte beider READMEs; dann `prepare`, PR, `publish`.
 - **Installationstest offen:** nur F19 (Meldung bei Datei über dem Limit, nicht
   live geprüft); C12/J39 optional, I35 trifft nicht zu. Teil U (Sprache, 014)
   bestanden.
