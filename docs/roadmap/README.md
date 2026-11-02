@@ -19,8 +19,9 @@ Entwickler-Doku (`bludit/documentation-english`).
 
 ## Stand und nächste Schritte (2026-11-02)
 
-Einstieg für die nächste Session. `main` ist grün (CI aus 036), alles bis #92
-gemergt; 014 liegt auf `claude/admin-i18n`.
+Einstieg für die nächste Session. `main` ist grün (CI aus 036); gemergt sind
+014 (#93, Episodentyp #94), Teil U des Installationstests (#95), englische
+Screenshots (#97) und die Release-Vorbereitung (#96).
 
 - **Erledigt für 1.0:** alle Pflichtpunkte und alles aus „Für 1.0 empfohlen“,
   dazu 009, 017, 043, 016 (Feed besteht den Validator), 022 (Cover-Upload),
