@@ -197,7 +197,36 @@ class PluginIntegrationTest extends TestCase
         $this->assertArrayHasKey('success', $saved, 'Redakteure dürfen Episoden anlegen');
     }
 
-    /** Ohne CSRF-Token meldet Bludit ab; der Aufruf verändert nichts. @depends testEditorRights */
+    /**
+     * Roadmap 014: Die Oberfläche folgt der Sitesprache (Einstellungen →
+     * Sprache); danach wieder Deutsch. @depends testEditorRights
+     */
+    public function testEnglishSiteShowsEnglishTexts(): void
+    {
+        $admin    = self::$admin;
+        $language = function (string $code) use ($admin): void {
+            $admin->post('/admin/settings', ['tokenCSRF' => BluditClient::token($admin->get('/admin/settings')),
+                'language' => $code]);
+        };
+
+        $language('en');
+        $episodes = $admin->get('/admin/plugin/podcast');
+        $this->assertStringContainsString('<title>Podcast – Episodes - Bludit</title>', $episodes);
+        $this->assertStringContainsString('Channel settings', $episodes);
+        $this->assertStringContainsString('var PODCAST_TEXTS = {', $episodes);
+        $this->assertStringContainsString('"new-episode":"New episode"', $episodes);
+        $this->assertStringNotContainsString('Neue Episode', $episodes);
+        $this->assertSame('Unknown action', $admin->api(['podcast_api_action' => 'drop_everything'])['error'] ?? null);
+        $settings = $admin->get('/admin/configure-plugin/Podcast');
+        $this->assertStringContainsString('Apple Podcasts &amp; directories', $settings);
+        $this->assertMatchesRegularExpression('/value="Kids &amp; Family &gt; Parenting" selected>Kids &amp; Family → Parenting</', $settings);
+        $this->assertStringNotContainsString('Kinder und Familie', $settings);
+
+        $language('de_DE');
+        $this->assertStringContainsString('Neue Episode', $admin->get('/admin/plugin/podcast'));
+    }
+
+    /** Ohne CSRF-Token meldet Bludit ab; der Aufruf verändert nichts. @depends testEnglishSiteShowsEnglishTexts */
     public function testApiWithoutCsrfTokenEndsSession(): void
     {
         $admin  = self::$admin;

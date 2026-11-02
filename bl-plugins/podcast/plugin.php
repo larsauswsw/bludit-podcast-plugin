@@ -82,13 +82,19 @@ class Podcast extends Plugin {
      * - sonst: nach einem Plugin-Update Custom Fields einrichten, Altdaten übernehmen
      */
     public function adminController() {
+        global $layout;
+
         $allowed = checkRole(['admin', 'editor'], false);
 
         if ($this->isApiRequest()) {
             $this->sendJson($allowed
                 ? $this->runApiAction($this->postString($_POST, 'podcast_api_action'))
-                : ['error' => 'Keine Berechtigung.']);
+                : ['error' => $this->text('error-no-permission')]);
         }
+
+        // Titel des Browser-Tabs wie bei Bludits Seiten (controllers/about.php);
+        // Bludit gibt ihn vor adminView() und unverändert aus
+        $layout['title'] = $this->html('episodes-title') . ' - ' . $layout['title'];
 
         if (!$allowed) {
             return;
@@ -104,12 +110,10 @@ class Podcast extends Plugin {
      * Das Admin-Chrome (Sidebar, Header, CSS/JS) kommt automatisch von Bludit.
      */
     public function adminView() {
-        global $layout, $login;
-
-        $layout['title'] = 'Podcast – Episoden';
+        global $login;
 
         if (!in_array($login->role(), ['admin', 'editor'])) {
-            return '<div class="alert alert-danger">Zugriff verweigert.</div>';
+            return '<div class="alert alert-danger">' . $this->html('access-denied') . '</div>';
         }
 
         ob_start();
@@ -120,7 +124,7 @@ class Podcast extends Plugin {
         <link rel="stylesheet" href="<?php echo htmlspecialchars($this->assetUrl('css/podcast-admin.css'), ENT_QUOTES) ?>">
 
         <h2 class="mt-0 mb-3">
-          <span class="fa fa-microphone" style="font-size: 0.9em;"></span><span>Podcast – Episoden</span>
+          <span class="fa fa-microphone" style="font-size: 0.9em;"></span><span><?php echo $this->html('episodes-title') ?></span>
         </h2>
 
         <?php
@@ -129,13 +133,9 @@ class Podcast extends Plugin {
             echo $this->renderEpisodeForm($apiUrl);
         } catch (Exception $e) {
             Log::set(__METHOD__ . LOG_SEP . $e->getMessage());
-            echo '<div class="alert alert-danger">Die Episoden konnten nicht geladen werden. Details stehen im Bludit-Log.</div>';
+            echo '<div class="alert alert-danger">' . $this->html('episodes-load-failed') . '</div>';
         }
-        ?>
-
-        <script>var PODCAST_API_URL = <?php echo json_encode($apiUrl, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
-        <script src="<?php echo htmlspecialchars($this->assetUrl('js/podcast-admin.js'), ENT_QUOTES) ?>"></script>
-        <?php
+        echo $this->adminScript($apiUrl);
         return ob_get_clean();
     }
 
@@ -151,6 +151,113 @@ class Podcast extends Plugin {
     }
 
     // ═══════════════════════════════════════════════════════════════════
+    // TEXTE DER OBERFLÄCHE (Roadmap 014)
+    // ═══════════════════════════════════════════════════════════════════
+
+    /** @var array{texts: array<string, string>, categories: array<string, string>}|null */
+    private $language = null;
+
+    /**
+     * Texte aus languages/<Sitesprache>.json, wie Bludit die Datei wählt
+     * (60.plugins.php); fehlende Schlüssel aus en.json. Eigenes Laden statt
+     * $L: Der Konstruktor (rejectOversizedApiPost()) läuft, bevor Bludit die
+     * Sprachdatei in $L übernimmt, und ein noch nicht übersetzter Text soll
+     * englisch erscheinen statt als Schlüssel. Die Texte stehen unter
+     * „podcast-texts“, damit sie keine Übersetzungen von Bludit überschreiben.
+     */
+    private function language() {
+        if ($this->language !== null) {
+            return $this->language;
+        }
+        global $site;
+        $dir      = $this->phpPath() . 'languages' . DS;
+        $fallback = $this->readLanguageFile($dir . 'en.json');
+        $current  = ['texts' => [], 'categories' => []];
+        $code     = is_object($site) && method_exists($site, 'language') ? $site->language() : '';
+        // Nur ein Sprachcode wie de_DE oder es, kein Pfad (Regel 2)
+        if (is_string($code) && $code !== 'en' && preg_match('/^[a-z]{2,3}(?:_[A-Z]{2})?$/D', $code) === 1) {
+            $current = $this->readLanguageFile($dir . $code . '.json');
+        }
+        $this->language = [
+            'texts'      => array_merge($fallback['texts'], $current['texts']),
+            'categories' => $current['categories'] ?: $fallback['categories'],
+        ];
+        return $this->language;
+    }
+
+    /** Texte und Kategorienamen einer Sprachdatei; nur Zeichenketten, sonst leer. */
+    private function readLanguageFile($path) {
+        $data   = is_file($path) ? json_decode((string) file_get_contents($path), true) : null;
+        $result = ['texts' => [], 'categories' => []];
+        foreach (['texts' => 'podcast-texts', 'categories' => 'podcast-apple-categories'] as $part => $name) {
+            if (isset($data[$name]) && is_array($data[$name])) {
+                $result[$part] = array_filter($data[$name], function ($value, $key) {
+                    return is_string($key) && is_string($value);
+                }, ARRAY_FILTER_USE_BOTH);
+            }
+        }
+        return $result;
+    }
+
+    /** Text der Oberfläche als Klartext; {name} wird durch $vars['name'] ersetzt. */
+    private function text($key, array $vars = []) {
+        $texts = $this->language()['texts'];
+        $text  = isset($texts[$key]) ? $texts[$key] : $key;
+        $pairs = [];
+        foreach ($vars as $name => $value) {
+            $pairs['{' . $name . '}'] = (string) $value;
+        }
+        return $pairs ? strtr($text, $pairs) : $text;
+    }
+
+    /**
+     * Text als HTML (Regel 4): Text und $vars escaped, $markup unverändert —
+     * nur für HTML aus dem Code (z. B. <code>…</code>), nie für Eingaben.
+     */
+    private function html($key, array $vars = [], array $markup = []) {
+        $pairs = [];
+        foreach ($vars as $name => $value) {
+            $pairs['{' . $name . '}'] = htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+        }
+        foreach ($markup as $name => $value) {
+            $pairs['{' . $name . '}'] = (string) $value;
+        }
+        $html = htmlspecialchars($this->text($key), ENT_QUOTES, 'UTF-8');
+        return $pairs ? strtr($html, $pairs) : $html;
+    }
+
+    /** Meldung zu einem Upload: Schlüssel je Art (image-…, audio-…). */
+    private function uploadText($type, $key, array $vars = []) {
+        return $this->text(($type === 'audio' ? 'audio-' : 'image-') . $key, $vars);
+    }
+
+    /** Name einer Apple-Kategorie in der Sitesprache, sonst der englische. */
+    private function categoryName($english) {
+        $names = $this->language()['categories'];
+        return isset($names[$english]) && $names[$english] !== '' ? $names[$english] : $english;
+    }
+
+    /**
+     * Skript der Admin-Seiten mit seinen Texten (Schlüssel „js-…“ ohne das
+     * Präfix) und der API-Adresse, als JSON nach Regel 4.
+     */
+    private function adminScript($apiUrl = '') {
+        $flags = JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+        $texts = [];
+        foreach ($this->language()['texts'] as $key => $value) {
+            if (strpos($key, 'js-') === 0) {
+                $texts[substr($key, 3)] = $value;
+            }
+        }
+        $vars = 'var PODCAST_TEXTS = ' . (json_encode((object) $texts, $flags) ?: '{}') . ';';
+        if ($apiUrl !== '') {
+            $vars .= ' var PODCAST_API_URL = ' . json_encode($apiUrl, $flags) . ';';
+        }
+        return '<script>' . $vars . '</script>' . "\n"
+            . '<script src="' . htmlspecialchars($this->assetUrl('js/podcast-admin.js'), ENT_QUOTES) . '"></script>' . "\n";
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     // SETTINGS FORM
     // ═══════════════════════════════════════════════════════════════════
 
@@ -159,8 +266,8 @@ class Podcast extends Plugin {
         // gestylt über .plugin-form (bl-kernel/admin/views/configure-plugin.php),
         // Hinweise als span.tip, Gruppen mit Bludits Zwischenüberschrift
         // (Bootstrap::formTitle wie in den Bludit-Einstellungen). Beschriftungen
-        // und Hinweise sind feste Texte. Werte dekodiert lesen und genau einmal
-        // escapen (Plugin::post() escaped beim Speichern).
+        // und Hinweise kommen als fertiges HTML aus html(). Werte dekodiert
+        // lesen und genau einmal escapen (Plugin::post() escaped beim Speichern).
         $esc  = function ($value) { return htmlspecialchars((string) $value, ENT_QUOTES); };
         $text = function ($name, $label, $tip = '', $value = null, $attrs = '') use ($esc) {
             if ($value === null) {
@@ -180,7 +287,7 @@ class Podcast extends Plugin {
         $ignoredUrl = function ($name) {
             $value = trim($this->setting($name));
             return $value !== '' && !$this->isHttpUrl($value)
-                ? ' <strong>Wird nicht verwendet: Die Adresse muss mit http:// oder https:// beginnen.</strong>'
+                ? ' <strong>' . $this->html('url-ignored') . '</strong>'
                 : '';
         };
         $feedUrl = $this->feedUrl();
@@ -190,135 +297,129 @@ class Podcast extends Plugin {
         <link rel="stylesheet" href="<?php echo $esc($this->assetUrl('css/podcast-admin.css')) ?>">
 
         <div class="alert alert-primary" role="alert">
-            Kanal- und Feed-Einstellungen des Podcasts. Episoden werden unter
-            <a href="<?php echo HTML_PATH_ADMIN_ROOT ?>plugin/podcast">Podcast – Episoden</a> verwaltet.
+            <?php echo $this->html('settings-intro', [], ['link' => '<a href="' . $esc(HTML_PATH_ADMIN_ROOT . 'plugin/podcast') . '">'
+                . $this->html('episodes-title') . '</a>']) ?>
         </div>
 
         <?php
-        echo $group('Podcast');
-        echo $text('feedTitle', 'Podcast-Titel');
+        echo $group($this->html('group-podcast'));
+        echo $text('feedTitle', $this->html('feed-title'));
         ?>
         <div>
-            <label for="podcast-feedDesc">Beschreibung</label>
+            <label for="podcast-feedDesc"><?php echo $this->html('description') ?></label>
             <textarea id="podcast-feedDesc" name="feedDesc" rows="3"><?php
                 echo $esc($this->setting('feedDesc')) ?></textarea>
         </div>
         <?php
-        echo $text('author', 'Autor');
-        echo $text('feedLang', 'Sprache', 'z. B. de-de');
+        echo $text('author', $this->html('author'));
+        echo $text('feedLang', $this->html('feed-language'), $this->html('feed-language-tip'));
         // Ein hochgeladenes Cover dieser Website lässt sich prüfen, eine fremde Adresse nicht
         $coverUrl      = $this->coverUrl();
         $coverPath     = $coverUrl !== '' ? $this->localImagePath($coverUrl) : '';
         $coverProblems = $coverPath !== '' ? $this->coverProblems($coverPath) : [];
-        echo $text('cover', 'Cover-URL', 'Apple verlangt ein quadratisches Bild mit 1400 bis 3000 px Kantenlänge, JPG oder PNG in RGB.'
+        echo $text('cover', $this->html('cover-url'), $this->html('cover-tip', ['min' => self::COVER_MIN_PX, 'max' => self::COVER_MAX_PX])
             . $ignoredUrl('cover')
-            . ($coverProblems ? ' <strong>Das eingetragene Cover passt nicht: ' . $esc(implode(' ', $coverProblems)) . '</strong>' : ''),
+            . ($coverProblems ? ' <strong>' . $this->html('cover-mismatch', ['problems' => implode(' ', $coverProblems)]) . '</strong>' : ''),
             null, ' inputmode="url"');
         $limits = $this->uploadLimits();
         ?>
         <div>
-            <label for="podcast-cover-file">Cover hochladen</label>
+            <label for="podcast-cover-file"><?php echo $this->html('cover-upload') ?></label>
             <input type="file" id="podcast-cover-file" accept=".jpg,.jpeg,.png"
                    data-api-url="<?php echo $esc(DOMAIN_ADMIN . 'plugin/podcast?podcast_api=1') ?>"
                    data-max-file="<?php echo (int) $limits['file'] ?>"<?php echo $limits['enabled'] ? '' : ' disabled' ?>>
-            <span class="tip" id="podcast-cover-status" role="status">Wird beim Hochladen geprüft und in die Cover-URL übernommen; danach „Speichern“.</span>
-            <img id="podcast-cover-preview" alt="Vorschau des Covers"<?php echo $coverUrl !== '' ? ' src="' . $esc($coverUrl) . '"' : ' hidden' ?>>
+            <span class="tip" id="podcast-cover-status" role="status"><?php echo $this->html('cover-upload-tip') ?></span>
+            <img id="podcast-cover-preview" alt="<?php echo $this->html('cover-preview-alt') ?>"<?php echo $coverUrl !== '' ? ' src="' . $esc($coverUrl) . '"' : ' hidden' ?>>
         </div>
         <?php
-        echo $text('copyright', 'Copyright', 'Optional, z. B. © 2026 Max Mustermann');
+        echo $text('copyright', $this->html('copyright'), $this->html('copyright-tip'));
 
-        echo $group('Apple Podcasts &amp; Verzeichnisse');
+        echo $group($this->html('group-directories'));
         echo $this->categorySelect();
         ?>
         <div>
-            <label for="podcast-showType">Art des Podcasts</label>
+            <label for="podcast-showType"><?php echo $this->html('show-type') ?></label>
             <select id="podcast-showType" name="showType">
-                <option value="episodic" <?php echo $this->showType() === 'episodic' ? 'selected' : '' ?>>Episodisch – neueste Folge zuerst</option>
-                <option value="serial"   <?php echo $this->showType() === 'serial'   ? 'selected' : '' ?>>Seriell – Folgen der Reihe nach, älteste zuerst</option>
+                <option value="episodic" <?php echo $this->showType() === 'episodic' ? 'selected' : '' ?>><?php echo $this->html('show-type-episodic') ?></option>
+                <option value="serial"   <?php echo $this->showType() === 'serial'   ? 'selected' : '' ?>><?php echo $this->html('show-type-serial') ?></option>
             </select>
-            <span class="tip">Seriell passt zu Staffeln, die man von Anfang an hört; dann Staffel und Folge bei jeder Episode angeben.</span>
+            <span class="tip"><?php echo $this->html('show-type-tip') ?></span>
         </div>
         <div>
-            <label for="podcast-explicit">Explicit</label>
+            <label for="podcast-explicit"><?php echo $this->html('explicit') ?></label>
             <select id="podcast-explicit" name="explicit">
-                <option value="no"  <?php echo $this->getValue('explicit') !== 'yes' ? 'selected' : '' ?>>Nein</option>
-                <option value="yes" <?php echo $this->getValue('explicit') === 'yes' ? 'selected' : '' ?>>Ja</option>
+                <option value="no"  <?php echo $this->getValue('explicit') !== 'yes' ? 'selected' : '' ?>><?php echo $this->html('no') ?></option>
+                <option value="yes" <?php echo $this->getValue('explicit') === 'yes' ? 'selected' : '' ?>><?php echo $this->html('yes') ?></option>
             </select>
         </div>
         <div>
-            <label for="podcast-feedLocked">Feed gegen Übernahme sperren</label>
+            <label for="podcast-feedLocked"><?php echo $this->html('feed-locked') ?></label>
             <select id="podcast-feedLocked" name="feedLocked">
-                <option value="no"  <?php echo !$this->feedLocked() ? 'selected' : '' ?>>Nein</option>
-                <option value="yes" <?php echo $this->feedLocked()  ? 'selected' : '' ?>>Ja</option>
+                <option value="no"  <?php echo !$this->feedLocked() ? 'selected' : '' ?>><?php echo $this->html('no') ?></option>
+                <option value="yes" <?php echo $this->feedLocked()  ? 'selected' : '' ?>><?php echo $this->html('yes') ?></option>
             </select>
-            <span class="tip">Ja: Andere Plattformen übernehmen den Podcast erst, wenn über die E-Mail des Inhabers bestätigt ist, wem er gehört (<code>podcast:locked</code>). Vor einem Umzug zu einem anderen Anbieter auf Nein stellen.</span>
+            <span class="tip"><?php echo $this->html('feed-locked-tip', [], ['tag' => '<code>podcast:locked</code>']) ?></span>
         </div>
         <?php
-        echo $text('email', 'E-Mail des Inhabers',
-            'Steht öffentlich im Feed. Verzeichnisse wie Apple Podcasts und Spotify prüfen darüber, wem der Podcast gehört.',
+        echo $text('email', $this->html('owner-email'), $this->html('owner-email-tip'),
             null, ' inputmode="email" autocomplete="email"');
 
         // Links zum Podcast bei Diensten: erscheinen im Abo-Button des Players
         $serviceTips = [
-            'linkApple'       => 'Links zum Podcast erscheinen im Abo-Button des Players (in der App: Teilen → Link kopieren). '
-                . 'Mit dem Apple-Link erscheinen auch Castro (iPhone) und Pocket Casts.',
-            'linkPocketCasts' => 'Leer lassen, um Pocket Casts über den Apple-Link zu verbinden.',
+            'linkApple'       => $this->html('link-apple-tip'),
+            'linkPocketCasts' => $this->html('link-pocketcasts-tip'),
         ];
         foreach (self::SUBSCRIBE_SERVICES as $field => $service) {
-            $tip = (isset($serviceTips[$field]) ? $serviceTips[$field] . ' ' : '') . 'Beispiel: ' . $esc($service[3]);
+            $tip = (isset($serviceTips[$field]) ? $serviceTips[$field] . ' ' : '') . $this->html('link-example', ['url' => $service[3]]);
             if (trim($this->setting($field)) !== '' && $this->serviceId($field) === '') {
-                $tip .= ' <strong>Wird nicht verwendet: Der Link hat nicht die erwartete Form.</strong>';
+                $tip .= ' <strong>' . $this->html('link-ignored') . '</strong>';
             }
-            echo $text($field, $service[1], $tip, null, ' inputmode="url"');
+            echo $text($field, $esc($service[1]), $tip, null, ' inputmode="url"');
         }
 
-        echo $group('Feed');
-        echo $text('feedSlug', 'Feed-Dateiname', 'z. B. podcast.xml');
+        echo $group($this->html('group-feed'));
+        echo $text('feedSlug', $this->html('feed-slug'), $this->html('feed-slug-tip'));
         ?>
         <div>
-            <label for="podcast-feedAddress">Adresse des Feeds</label>
+            <label for="podcast-feedAddress"><?php echo $this->html('feed-address') ?></label>
             <!-- Nur zum Kopieren: ohne name, wird nicht gespeichert -->
             <input type="text" id="podcast-feedAddress" value="<?php echo $esc($feedUrl) ?>" readonly>
-            <span class="tip">Diese Adresse bei Apple Podcasts, Spotify und anderen Verzeichnissen eintragen.
-                <a href="<?php echo $esc($feedUrl) ?>" target="_blank" rel="noopener">Feed öffnen</a></span>
+            <span class="tip"><?php echo $this->html('feed-address-tip') ?>
+                <a href="<?php echo $esc($feedUrl) ?>" target="_blank" rel="noopener"><?php echo $this->html('feed-open') ?></a></span>
         </div>
         <div>
-            <label for="podcast-guidDisplay">Podcast-GUID</label>
+            <label for="podcast-guidDisplay"><?php echo $this->html('podcast-guid') ?></label>
             <input type="text" id="podcast-guidDisplay" value="<?php echo $esc($this->podcastGuid()) ?>" readonly>
-            <span class="tip">Dauerhafte Kennung des Podcasts (<code>podcast:guid</code>), beim ersten Speichern aus der Feed-Adresse erzeugt. Sie bleibt auch bei einem Umzug gleich.</span>
+            <span class="tip"><?php echo $this->html('podcast-guid-tip', [], ['tag' => '<code>podcast:guid</code>']) ?></span>
         </div>
         <?php
-        echo $text('feedUrl', 'Abweichende Feed-URL (optional)',
-            'Nur nötig, wenn der Feed über eine andere Adresse ausgeliefert wird, z. B. ein CDN. Leer lassen für die Adresse oben.' . $ignoredUrl('feedUrl'),
+        echo $text('feedUrl', $this->html('feed-url'), $this->html('feed-url-tip') . $ignoredUrl('feedUrl'),
             null, ' inputmode="url" placeholder="' . $esc($this->localFeedUrl()) . '"');
-        echo $text('siteUrl', 'Website-URL',
-            'Leer lassen für diese Bludit-Website.' . $ignoredUrl('siteUrl'),
+        echo $text('siteUrl', $this->html('site-url'), $this->html('site-url-tip') . $ignoredUrl('siteUrl'),
             null, ' inputmode="url" placeholder="' . $esc(DOMAIN_BASE) . '"');
 
-        echo $group('Website &amp; Player');
+        echo $group($this->html('group-player'));
         ?>
         <div>
-            <label for="podcast-playerMode">Player auf Episodenseiten</label>
+            <label for="podcast-playerMode"><?php echo $this->html('player-mode') ?></label>
             <select id="podcast-playerMode" name="playerMode">
-                <option value="podlove" <?php echo $this->playerMode() === 'podlove' ? 'selected' : '' ?>>Podlove Web Player (lokal gehostet, ohne Drittanbieter)</option>
-                <option value="html5"   <?php echo $this->playerMode() === 'html5'   ? 'selected' : '' ?>>Einfacher HTML5-Player</option>
+                <option value="podlove" <?php echo $this->playerMode() === 'podlove' ? 'selected' : '' ?>><?php echo $this->html('player-podlove') ?></option>
+                <option value="html5"   <?php echo $this->playerMode() === 'html5'   ? 'selected' : '' ?>><?php echo $this->html('player-html5') ?></option>
             </select>
         </div>
         <div>
-            <label for="podcast-playerPosition">Position des Players</label>
+            <label for="podcast-playerPosition"><?php echo $this->html('player-position') ?></label>
             <select id="podcast-playerPosition" name="playerPosition">
-                <option value="top"    <?php echo $this->playerPosition() === 'top'    ? 'selected' : '' ?>>Am Anfang des Inhalts (unter dem Titel)</option>
-                <option value="bottom" <?php echo $this->playerPosition() === 'bottom' ? 'selected' : '' ?>>Am Ende des Inhalts</option>
+                <option value="top"    <?php echo $this->playerPosition() === 'top'    ? 'selected' : '' ?>><?php echo $this->html('player-position-top') ?></option>
+                <option value="bottom" <?php echo $this->playerPosition() === 'bottom' ? 'selected' : '' ?>><?php echo $this->html('player-position-bottom') ?></option>
             </select>
-            <span class="tip">Für eine eigene Stelle <code>{{ podcast-player }}</code> in den Text der Episode schreiben.</span>
+            <span class="tip"><?php echo $this->html('player-position-tip', [], ['placeholder' => '<code>' . $esc(self::PLAYER_PLACEHOLDER) . '</code>']) ?></span>
         </div>
         <?php
-        echo $group('Uploads');
-        echo $text('maxUploadMB', 'Max. Upload-Größe (MB)', 'Die PHP-Limits des Servers gelten zusätzlich.',
+        echo $group($this->html('group-uploads'));
+        echo $text('maxUploadMB', $this->html('max-upload'), $this->html('max-upload-tip'),
             (int) ($this->getValue('maxUploadMB') ?: 512), ' inputmode="numeric" pattern="[0-9]*"');
-        ?>
-        <script src="<?php echo $esc($this->assetUrl('js/podcast-admin.js')) ?>"></script>
-        <?php
+        echo $this->adminScript();
         return ob_get_clean();
     }
 
@@ -462,7 +563,7 @@ class Podcast extends Plugin {
         }
         $html .= '<div class="podcast-audio-fallback">'
             . '<audio controls preload="none" src="' . $audioAttr . '" style="width:100%"></audio>'
-            . '<p><a href="' . $audioAttr . '" download>Episode herunterladen</a></p>'
+            . '<p><a href="' . $audioAttr . '" download>' . $this->html('download-episode') . '</a></p>'
             . '</div></div>';
         return $html;
     }
@@ -728,26 +829,26 @@ class Podcast extends Plugin {
           <div id="podcast-episode-list">
             <div class="d-flex flex-wrap">
               <a href="#" id="podcast-new-btn" class="mr-4 mb-2" role="button">
-                <span class="fa fa-plus mr-1"></span>Neue Episode
+                <span class="fa fa-plus mr-1"></span><?php echo $this->html('js-new-episode') ?>
               </a>
               <?php if ($canConfigure): ?>
               <a href="<?php echo HTML_PATH_ADMIN_ROOT ?>configure-plugin/Podcast" class="mb-2">
-                <span class="fa fa-cog mr-1"></span>Kanaleinstellungen
+                <span class="fa fa-cog mr-1"></span><?php echo $this->html('channel-settings') ?>
               </a>
               <?php endif ?>
             </div>
 
             <?php if (empty($episodes)): ?>
-              <p class="mt-4 text-muted">Noch keine Episoden vorhanden.</p>
+              <p class="mt-4 text-muted"><?php echo $this->html('no-episodes') ?></p>
             <?php else: ?>
               <table class="table mt-3">
                 <thead>
                   <tr>
-                    <th class="border-0" scope="col">Titel</th>
-                    <th class="border-0 text-center d-none d-md-table-cell" scope="col">Staffel</th>
-                    <th class="border-0 text-center d-none d-md-table-cell" scope="col">Folge</th>
-                    <th class="border-0 d-none d-lg-table-cell" scope="col">Typ</th>
-                    <th class="border-0 text-center" scope="col">Aktionen</th>
+                    <th class="border-0" scope="col"><?php echo $this->html('title') ?></th>
+                    <th class="border-0 text-center d-none d-md-table-cell" scope="col"><?php echo $this->html('season') ?></th>
+                    <th class="border-0 text-center d-none d-md-table-cell" scope="col"><?php echo $this->html('episode-number') ?></th>
+                    <th class="border-0 d-none d-lg-table-cell" scope="col"><?php echo $this->html('type') ?></th>
+                    <th class="border-0 text-center" scope="col"><?php echo $this->html('actions') ?></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -766,8 +867,8 @@ class Podcast extends Plugin {
                       $season   = $get('itunes_season');
                       $number   = $get('itunes_episode');
                       $numbers  = [];
-                      if ($season !== '') $numbers[] = 'Staffel ' . $season;
-                      if ($number !== '') $numbers[] = 'Folge ' . $number;
+                      if ($season !== '') $numbers[] = $this->text('season-n', ['n' => $season]);
+                      if ($number !== '') $numbers[] = $this->text('episode-n', ['n' => $number]);
                   ?>
                   <tr class="podcast-episode-row"
                       data-key="<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>"
@@ -788,21 +889,21 @@ class Podcast extends Plugin {
                           <?php if ($title !== ''): ?>
                             <?php echo htmlspecialchars($title, ENT_QUOTES) ?>
                           <?php else: ?>
-                            <span class="label-empty-title">Kein Titel</span>
+                            <span class="label-empty-title"><?php echo $this->html('no-title') ?></span>
                           <?php endif ?>
                         </a>
                         <?php if ($type === 'scheduled'): ?>
-                          <span class="badge badge-info align-middle ml-1">Geplant</span>
+                          <span class="badge badge-info align-middle ml-1"><?php echo $this->html('status-scheduled') ?></span>
                         <?php elseif ($type === 'sticky'): ?>
-                          <span class="badge badge-warning align-middle ml-1"><i class="fa fa-thumb-tack"></i> Fixiert</span>
+                          <span class="badge badge-warning align-middle ml-1"><i class="fa fa-thumb-tack"></i> <?php echo $this->html('js-status-sticky') ?></span>
                         <?php elseif ($type === 'static'): ?>
-                          <span class="badge badge-light align-middle ml-1">Statisch</span>
+                          <span class="badge badge-light align-middle ml-1"><?php echo $this->html('js-status-static') ?></span>
                         <?php elseif (!$isPublic): ?>
-                          <span class="badge badge-secondary align-middle ml-1">Entwurf</span>
+                          <span class="badge badge-secondary align-middle ml-1"><?php echo $this->html('status-draft') ?></span>
                         <?php endif ?>
                       </div>
                       <p class="podcast-episode-meta m-0 text-uppercase text-muted">
-                        <?php echo $type === 'scheduled' ? $ep->date('d.m.Y, H:i \U\h\r') : $ep->date('d.m.Y') ?><?php if ($numbers): ?><span class="d-md-none"> · <?php echo htmlspecialchars(implode(' · ', $numbers)) ?></span><?php endif ?>
+                        <?php echo htmlspecialchars($ep->date($type === 'scheduled' ? $this->text('datetime-format') : $this->text('date-format')), ENT_QUOTES) ?><?php if ($numbers): ?><span class="d-md-none"> · <?php echo htmlspecialchars(implode(' · ', $numbers), ENT_QUOTES) ?></span><?php endif ?>
                       </p>
                     </td>
                     <td class="pt-3 text-center d-none d-md-table-cell"><?php echo htmlspecialchars($season) ?></td>
@@ -812,26 +913,26 @@ class Podcast extends Plugin {
                       <div class="dropdown actionsDropdown">
                         <button class="btn btn-link text-secondary p-1 actionsDropdownToggle" type="button"
                                 data-toggle="dropdown" data-boundary="viewport" aria-haspopup="true" aria-expanded="false"
-                                title="Aktionen"
-                                aria-label="Aktionen für <?php echo htmlspecialchars($title !== '' ? $title : 'Episode ohne Titel', ENT_QUOTES) ?>">
+                                title="<?php echo $this->html('actions') ?>"
+                                aria-label="<?php echo $this->html('actions-for', ['title' => $title !== '' ? $title : $this->text('untitled-episode')]) ?>">
                           <i class="fa fa-bars"></i>
                         </button>
                         <div class="dropdown-menu dropdown-menu-right">
                           <?php if ($isPublic): ?>
                           <a class="dropdown-item" target="_blank" rel="noopener" href="<?php echo htmlspecialchars($ep->permalink(), ENT_QUOTES) ?>">
-                            <i class="fa fa-desktop fa-fw mr-2"></i>Anschauen
+                            <i class="fa fa-desktop fa-fw mr-2"></i><?php echo $this->html('view') ?>
                           </a>
                           <?php endif ?>
                           <a href="#" class="dropdown-item podcast-edit-btn" role="button">
-                            <i class="fa fa-edit fa-fw mr-2"></i>Bearbeiten
+                            <i class="fa fa-edit fa-fw mr-2"></i><?php echo $this->html('edit') ?>
                           </a>
                           <a class="dropdown-item" href="<?php echo HTML_PATH_ADMIN_ROOT ?>edit-content/<?php echo htmlspecialchars($ep->key(), ENT_QUOTES) ?>">
-                            <i class="fa fa-pencil fa-fw mr-2"></i>Im Bludit-Editor öffnen
+                            <i class="fa fa-pencil fa-fw mr-2"></i><?php echo $this->html('open-in-editor') ?>
                           </a>
                           <?php if ($canDelete): ?>
                           <div class="dropdown-divider"></div>
                           <a href="#" class="dropdown-item text-danger podcast-delete-btn" role="button">
-                            <i class="fa fa-trash fa-fw mr-2"></i>Löschen
+                            <i class="fa fa-trash fa-fw mr-2"></i><?php echo $this->html('delete') ?>
                           </a>
                           <?php endif ?>
                         </div>
@@ -859,37 +960,37 @@ class Podcast extends Plugin {
           <div class="align-middle clearfix">
             <div class="float-right mt-1 ml-2 mb-2">
               <span id="podcast-saving" class="text-muted small mr-2" role="status" hidden>
-                <span class="fa fa-spinner fa-spin"></span> Wird gespeichert&hellip;
+                <span class="fa fa-spinner fa-spin"></span> <?php echo $this->html('saving') ?>
               </span>
-              <button type="button" class="btn btn-primary btn-sm" id="podcast-save-btn">Speichern</button>
-              <button type="button" class="btn btn-secondary btn-sm" id="podcast-cancel-btn">Abbrechen</button>
+              <button type="button" class="btn btn-primary btn-sm" id="podcast-save-btn"><?php echo $this->html('save') ?></button>
+              <button type="button" class="btn btn-secondary btn-sm" id="podcast-cancel-btn"><?php echo $this->html('cancel') ?></button>
             </div>
-            <h4 id="podcast-form-title" class="mb-3">Neue Episode</h4>
+            <h4 id="podcast-form-title" class="mb-3"><?php echo $this->html('js-new-episode') ?></h4>
           </div>
 
           <div id="podcast-save-error" class="alert alert-danger" role="alert" hidden></div>
           <input type="hidden" id="pe-key" value="">
 
           <div class="form-group">
-            <label for="pe-title">Titel *</label>
+            <label for="pe-title"><?php echo $this->html('title') ?> *</label>
             <input type="text" class="form-control" id="pe-title">
           </div>
           <div class="form-group">
-            <label for="pe-content">Beschreibung *</label>
+            <label for="pe-content"><?php echo $this->html('description') ?> *</label>
             <textarea class="form-control" id="pe-content" rows="4"></textarea>
           </div>
 
           <div class="form-row">
             <div class="form-group col-6 col-md-3">
-              <label for="pe-episode">Folge</label>
+              <label for="pe-episode"><?php echo $this->html('episode-number') ?></label>
               <input type="number" class="form-control" id="pe-episode" min="0" inputmode="numeric">
             </div>
             <div class="form-group col-6 col-md-3">
-              <label for="pe-season">Staffel</label>
+              <label for="pe-season"><?php echo $this->html('season') ?></label>
               <input type="number" class="form-control" id="pe-season" min="0" inputmode="numeric">
             </div>
             <div class="form-group col-6 col-md-3">
-              <label for="pe-type">Typ</label>
+              <label for="pe-type"><?php echo $this->html('type') ?></label>
               <select class="custom-select" id="pe-type">
                 <option value="full">full</option>
                 <option value="trailer">trailer</option>
@@ -897,21 +998,21 @@ class Podcast extends Plugin {
               </select>
             </div>
             <div class="form-group col-6 col-md-3">
-              <label for="pe-explicit">Explicit</label>
+              <label for="pe-explicit"><?php echo $this->html('explicit') ?></label>
               <select class="custom-select" id="pe-explicit">
-                <option value="no">Nein</option>
-                <option value="yes">Ja</option>
+                <option value="no"><?php echo $this->html('no') ?></option>
+                <option value="yes"><?php echo $this->html('yes') ?></option>
               </select>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="pe-duration">Dauer (HH:MM:SS)</label>
+            <label for="pe-duration"><?php echo $this->html('duration') ?></label>
             <input type="text" class="form-control" id="pe-duration" placeholder="00:45:00">
           </div>
 
           <div class="form-group">
-            <label id="pe-image-label">Episodenbild</label>
+            <label id="pe-image-label"><?php echo $this->html('episode-image') ?></label>
             <div role="radiogroup" aria-labelledby="pe-image-label">
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="pe-image-mode" id="pe-image-mode-url" value="url" checked>
@@ -919,17 +1020,17 @@ class Podcast extends Plugin {
               </div>
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="pe-image-mode" id="pe-image-mode-file" value="file">
-                <label class="form-check-label" for="pe-image-mode-file">Datei hochladen</label>
+                <label class="form-check-label" for="pe-image-mode-file"><?php echo $this->html('upload-file') ?></label>
               </div>
             </div>
             <input type="text" class="form-control mt-2" id="pe-image-url" placeholder="https://..."
                    inputmode="url" aria-labelledby="pe-image-label">
             <div class="custom-file mt-2" id="pe-image-file-wrap" hidden>
               <input type="file" class="custom-file-input" id="pe-image-file" accept=".jpg,.jpeg,.png">
-              <label class="custom-file-label" for="pe-image-file" data-browse="Durchsuchen"
-                     data-placeholder="Bild auswählen …">Bild auswählen …</label>
+              <label class="custom-file-label" for="pe-image-file" data-browse="<?php echo $this->html('browse') ?>"
+                     data-placeholder="<?php echo $this->html('choose-image') ?>"><?php echo $this->html('choose-image') ?></label>
             </div>
-            <img id="pe-image-preview" class="mt-2 border rounded" alt="Vorschau des Episodenbilds" hidden>
+            <img id="pe-image-preview" class="mt-2 border rounded" alt="<?php echo $this->html('image-preview-alt') ?>" hidden>
           </div>
 
           <div class="form-group">
@@ -937,33 +1038,35 @@ class Podcast extends Plugin {
             <div role="radiogroup" aria-labelledby="pe-audio-label">
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="pe-audio-mode" id="pe-audio-mode-url" value="url" checked>
-                <label class="form-check-label" for="pe-audio-mode-url">Externe URL</label>
+                <label class="form-check-label" for="pe-audio-mode-url"><?php echo $this->html('external-url') ?></label>
               </div>
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="pe-audio-mode" id="pe-audio-mode-file" value="file">
-                <label class="form-check-label" for="pe-audio-mode-file">Datei hochladen</label>
+                <label class="form-check-label" for="pe-audio-mode-file"><?php echo $this->html('upload-file') ?></label>
               </div>
             </div>
             <input type="text" class="form-control mt-2" id="pe-audio-url" placeholder="https://..."
                    inputmode="url" aria-labelledby="pe-audio-label">
             <div class="custom-file mt-2" id="pe-audio-file-wrap" hidden>
               <input type="file" class="custom-file-input" id="pe-audio-file" accept=".mp3,.m4a,.ogg,.wav">
-              <label class="custom-file-label" for="pe-audio-file" data-browse="Durchsuchen"
-                     data-placeholder="Audiodatei auswählen …">Audiodatei auswählen …</label>
+              <label class="custom-file-label" for="pe-audio-file" data-browse="<?php echo $this->html('browse') ?>"
+                     data-placeholder="<?php echo $this->html('choose-audio') ?>"><?php echo $this->html('choose-audio') ?></label>
             </div>
             <div class="alert alert-warning small py-2 px-3 mt-2 mb-0" id="pe-audio-format-hint" role="status" hidden>
-              Apple Podcasts spielt WAV- und OGG-Dateien nicht ab. Für Podcast-Verzeichnisse besser MP3 oder M4A verwenden.
+              <?php echo $this->html('audio-format-hint') ?>
             </div>
             <small class="form-text text-muted" id="pe-upload-limit"
                    data-max-file="<?php echo (int) $limits['file'] ?>"
                    data-max-post="<?php echo (int) $limits['post'] ?>">
               <?php if (!$limits['enabled']): ?>
-                Datei-Uploads sind auf dem Server deaktiviert (<code>file_uploads = Off</code>) — bitte Audio-URL verwenden.
+                <?php echo $this->html('uploads-disabled', [], ['setting' => '<code>file_uploads = Off</code>']) ?>
               <?php else: ?>
-                Max. <?php echo $this->formatMB($limits['file']) ?> MB pro Datei<?php if ($limits['server']): ?>
-                — vom Server begrenzt (<code>upload_max_filesize = <?php echo htmlspecialchars((string) ini_get('upload_max_filesize'), ENT_QUOTES) ?></code>,
-                <code>post_max_size = <?php echo htmlspecialchars((string) ini_get('post_max_size'), ENT_QUOTES) ?></code>;
-                Plugin-Einstellung: <?php echo $this->formatMB($limits['plugin']) ?> MB). Für größere Dateien die PHP-Limits erhöhen, siehe README.
+                <?php echo $this->html('upload-limit', ['size' => $this->formatMB($limits['file'])]) ?>
+                <?php if ($limits['server']): ?>
+                <?php echo $this->html('upload-limit-server', ['plugin' => $this->formatMB($limits['plugin'])], [
+                    'file' => '<code>upload_max_filesize = ' . htmlspecialchars((string) ini_get('upload_max_filesize'), ENT_QUOTES) . '</code>',
+                    'post' => '<code>post_max_size = ' . htmlspecialchars((string) ini_get('post_max_size'), ENT_QUOTES) . '</code>',
+                ]) ?>
                 <?php endif ?>
               <?php endif ?>
             </small>
@@ -971,21 +1074,20 @@ class Podcast extends Plugin {
 
           <div class="form-row">
             <div class="form-group col-md-6">
-              <label for="pe-date">Veröffentlichungsdatum *</label>
+              <label for="pe-date"><?php echo $this->html('publish-date') ?> *</label>
               <input type="datetime-local" class="form-control" id="pe-date" required
                      value="<?php echo date('Y-m-d\TH:i') ?>"
                      data-timezone="<?php echo htmlspecialchars(date_default_timezone_get(), ENT_QUOTES) ?>"
                      aria-describedby="pe-date-help">
               <small id="pe-date-help" class="form-text text-muted">
-                Zeitzone der Website: <?php echo htmlspecialchars(date_default_timezone_get(), ENT_QUOTES) ?>.
-                Ein Datum in der Zukunft plant die Episode.
+                <?php echo $this->html('date-help', ['timezone' => date_default_timezone_get()]) ?>
               </small>
             </div>
             <div class="form-group col-md-6">
-              <label for="pe-status">Status</label>
+              <label for="pe-status"><?php echo $this->html('status') ?></label>
               <select class="custom-select" id="pe-status">
-                <option value="published">Veröffentlicht</option>
-                <option value="draft">Entwurf</option>
+                <option value="published"><?php echo $this->html('status-published') ?></option>
+                <option value="draft"><?php echo $this->html('status-draft') ?></option>
               </select>
             </div>
           </div>
@@ -1013,14 +1115,14 @@ class Podcast extends Plugin {
                 case 'upload_cover':
                     return $this->handleCoverUpload($_FILES);
                 default:
-                    return ['error' => 'Unbekannte Aktion'];
+                    return ['error' => $this->text('error-unknown-action')];
             }
         } catch (RuntimeException $e) {
             // Eigene, für Nutzer formulierte Fehlermeldungen
             return ['error' => $e->getMessage()];
         } catch (Throwable $e) {
             Log::set(__METHOD__ . LOG_SEP . $e->getMessage());
-            return ['error' => 'Interner Fehler. Details stehen im Bludit-Log.'];
+            return ['error' => $this->text('error-internal')];
         }
     }
 
@@ -1064,7 +1166,7 @@ class Podcast extends Plugin {
             return;
         }
         $limitMB = round($postMaxBytes / 1024 / 1024, 0);
-        $this->sendJson(['error' => 'Upload zu groß: Gesamtgröße überschreitet das Server-Limit von ' . $limitMB . ' MB. Bitte kleinere Dateien wählen oder Audio-URL verwenden.']);
+        $this->sendJson(['error' => $this->text('error-post-too-large', ['limit' => $limitMB])]);
     }
 
     private function handleSaveEpisode($post, $files = []) {
@@ -1077,26 +1179,26 @@ class Podcast extends Plugin {
         $key     = $this->postString($post, 'key');
 
         if (!$title) {
-            return ['error' => 'Titel ist erforderlich'];
+            return ['error' => $this->text('error-title-required')];
         }
         // Pflichtfeld: Pages::edit() ignoriert leeren Inhalt, ein geleertes Feld
         // würde sonst stillschweigend den alten Text behalten
         if ($content === '') {
-            return ['error' => 'Bitte eine Beschreibung eingeben.'];
+            return ['error' => $this->text('js-error-description')];
         }
         if ($date === null) {
-            return ['error' => 'Bitte ein gültiges Veröffentlichungsdatum eingeben.'];
+            return ['error' => $this->text('js-error-date')];
         }
 
         // Nur bestehende Podcast-Episoden dürfen bearbeitet werden — vor jedem Upload prüfen
         $page = null;
         if ($key !== '') {
             if (!$pages->exists($key)) {
-                return ['error' => 'Episode nicht gefunden'];
+                return ['error' => $this->text('error-episode-not-found')];
             }
             $page = new Page($key);
             if (!$this->pageHasPodcastTag($page)) {
-                return ['error' => 'Seite gehört nicht zum Podcast'];
+                return ['error' => $this->text('error-not-podcast')];
             }
         }
 
@@ -1111,21 +1213,21 @@ class Podcast extends Plugin {
         $status       = in_array($postedStatus, $allowedStatus, true) ? $postedStatus : 'published';
 
         if (!$this->ensureCustomFields()) {
-            return ['error' => 'Podcast-Felder konnten nicht eingerichtet werden. Details stehen im Bludit-Log.'];
+            return ['error' => $this->text('error-fields-setup')];
         }
 
         $imageUrlInput = $this->postString($post, 'image_url');
         $audioUrlInput = $this->postString($post, 'audio_url');
         if ($imageUrlInput !== '' && !$this->isHttpUrl($imageUrlInput)) {
-            return ['error' => 'Bild-URL muss mit http:// oder https:// beginnen'];
+            return ['error' => $this->text('error-image-url')];
         }
         if ($audioUrlInput !== '' && !$this->isHttpUrl($audioUrlInput)) {
-            return ['error' => 'Audio-URL muss mit http:// oder https:// beginnen'];
+            return ['error' => $this->text('error-audio-url')];
         }
 
         $duration = $this->postString($post, 'duration');
         if ($duration !== '' && !$this->isValidDuration($duration)) {
-            return ['error' => 'Dauer bitte als HH:MM:SS, MM:SS oder in Sekunden angeben'];
+            return ['error' => $this->text('error-duration')];
         }
 
         // Episodenbild
@@ -1134,7 +1236,7 @@ class Podcast extends Plugin {
         if (!empty($files['image_file'])) {
             $imgErr = $files['image_file']['error'] ?? UPLOAD_ERR_NO_FILE;
             if (!is_int($imgErr)) {
-                return ['error' => 'Ungültiger Bild-Upload'];
+                return ['error' => $this->uploadText('image', 'upload-invalid')];
             }
             if ($imgErr === UPLOAD_ERR_OK) {
                 $imageUrl = $this->handleUpload('image_file', 'image');
@@ -1142,7 +1244,7 @@ class Podcast extends Plugin {
                 $imagePath = $this->localImagePath($imageUrl);
                 $imageProblems = $imagePath !== '' ? $this->coverProblems($imagePath) : [];
             } elseif ($imgErr !== UPLOAD_ERR_NO_FILE) {
-                return ['error' => $this->uploadErrorMessage($imgErr, 'Bild')];
+                return ['error' => $this->uploadErrorMessage($imgErr, 'image')];
             }
         }
         if (!$imageUrl) {
@@ -1155,7 +1257,7 @@ class Podcast extends Plugin {
         if (!empty($files['audio_file'])) {
             $audErr = $files['audio_file']['error'] ?? UPLOAD_ERR_NO_FILE;
             if (!is_int($audErr)) {
-                return ['error' => 'Ungültiger Audio-Upload'];
+                return ['error' => $this->uploadText('audio', 'upload-invalid')];
             }
             if ($audErr === UPLOAD_ERR_OK) {
                 $audioUrl = $this->handleUpload('audio_file', 'audio');
@@ -1164,7 +1266,7 @@ class Podcast extends Plugin {
                     $audioLength = (int) filesize($localPath);
                 }
             } elseif ($audErr !== UPLOAD_ERR_NO_FILE) {
-                return ['error' => $this->uploadErrorMessage($audErr, 'Audio')];
+                return ['error' => $this->uploadErrorMessage($audErr, 'audio')];
             }
         }
         if (!$audioUrl) {
@@ -1172,7 +1274,7 @@ class Podcast extends Plugin {
         }
 
         if (!$audioUrl) {
-            return ['error' => 'Audio-URL oder -Datei ist erforderlich'];
+            return ['error' => $this->text('error-audio-required')];
         }
 
         // Dateigröße für <enclosure length>, wenn nicht gerade hochgeladen:
@@ -1191,8 +1293,7 @@ class Podcast extends Plugin {
                 if (isset($probe['length'])) {
                     $audioLength = $probe['length'];
                 } else {
-                    $warning = 'Episode gespeichert, aber die Dateigröße der Audio-URL ließ sich nicht ermitteln: '
-                        . $probe['error'] . ' Im Feed steht sie dann als 0; beim nächsten Speichern wird es erneut versucht.';
+                    $warning = $this->text('warning-length-unknown', ['reason' => $probe['error']]);
                 }
             }
         }
@@ -1201,7 +1302,7 @@ class Podcast extends Plugin {
         $seasonNum  = $this->postString($post, 'season');
         foreach ([$episodeNum, $seasonNum] as $number) {
             if ($number !== '' && filter_var($number, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
-                return ['error' => 'Episode und Staffel müssen ganze Zahlen ab 0 sein'];
+                return ['error' => $this->text('error-numbers')];
             }
         }
         $type = $this->postString($post, 'type');
@@ -1247,12 +1348,11 @@ class Podcast extends Plugin {
             $newKey = createPage($pageArgs);
         }
         if (!$newKey) {
-            return ['error' => 'Episode konnte nicht gespeichert werden. Details stehen im Bludit-Log.'];
+            return ['error' => $this->text('error-save-failed')];
         }
         $result = ['success' => true, 'key' => $newKey];
         if ($imageProblems) {
-            $warning = trim($warning . ' Episodenbild gespeichert, aber es passt nicht zu Apples Vorgaben: '
-                . implode(' ', $imageProblems) . ' Apple zeigt dann womöglich nur das Kanal-Cover.');
+            $warning = trim($warning . ' ' . $this->text('warning-image', ['problems' => implode(' ', $imageProblems)]));
         }
         if ($warning !== '') {
             $result['warning'] = $warning;
@@ -1264,28 +1364,28 @@ class Podcast extends Plugin {
         global $pages;
 
         if (!$key) {
-            return ['error' => 'Kein Schlüssel angegeben'];
+            return ['error' => $this->text('error-no-key')];
         }
 
         if (!$pages->exists($key)) {
-            return ['error' => 'Episode nicht gefunden'];
+            return ['error' => $this->text('error-episode-not-found')];
         }
 
         $page = new Page($key);
 
         // Nur Seiten mit Tag 'podcast' löschen (Sicherheit)
         if (!$this->pageHasPodcastTag($page)) {
-            return ['error' => 'Seite gehört nicht zum Podcast'];
+            return ['error' => $this->text('error-not-podcast')];
         }
 
         // Pages::delete() löscht den Ordner samt Unterseiten-Ordnern, deren Einträge
         // blieben verwaist zurück — wie Bludits Inhaltsliste nur ohne Unterseiten
         if (!empty($pages->getChildren($key))) {
-            return ['error' => 'Die Episode hat Unterseiten und kann hier nicht gelöscht werden.'];
+            return ['error' => $this->text('error-has-children')];
         }
 
         if (!deletePage($key)) {
-            return ['error' => 'Episode konnte nicht gelöscht werden. Details stehen im Bludit-Log.'];
+            return ['error' => $this->text('error-delete-failed')];
         }
 
         return ['success' => true];
@@ -1328,27 +1428,28 @@ class Podcast extends Plugin {
      */
     private function handleCoverUpload(array $files) {
         if (!checkRole(['admin'], false)) {
-            return ['error' => 'Das Cover dürfen nur Admins ändern.'];
+            return ['error' => $this->text('error-cover-admin-only')];
         }
         $error = $files['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE;
         if (!is_int($error)) {
-            return ['error' => 'Ungültiger Bild-Upload'];
+            return ['error' => $this->uploadText('image', 'upload-invalid')];
         }
         if ($error === UPLOAD_ERR_NO_FILE) {
-            return ['error' => 'Bitte ein Bild auswählen.'];
+            return ['error' => $this->text('error-choose-image')];
         }
         if ($error !== UPLOAD_ERR_OK) {
-            return ['error' => $this->uploadErrorMessage($error, 'Bild')];
+            return ['error' => $this->uploadErrorMessage($error, 'image')];
         }
         $this->validateUpload($files['cover_file'], 'image');
         $problems = $this->coverProblems($files['cover_file']['tmp_name']);
         if ($problems) {
-            return ['error' => 'Das Bild eignet sich nicht als Cover für Apple Podcasts: ' . implode(' ', $problems)
-                . ' Verlangt: quadratisch, ' . self::COVER_MIN_PX . ' bis ' . self::COVER_MAX_PX . ' px, JPG oder PNG in RGB.'];
+            return ['error' => $this->text('error-cover-unsuitable', [
+                'problems' => implode(' ', $problems), 'min' => self::COVER_MIN_PX, 'max' => self::COVER_MAX_PX,
+            ])];
         }
         $url = $this->handleUpload('cover_file', 'image');
         if ($url === '') {
-            return ['error' => 'Upload fehlgeschlagen.'];
+            return ['error' => $this->text('js-error-upload-failed')];
         }
         return ['success' => true, 'url' => $url];
     }
@@ -1357,20 +1458,20 @@ class Podcast extends Plugin {
     private function coverProblems($path) {
         $info = is_string($path) && is_file($path) ? @getimagesize($path) : false;
         if (!$info) {
-            return ['Die Bildgröße ließ sich nicht lesen.'];
+            return [$this->text('image-size-unreadable')];
         }
         [$width, $height] = $info;
         $size     = $width . ' × ' . $height . ' px';
         $problems = [];
         if ($width !== $height) {
-            $problems[] = 'Es ist nicht quadratisch (' . $size . ').';
+            $problems[] = $this->text('image-not-square', ['size' => $size]);
         } elseif ($width < self::COVER_MIN_PX) {
-            $problems[] = 'Es ist zu klein (' . $size . ').';
+            $problems[] = $this->text('image-too-small', ['size' => $size]);
         } elseif ($width > self::COVER_MAX_PX) {
-            $problems[] = 'Es ist zu groß (' . $size . ').';
+            $problems[] = $this->text('image-too-large', ['size' => $size]);
         }
         if ($info[2] === IMAGETYPE_JPEG && ($info['channels'] ?? 3) === 4) {
-            $problems[] = 'Es ist im CMYK-Farbraum gespeichert, Apple verlangt RGB.';
+            $problems[] = $this->text('image-cmyk');
         }
         return $problems;
     }
@@ -1394,11 +1495,13 @@ class Podcast extends Plugin {
     }
 
     /**
-     * Bytes als MB mit höchstens einer Nachkommastelle, z. B. „2“ oder „0,5“.
+     * Bytes als MB mit höchstens einer Nachkommastelle und dem Dezimalzeichen
+     * der Sprache, z. B. „2“ oder „0,5“.
      */
     private function formatMB($bytes) {
-        $mb = number_format($bytes / 1048576, 1, ',', '');
-        return substr($mb, -2) === ',0' ? substr($mb, 0, -2) : $mb;
+        $mb = number_format($bytes / 1048576, 1, '.', '');
+        $mb = substr($mb, -2) === '.0' ? substr($mb, 0, -2) : $mb;
+        return str_replace('.', $this->text('js-decimal-separator'), $mb);
     }
 
     private function parseBytes($val) {
@@ -1413,16 +1516,24 @@ class Podcast extends Plugin {
         }
     }
 
-    private function uploadErrorMessage($code, $label) {
-        $messages = [
-            UPLOAD_ERR_INI_SIZE   => $label . '-Datei zu groß (Server-Limit: ' . ini_get('upload_max_filesize') . '). Bitte kleinere Datei wählen oder URL verwenden.',
-            UPLOAD_ERR_FORM_SIZE  => $label . '-Datei überschreitet die Formularbegrenzung.',
-            UPLOAD_ERR_PARTIAL    => $label . '-Datei wurde nur teilweise hochgeladen. Bitte erneut versuchen.',
-            UPLOAD_ERR_NO_TMP_DIR => 'Server-Konfigurationsfehler: Kein temporäres Verzeichnis.',
-            UPLOAD_ERR_CANT_WRITE => 'Server-Konfigurationsfehler: Datei konnte nicht geschrieben werden.',
-            UPLOAD_ERR_EXTENSION  => 'Upload durch Server-Konfiguration blockiert.',
-        ];
-        return $messages[$code] ?? $label . '-Upload fehlgeschlagen (Code: ' . $code . ')';
+    /** Meldung zu einem PHP-Upload-Fehler; $type ist 'image' oder 'audio'. */
+    private function uploadErrorMessage($code, $type) {
+        switch ($code) {
+            case UPLOAD_ERR_INI_SIZE:
+                return $this->uploadText($type, 'upload-ini-size', ['limit' => (string) ini_get('upload_max_filesize')]);
+            case UPLOAD_ERR_FORM_SIZE:
+                return $this->uploadText($type, 'upload-form-size');
+            case UPLOAD_ERR_PARTIAL:
+                return $this->uploadText($type, 'upload-partial');
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return $this->text('upload-no-tmp-dir');
+            case UPLOAD_ERR_CANT_WRITE:
+                return $this->text('upload-cant-write');
+            case UPLOAD_ERR_EXTENSION:
+                return $this->text('upload-blocked');
+            default:
+                return $this->uploadText($type, 'upload-failed-code', ['code' => (int) $code]);
+        }
     }
 
     // Erlaubte Upload-Endungen je Typ und die per finfo akzeptierten MIME-Typen
@@ -1449,13 +1560,12 @@ class Podcast extends Plugin {
             return '';
         }
 
-        $file  = $_FILES[$fileField];
-        $label = $type === 'audio' ? 'Audio' : 'Bild';
-        $ext   = $this->validateUpload($file, $type);
+        $file = $_FILES[$fileField];
+        $ext  = $this->validateUpload($file, $type);
 
         $dir = PATH_UPLOADS . 'podcast' . DS . ($type === 'audio' ? 'audio' : 'images') . DS;
         if (!$this->prepareUploadDir($dir)) {
-            throw new RuntimeException($label . '-Upload fehlgeschlagen: Upload-Ordner nicht beschreibbar.');
+            throw new RuntimeException($this->uploadText($type, 'upload-dir-not-writable'));
         }
 
         // Zufälliger Namensanteil: Dateien unveröffentlichter Episoden sind nicht erratbar
@@ -1466,7 +1576,7 @@ class Podcast extends Plugin {
 
         if (!move_uploaded_file($file['tmp_name'], $dir . $filename)) {
             Log::set(__METHOD__ . LOG_SEP . 'move_uploaded_file failed: ' . $dir . $filename);
-            throw new RuntimeException('Upload fehlgeschlagen: Datei konnte nicht gespeichert werden.');
+            throw new RuntimeException($this->text('upload-move-failed'));
         }
 
         return DOMAIN_UPLOADS . 'podcast/' . ($type === 'audio' ? 'audio' : 'images') . '/' . $filename;
@@ -1477,25 +1587,24 @@ class Podcast extends Plugin {
      * Liefert die normalisierte Endung oder wirft eine RuntimeException.
      */
     private function validateUpload(array $file, $type) {
-        $label   = $type === 'audio' ? 'Audio' : 'Bild';
         $allowed = self::UPLOAD_TYPES[$type];
         $maxMB   = (int) ($this->getValue('maxUploadMB') ?: 512);
 
         if (!is_string($file['name'] ?? null) || !is_string($file['tmp_name'] ?? null) || !is_int($file['size'] ?? null)) {
-            throw new RuntimeException('Ungültiger ' . $label . '-Upload.');
+            throw new RuntimeException($this->uploadText($type, 'upload-invalid'));
         }
         if ($file['size'] > $maxMB * 1024 * 1024) {
-            throw new RuntimeException($label . '-Datei ist größer als ' . $maxMB . ' MB (Einstellung „Max. Upload-Größe“).');
+            throw new RuntimeException($this->uploadText($type, 'upload-too-large', ['limit' => $maxMB]));
         }
 
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         if (!isset($allowed[$ext])) {
-            throw new RuntimeException($label . '-Datei hat eine nicht erlaubte Endung. Erlaubt: ' . implode(', ', array_keys($allowed)) . '.');
+            throw new RuntimeException($this->uploadText($type, 'upload-bad-extension', ['allowed' => implode(', ', array_keys($allowed))]));
         }
 
         if (!class_exists('finfo')) {
             Log::set(__METHOD__ . LOG_SEP . 'PHP extension fileinfo missing, upload rejected.');
-            throw new RuntimeException('Upload nicht möglich: Die PHP-Erweiterung „fileinfo“ fehlt auf dem Server.');
+            throw new RuntimeException($this->text('upload-no-fileinfo'));
         }
         $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
         // Bilder zusätzlich per getimagesize(): liefert false, wenn es kein lesbares Bild ist
@@ -1504,7 +1613,7 @@ class Podcast extends Plugin {
             || (is_array($imageInfo) && in_array($imageInfo[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG], true));
         if (!in_array($mime, $allowed[$ext], true) || !$isImage) {
             Log::set(__METHOD__ . LOG_SEP . 'Rejected upload, extension ' . $ext . ', detected ' . $mime);
-            throw new RuntimeException($label . '-Datei passt inhaltlich nicht zur Endung .' . $ext . '.');
+            throw new RuntimeException($this->uploadText($type, 'upload-content-mismatch', ['ext' => $ext]));
         }
 
         return $ext;
@@ -1891,7 +2000,7 @@ class Podcast extends Plugin {
      */
     private function remoteAudioLength($url) {
         if (!function_exists('curl_init')) {
-            return ['error' => 'Die PHP-Erweiterung curl fehlt auf dem Server.'];
+            return ['error' => $this->text('remote-no-curl')];
         }
         $deadline = microtime(true) + self::REMOTE_TIMEOUT;
         for ($hop = 0; $hop <= self::REMOTE_MAX_REDIRECTS; $hop++) {
@@ -1924,10 +2033,10 @@ class Podcast extends Plugin {
             }
             $status = $range['status'] ?: $head['status'];
             return ['error' => $status >= 400
-                ? 'Der Server antwortet mit HTTP ' . $status . '.'
-                : 'Der Server nennt keine Dateigröße.'];
+                ? $this->text('remote-http-status', ['status' => $status])
+                : $this->text('remote-no-length')];
         }
-        return ['error' => 'Zu viele Weiterleitungen.'];
+        return ['error' => $this->text('remote-too-many-redirects')];
     }
 
     /**
@@ -1936,17 +2045,17 @@ class Podcast extends Plugin {
      */
     private function publicTarget($url) {
         if (!is_string($url) || !$this->isHttpUrl($url)) {
-            return ['error' => 'Die Adresse muss mit http:// oder https:// beginnen.'];
+            return ['error' => $this->text('remote-not-http')];
         }
         $parts  = parse_url($url);
         $scheme = strtolower($parts['scheme']);
         $host   = strtolower(rtrim($parts['host'], '.'));
         $port   = isset($parts['port']) ? (int) $parts['port'] : ($scheme === 'https' ? 443 : 80);
         if (isset($parts['user']) || isset($parts['pass'])) {
-            return ['error' => 'Adressen mit Zugangsdaten werden nicht abgefragt.'];
+            return ['error' => $this->text('remote-credentials')];
         }
         if (!in_array($port, [80, 443], true)) {
-            return ['error' => 'Abgefragt werden nur die Standard-Ports 80 und 443.'];
+            return ['error' => $this->text('remote-ports')];
         }
         $literal = trim($host, '[]');
         if (filter_var($literal, FILTER_VALIDATE_IP) !== false) {
@@ -1955,7 +2064,7 @@ class Podcast extends Plugin {
             // Nur echte Servernamen (Endung mit Buchstaben); Zahlenformen wie
             // „2130706433“ oder „0x7f.1“ legen Programme unterschiedlich aus
             if (preg_match('/^[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z][a-z0-9-]*$/D', $host) !== 1) {
-                return ['error' => 'Der Servername ist ungültig.'];
+                return ['error' => $this->text('remote-bad-host')];
             }
             $ips     = [];
             $records = @dns_get_record($host, DNS_A | DNS_AAAA);
@@ -1974,11 +2083,11 @@ class Podcast extends Plugin {
             }
         }
         if (!$ips) {
-            return ['error' => 'Der Servername lässt sich nicht auflösen.'];
+            return ['error' => $this->text('remote-unresolvable')];
         }
         foreach ($ips as $ip) {
             if (!$this->isPublicIp($ip)) {
-                return ['error' => 'Die Adresse zeigt auf ein internes Netz und wird nicht abgefragt.'];
+                return ['error' => $this->text('remote-internal')];
             }
         }
         // IPv4 bevorzugen, wenn vorhanden
@@ -2039,7 +2148,7 @@ class Podcast extends Plugin {
     private function httpProbe($url, array $target, $range, $deadline) {
         $timeout = (int) ceil($deadline - microtime(true));
         if ($timeout < 1) {
-            return ['error' => 'Zeitüberschreitung.'];
+            return ['error' => $this->text('remote-timeout')];
         }
         $headers  = [];
         $received = 0;
@@ -2088,7 +2197,7 @@ class Podcast extends Plugin {
         // Abbruch nach 1 KB (CURLE_WRITE_ERROR) ist gewollt, wenn eine Antwort da ist
         if ($errno !== 0 && !($errno === 23 && $status > 0)) {
             Log::set(__METHOD__ . LOG_SEP . 'curl ' . $errno . ': ' . $error);
-            return ['error' => 'Der Server ist nicht erreichbar (Verbindungsfehler oder Zeitüberschreitung).'];
+            return ['error' => $this->text('remote-unreachable')];
         }
 
         $contentLength = null;
@@ -2152,58 +2261,49 @@ class Podcast extends Plugin {
     // ── Apple-Kanalangaben (Roadmap 016)
 
     /**
-     * Apple-Podcasts-Kategorien: englischer Name (so im Feed) => [deutscher
-     * Name, [Unterkategorie englisch => deutsch]]. Namen und Reihenfolge wie auf
-     * Apples Seite „Apple Podcasts-Kategorien“ (podcasters.apple.com/support/1691,
-     * Stand 2026), deutsche Namen wie in Apple Podcasts.
+     * Apple-Podcasts-Kategorien: Kategorie => Unterkategorien, mit den
+     * englischen Namen wie im Feed. Namen und Reihenfolge wie auf Apples Seite
+     * „Apple Podcasts-Kategorien“ (podcasters.apple.com/support/1691, Stand
+     * 2026). Angezeigt in der Sitesprache: Übersetzungen stehen in den
+     * Sprachdateien unter „podcast-apple-categories“ (deutsch wie in Apple
+     * Podcasts), sonst der englische Name.
      */
     private const APPLE_CATEGORIES = [
-        'Arts' => ['Kunst', ['Books' => 'Bücher', 'Design' => 'Design', 'Fashion & Beauty' => 'Mode und Schönheit',
-            'Food' => 'Essen', 'Performing Arts' => 'Darstellende Kunst', 'Visual Arts' => 'Bildende Kunst']],
-        'Business' => ['Wirtschaft', ['Careers' => 'Karriere', 'Entrepreneurship' => 'Firmengründung',
-            'Investing' => 'Geldanlage', 'Management' => 'Management', 'Marketing' => 'Marketing',
-            'Non-Profit' => 'Gemeinnützig']],
-        'Comedy' => ['Comedy', ['Comedy Interviews' => 'Comedy-Interviews', 'Improv' => 'Impro-Comedy',
-            'Stand-Up' => 'Stand-Up-Comedy']],
-        'Education' => ['Bildung', ['Courses' => 'Kurse', 'How To' => 'So geht’s',
-            'Language Learning' => 'Sprachen lernen', 'Self-Improvement' => 'Selbstverwirklichung']],
-        'Fiction' => ['Fiktion', ['Comedy Fiction' => 'Comedy-Fiction', 'Drama' => 'Drama',
-            'Science Fiction' => 'Science-Fiction']],
-        'Government' => ['Regierung', []],
-        'History' => ['Geschichte', []],
-        'Health & Fitness' => ['Gesundheit und Fitness', ['Alternative Health' => 'Alternative Therapien',
-            'Fitness' => 'Fitness', 'Medicine' => 'Medizin', 'Mental Health' => 'Mentale Gesundheit',
-            'Nutrition' => 'Ernährung', 'Sexuality' => 'Sexualität']],
-        'Kids & Family' => ['Kinder und Familie', ['Education for Kids' => 'Bildung für Kinder',
-            'Parenting' => 'Kindererziehung', 'Pets & Animals' => 'Haus- und Wildtiere',
-            'Stories for Kids' => 'Geschichten für Kinder']],
-        'Leisure' => ['Freizeit', ['Animation & Manga' => 'Animation und Manga', 'Automotive' => 'Rund ums Auto',
-            'Aviation' => 'Luftfahrt', 'Crafts' => 'Basteln', 'Games' => 'Spiele', 'Hobbies' => 'Hobbys',
-            'Home & Garden' => 'Heim und Garten', 'Video Games' => 'Videospiele']],
-        'Music' => ['Musik', ['Music Commentary' => 'Musikrezensionen', 'Music History' => 'Musikgeschichte',
-            'Music Interviews' => 'Musikinterviews']],
-        'News' => ['Nachrichten', ['Business News' => 'Wirtschaftsnachrichten', 'Daily News' => 'Nachrichten des Tages',
-            'Entertainment News' => 'Neues aus der Unterhaltung', 'News Commentary' => 'Kommentare',
-            'Politics' => 'Politik', 'Sports News' => 'Sportnews', 'Tech News' => 'Neues aus der Technik']],
-        'Religion & Spirituality' => ['Religion und Spiritualität', ['Buddhism' => 'Buddhismus',
-            'Christianity' => 'Christentum', 'Hinduism' => 'Hinduismus', 'Islam' => 'Islam', 'Judaism' => 'Judentum',
-            'Religion' => 'Religion', 'Spirituality' => 'Spiritualität']],
-        'Science' => ['Wissenschaft', ['Astronomy' => 'Astronomie', 'Chemistry' => 'Chemie',
-            'Earth Sciences' => 'Geowissenschaften', 'Life Sciences' => 'Biowissenschaften',
-            'Mathematics' => 'Mathematik', 'Natural Sciences' => 'Naturwissenschaften', 'Nature' => 'Natur',
-            'Physics' => 'Physik', 'Social Sciences' => 'Sozialwissenschaften']],
-        'Society & Culture' => ['Gesellschaft und Kultur', ['Documentary' => 'Dokumentation',
-            'Personal Journals' => 'Tagebücher', 'Philosophy' => 'Philosophie',
-            'Places & Travel' => 'Reisen und Orte', 'Relationships' => 'Beziehungen']],
-        'Sports' => ['Sport', ['Baseball' => 'Baseball', 'Basketball' => 'Basketball', 'Cricket' => 'Cricket',
-            'Fantasy Sports' => 'Fantasy Sport', 'Football' => 'American Football', 'Golf' => 'Golf',
-            'Hockey' => 'Eishockey', 'Rugby' => 'Rugby', 'Running' => 'Laufen', 'Soccer' => 'Fußball',
-            'Swimming' => 'Schwimmen', 'Tennis' => 'Tennis', 'Volleyball' => 'Volleyball',
-            'Wilderness' => 'Abenteuer Natur', 'Wrestling' => 'Wrestling']],
-        'Technology' => ['Technologie', []],
-        'True Crime' => ['Wahre Kriminalfälle', []],
-        'TV & Film' => ['TV und Film', ['After Shows' => 'Backstage', 'Film History' => 'Filmgeschichte',
-            'Film Interviews' => 'Filminterviews', 'Film Reviews' => 'Filmrezensionen', 'TV Reviews' => 'TV-Rezensionen']],
+        'Arts' => ['Books', 'Design', 'Fashion & Beauty', 'Food', 'Performing Arts', 'Visual Arts'],
+        'Business' => ['Careers', 'Entrepreneurship', 'Investing', 'Management', 'Marketing', 'Non-Profit'],
+        'Comedy' => ['Comedy Interviews', 'Improv', 'Stand-Up'],
+        'Education' => ['Courses', 'How To', 'Language Learning', 'Self-Improvement'],
+        'Fiction' => ['Comedy Fiction', 'Drama', 'Science Fiction'],
+        'Government' => [],
+        'History' => [],
+        'Health & Fitness' => [
+            'Alternative Health', 'Fitness', 'Medicine', 'Mental Health', 'Nutrition', 'Sexuality',
+        ],
+        'Kids & Family' => ['Education for Kids', 'Parenting', 'Pets & Animals', 'Stories for Kids'],
+        'Leisure' => [
+            'Animation & Manga', 'Automotive', 'Aviation', 'Crafts', 'Games', 'Hobbies', 'Home & Garden',
+            'Video Games',
+        ],
+        'Music' => ['Music Commentary', 'Music History', 'Music Interviews'],
+        'News' => [
+            'Business News', 'Daily News', 'Entertainment News', 'News Commentary', 'Politics', 'Sports News',
+            'Tech News',
+        ],
+        'Religion & Spirituality' => [
+            'Buddhism', 'Christianity', 'Hinduism', 'Islam', 'Judaism', 'Religion', 'Spirituality',
+        ],
+        'Science' => [
+            'Astronomy', 'Chemistry', 'Earth Sciences', 'Life Sciences', 'Mathematics', 'Natural Sciences', 'Nature',
+            'Physics', 'Social Sciences',
+        ],
+        'Society & Culture' => ['Documentary', 'Personal Journals', 'Philosophy', 'Places & Travel', 'Relationships'],
+        'Sports' => [
+            'Baseball', 'Basketball', 'Cricket', 'Fantasy Sports', 'Football', 'Golf', 'Hockey', 'Rugby', 'Running',
+            'Soccer', 'Swimming', 'Tennis', 'Volleyball', 'Wilderness', 'Wrestling',
+        ],
+        'Technology' => [],
+        'True Crime' => [],
+        'TV & Film' => ['After Shows', 'Film History', 'Film Interviews', 'Film Reviews', 'TV Reviews'],
     ];
 
     /**
@@ -2218,14 +2318,14 @@ class Podcast extends Plugin {
             return null;
         }
         $parts = array_map('trim', explode('>', $value, 2));
-        foreach (self::APPLE_CATEGORIES as $category => $info) {
+        foreach (self::APPLE_CATEGORIES as $category => $subs) {
             if (strcasecmp($category, $parts[0]) !== 0) {
                 continue;
             }
             if (!isset($parts[1]) || $parts[1] === '') {
                 return [$category, ''];
             }
-            foreach (array_keys($info[1]) as $sub) {
+            foreach ($subs as $sub) {
                 if (strcasecmp($sub, $parts[1]) === 0) {
                     return [$category, $sub];
                 }
@@ -2236,9 +2336,10 @@ class Podcast extends Plugin {
     }
 
     /**
-     * Auswahlliste der Apple-Kategorien für form(): deutsch angezeigt mit dem
-     * englischen Namen, nach deutscher Bezeichnung sortiert, je Kategorie eine
-     * Gruppe mit der Kategorie selbst und ihren Unterkategorien.
+     * Auswahlliste der Apple-Kategorien für form(): in der Sitesprache mit dem
+     * englischen Namen dahinter, wenn er abweicht; nach angezeigtem Namen
+     * sortiert, je Kategorie eine Gruppe mit der Kategorie selbst und ihren
+     * Unterkategorien.
      */
     private function categorySelect() {
         $esc      = function ($value) { return htmlspecialchars((string) $value, ENT_QUOTES); };
@@ -2249,33 +2350,35 @@ class Podcast extends Plugin {
                 . $esc($label) . '</option>';
         };
         $byLabel  = function ($a, $b) { return strnatcasecmp($a, $b); };
-        // Englischen Namen nur zeigen, wenn er sich vom deutschen unterscheidet
-        $name     = function ($de, $en) { return $de === $en ? $de : $de . ' (' . $en . ')'; };
+        // Englischen Namen nur zeigen, wenn er sich vom angezeigten unterscheidet
+        $name     = function ($label, $en) { return $label === $en ? $label : $label . ' (' . $en . ')'; };
 
         $categories = [];
-        foreach (self::APPLE_CATEGORIES as $category => $info) {
-            $categories[$category] = $info[0];
+        foreach (array_keys(self::APPLE_CATEGORIES) as $category) {
+            $categories[$category] = $this->categoryName($category);
         }
         uasort($categories, $byLabel);
 
-        $html = '<div><label for="podcast-category">Kategorie</label>'
+        $html = '<div><label for="podcast-category">' . $this->html('category') . '</label>'
             . '<select id="podcast-category" name="category">'
-            . $option('', 'Bitte wählen …');
+            . $option('', $this->text('category-choose'));
         foreach ($categories as $category => $label) {
             $html .= '<optgroup label="' . $esc($name($label, $category)) . '">'
                 . $option($category, $name($label, $category));
-            $subs = self::APPLE_CATEGORIES[$category][1];
+            $subs = [];
+            foreach (self::APPLE_CATEGORIES[$category] as $sub) {
+                $subs[$sub] = $this->categoryName($sub);
+            }
             uasort($subs, $byLabel);
             foreach ($subs as $sub => $subLabel) {
                 $html .= $option($category . ' > ' . $sub, $label . ' → ' . $name($subLabel, $sub));
             }
             $html .= '</optgroup>';
         }
-        $html .= '</select><span class="tip">Apple wertet die Kategorie für Suche und Charts aus; im Feed steht der englische Name.';
+        $html .= '</select><span class="tip">' . $this->html('category-tip');
         $stored = trim($this->setting('category'));
         if ($stored !== '' && $selected === null) {
-            $html .= ' <strong>Bisheriger Eintrag „' . $esc($stored) . '“ ist keine Apple-Kategorie – bitte eine auswählen.'
-                . ' Bis dahin steht keine Kategorie im Feed.</strong>';
+            $html .= ' <strong>' . $this->html('category-invalid', ['value' => $stored]) . '</strong>';
         }
         return $html . '</span></div>';
     }
@@ -2414,22 +2517,23 @@ class Podcast extends Plugin {
      * Definitionen der Podcast-Felder für die Custom-Fields-Einstellung der Site.
      */
     private function customFieldDefinitions() {
+        // Beschriftung im Bludit-Editor in der Sitesprache beim Anlegen der Felder
         $labels = [
-            'podcast_audio_url'    => 'Podcast: Audio-URL',
-            'podcast_audio_length' => 'Podcast: Dateigröße (Bytes)',
-            'podcast_duration'     => 'Podcast: Dauer (HH:MM:SS)',
-            'podcast_episode'      => 'Podcast: Episode #',
-            'podcast_season'       => 'Podcast: Staffel',
-            'podcast_type'         => 'Podcast: Typ (full/trailer/bonus)',
-            'podcast_explicit'     => 'Podcast: Explicit',
-            'podcast_image'        => 'Podcast: Episodenbild-URL',
+            'podcast_audio_url'    => $this->text('field-audio-url'),
+            'podcast_audio_length' => $this->text('field-audio-length'),
+            'podcast_duration'     => $this->text('field-duration'),
+            'podcast_episode'      => $this->text('field-episode'),
+            'podcast_season'       => $this->text('field-season'),
+            'podcast_type'         => $this->text('field-type'),
+            'podcast_explicit'     => $this->text('field-explicit'),
+            'podcast_image'        => $this->text('field-image'),
         ];
         $definitions = [];
         foreach ($labels as $field => $label) {
             $definitions[$field] = [
                 'type'  => $field === 'podcast_explicit' ? 'bool' : 'string',
                 'label' => $label,
-                'tip'   => 'Wird vom Podcast-Plugin gepflegt (Admin → Podcast).',
+                'tip'   => $this->text('field-tip'),
             ];
         }
         return $definitions;

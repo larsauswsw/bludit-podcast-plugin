@@ -17,28 +17,24 @@ Grundlage ist das Code-Review vom 2026-10-30
 geprüft gegen den Bludit-Quellcode **3.22.0** und die offizielle
 Entwickler-Doku (`bludit/documentation-english`).
 
-## Stand und nächste Schritte (2026-11-01, Abend)
+## Stand und nächste Schritte (2026-11-02)
 
-Einstieg für die nächste Session. `main` ist grün (CI aus 036), alles bis #91
-gemergt.
+Einstieg für die nächste Session. `main` ist grün (CI aus 036), alles bis #92
+gemergt; 014 liegt auf `claude/admin-i18n`.
 
 - **Erledigt für 1.0:** alle Pflichtpunkte und alles aus „Für 1.0 empfohlen“,
-  dazu 009, 017, 043, 016 (Feed besteht den Validator), 022 (Cover-Upload) und
-  036 (Unit-, Integrationstests, PHPStan, ESLint, gitleaks in der CI). Vorgezogen
-  aus 019: Namespace, `podcast:guid`, `podcast:locked`.
-- **Als Nächstes: 014** (Oberfläche Deutsch/Englisch), vom Inhaber für
-  2026-11-02 vorgesehen. Zu beachten: Bludit lädt `languages/<Sitesprache>.json`
-  (`de_DE`, `de_AT`, `de_CH`, sonst `en`); Texte im JavaScript per `json_encode`
-  übergeben; die Apple-Kategorien haben deutsche Namen in `APPLE_CATEGORIES`
-  (für Englisch die englischen anzeigen); Unit- und Integrationstests prüfen
-  heute deutsche Texte und müssen mitwachsen.
-- **Danach: 038** (Release). Offen beim Inhaber: Lizenzentscheidung, Repository
+  dazu 009, 017, 043, 016 (Feed besteht den Validator), 022 (Cover-Upload),
+  036 (Unit-, Integrationstests, PHPStan, ESLint, gitleaks in der CI) und 014
+  (Oberfläche Deutsch/Englisch, Texte in `languages/*.json`). Vorgezogen aus
+  019: Namespace, `podcast:guid`, `podcast:locked`.
+- **Als Nächstes: 038** (Release). Offen beim Inhaber: Lizenzentscheidung, Repository
   auf privat stellen. Vorbereiten kann Claude: `CHANGELOG.md` (1.0.0),
   Release-Skript (öffentliches Repo, Tag, ZIP), öffentliche README in `public/`
   um die neuen Funktionen ergänzen (Apple-Kategorien, Abo-Dienste,
-  Cover-Upload, Shownotes, GUID/locked, Tests).
-- **Installationstest offen:** nur F19 (Meldung bei Datei über dem Limit, nicht
-  live geprüft); C12/J39 optional, I35 trifft nicht zu.
+  Cover-Upload, Shownotes, GUID/locked, Tests); die Sprachen stehen dort schon
+  (mit 014), im öffentlichen Repo noch nicht.
+- **Installationstest offen:** U70/U71 (Sprache, 014) und F19 (Meldung bei
+  Datei über dem Limit, nicht live geprüft); C12/J39 optional, I35 trifft nicht zu.
 - **Arbeitsweise:** PR anlegen und mergen nur auf Zuruf des Inhabers; bestandene
   Installationstests als kleiner Doku-PR abhaken; vor dem Merge grüne CI.
 
@@ -103,7 +99,7 @@ dokumentiert.
 | 011 | Upload- und Eingabe-Härtung | mittel | S | [#12](https://github.com/larsauswsw/bludit-podcast-plugin/issues/12) ✅ |
 | 012 | Episoden-Metadaten als Bludit Custom Fields speichern | mittel | L | [#13](https://github.com/larsauswsw/bludit-podcast-plugin/issues/13) ✅ |
 | 013 | Feed cachen, HTTP-Caching & Performance | mittel | M | [#14](https://github.com/larsauswsw/bludit-podcast-plugin/issues/14) |
-| 014 | Mehrsprachigkeit der Admin-UI (de_DE/en über `$L`) | hoch | M | [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15) |
+| 014 | Mehrsprachigkeit der Admin-UI (de_DE/en über `$L`) | hoch | M | [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15) ✅ |
 | 015 | Konfigurierbare Episoden-Zuordnung (Tag oder Kategorie) | niedrig | M | [#16](https://github.com/larsauswsw/bludit-podcast-plugin/issues/16) |
 | 016 | Apple-Podcasts-Konformität des Feeds | hoch | M | [#17](https://github.com/larsauswsw/bludit-podcast-plugin/issues/17) ✅ |
 | 017 | Feed-Discovery & automatische Feed-URL | niedrig | S | [#18](https://github.com/larsauswsw/bludit-podcast-plugin/issues/18) ✅ |
@@ -148,7 +144,7 @@ Seiteninhalt, 008 Fehlermeldungen, 037 Doku. Außerdem 009 Datum/Zeitzone, 017 a
 Kanaleinstellungen gruppiert, 016 Apple-Konformität des Feeds. Damit ist alles
 aus „Für 1.0 empfohlen“ umgesetzt. Vom Inhaber am 2026-11-01 zusätzlich für 1.0
 festgelegt: 022, 036, 014 (in dieser Reihenfolge), danach 038 (Release-Prozess);
-022 und 036 sind erledigt, offen sind 014 und 038.
+022, 036 und 014 sind erledigt, offen ist 038.
 Teilweise vorgezogen: URL-/Typprüfung aus 011, `CLAUDE.md` aus 037, toter Code
 aus 035 (mit 010).
 

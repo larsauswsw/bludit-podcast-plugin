@@ -5,6 +5,24 @@
 (function () {
     'use strict';
 
+    // ── Texte (Roadmap 014) ───────────────────────────────────────────
+    // Vom Plugin in der Sitesprache übergeben (adminScript(), Schlüssel
+    // „js-…“ aus languages/*.json); {name} wird durch vars.name ersetzt.
+    var TEXTS = (typeof PODCAST_TEXTS === 'object' && PODCAST_TEXTS) || {};
+
+    function t(key, vars) {
+        var text = Object.prototype.hasOwnProperty.call(TEXTS, key) ? String(TEXTS[key]) : key;
+        if (!vars) return text;
+        return text.replace(/\{([a-z]+)\}/g, function (match, name) {
+            return Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match;
+        });
+    }
+
+    // Bytes als MB mit höchstens einer Nachkommastelle, z. B. „0,5 MB“
+    function formatMB(bytes) {
+        return (bytes / 1048576).toFixed(1).replace(/\.0$/, '').replace('.', t('decimal-separator')) + ' MB';
+    }
+
     // ── DOM refs ──────────────────────────────────────────────────────
     var list      = document.getElementById('podcast-episode-list');
     var form      = document.getElementById('podcast-episode-form');
@@ -52,8 +70,7 @@
             if (!file) return;
             var maxFile = parseInt(coverFile.dataset.maxFile, 10) || 0;
             if (maxFile && file.size > maxFile) {
-                setCoverStatus('Die Datei ist größer als das Upload-Limit von ' +
-                    (maxFile / 1048576).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' MB.', true);
+                setCoverStatus(t('cover-too-large', { limit: formatMB(maxFile) }), true);
                 coverFile.value = '';
                 return;
             }
@@ -62,24 +79,24 @@
             fd.append('podcast_api_action', 'upload_cover');
             fd.append('cover_file', file);
             coverFile.disabled = true;
-            setCoverStatus('Wird hochgeladen und geprüft …', false);
+            setCoverStatus(t('cover-uploading'), false);
             fetch(coverFile.dataset.apiUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(function (response) {
                     return response.json().catch(function () {
-                        throw new Error('Unerwartete Antwort vom Server. Bitte die Seite neu laden.');
+                        throw new Error(t('unexpected-response'));
                     });
                 })
                 .then(function (data) {
                     if (!data || data.error || !data.url) {
-                        throw new Error(data && data.error ? data.error : 'Upload fehlgeschlagen.');
+                        throw new Error(data && data.error ? data.error : t('error-upload-failed'));
                     }
                     coverUrl.value = data.url;
                     coverPreview.src = data.url;
                     coverPreview.hidden = false;
-                    setCoverStatus('Hochgeladen und geprüft. Zum Übernehmen oben „Speichern“ klicken.', false);
+                    setCoverStatus(t('cover-uploaded'), false);
                 })
                 .catch(function (err) {
-                    setCoverStatus(err && err.message ? err.message : 'Netzwerkfehler beim Hochladen.', true);
+                    setCoverStatus(err && err.message ? err.message : t('network-error-upload'), true);
                 })
                 .then(function () {
                     coverFile.disabled = false;
@@ -225,7 +242,7 @@
 
     // Fixiert/statisch gibt es im Formular nur, wenn die Episode diesen Typ schon
     // hat (im Bludit-Editor gesetzt); dann als zusätzliche Option, damit er bleibt.
-    var EXTRA_STATUS = { sticky: 'Fixiert', static: 'Statisch' };
+    var EXTRA_STATUS = { sticky: t('status-sticky'), static: t('status-static') };
 
     function setStatus(type) {
         var extra = peStatus.querySelector('option[data-extra]');
@@ -265,10 +282,6 @@
         errorBox.hidden      = false;
     }
 
-    function formatMB(bytes) {
-        return (bytes / 1048576).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' MB';
-    }
-
     // Liefert eine Fehlermeldung, wenn eine Datei oder alle zusammen zu groß sind
     function checkUploadLimits(files) {
         var limitEl = document.getElementById('pe-upload-limit');
@@ -278,20 +291,15 @@
         var total   = 0;
         for (var i = 0; i < files.length; i++) {
             if (maxFile && files[i].size > maxFile) {
-                return 'Die Datei „' + files[i].name + '“ (' + formatMB(files[i].size) +
-                    ') ist größer als das Upload-Limit von ' + formatMB(maxFile) + '.';
+                return t('file-too-large', { name: files[i].name, size: formatMB(files[i].size), limit: formatMB(maxFile) });
             }
             total += files[i].size;
         }
         if (maxPost && total > maxPost) {
-            return 'Audio und Bild zusammen (' + formatMB(total) + ') überschreiten das Server-Limit von ' +
-                formatMB(maxPost) + '. Bitte einzeln hochladen oder eine URL verwenden.';
+            return t('files-too-large', { size: formatMB(total), limit: formatMB(maxPost) });
         }
         return '';
     }
-
-    var SESSION_ERROR = 'Sitzung abgelaufen oder Sicherheits-Token ungültig. ' +
-        'Bitte neu anmelden und es noch einmal versuchen.';
 
     // Die API antwortet immer mit JSON. Alles andere kommt nicht vom Plugin:
     // - Umleitung zur Anmeldung: Bludit hat die Anfrage abgelehnt (Sitzung
@@ -305,15 +313,13 @@
         }
         var msg;
         if (response.redirected && /\/login\/?$/.test(new URL(response.url).pathname)) {
-            msg = SESSION_ERROR;
+            msg = t('session-expired');
         } else if (response.status === 413) {
-            msg = 'Die Anfrage ist für den Webserver zu groß (HTTP 413). Bitte eine kleinere Datei ' +
-                'oder eine Audio-URL verwenden; das Limit legt die Server-Konfiguration fest ' +
-                '(z. B. LimitRequestBody bei Apache, client_max_body_size bei Nginx).';
+            msg = t('request-too-large');
         } else if (!response.ok) {
-            msg = 'Serverfehler (HTTP ' + response.status + '). Details stehen im Bludit- bzw. PHP-Fehlerlog.';
+            msg = t('server-error', { status: response.status });
         } else {
-            msg = 'Unerwartete Antwort vom Server. Bitte die Seite neu laden und es noch einmal versuchen.';
+            msg = t('unexpected-response');
         }
         var err = new Error(msg);
         err.isServerResponse = true;
@@ -351,7 +357,7 @@
     newBtn.addEventListener('click', function (e) {
         e.preventDefault();
         clearForm();
-        showForm('Neue Episode');
+        showForm(t('new-episode'));
     });
 
     // ── cancel ────────────────────────────────────────────────────────
@@ -388,7 +394,7 @@
         // Modus bereits auf „URL“ gesetzt
         updateFormatHint();
         updateImagePreview();
-        showForm('Episode bearbeiten');
+        showForm(t('edit-episode'));
     });
 
     // ── delete ────────────────────────────────────────────────────────
@@ -399,7 +405,7 @@
         if (!row) return;
         e.preventDefault();
         var title = row.dataset.title;
-        var question = title ? 'Episode „' + title + '“ wirklich löschen?' : 'Episode ohne Titel wirklich löschen?';
+        var question = title ? t('confirm-delete', { title: title }) : t('confirm-delete-untitled');
         if (!confirm(question)) return;
 
         var body = new URLSearchParams({
@@ -412,13 +418,13 @@
             .then(readJson)
             .then(function (data) {
                 if (data.error) {
-                    alert('Fehler: ' + data.error);
+                    alert(t('error-message', { message: data.error }));
                     return;
                 }
                 location.reload();
             })
             .catch(function (err) {
-                alert(err && err.isServerResponse ? err.message : 'Netzwerkfehler beim Löschen.');
+                alert(err && err.isServerResponse ? err.message : t('network-error-delete'));
             });
     });
 
@@ -432,24 +438,24 @@
         var audioFile = peAudioFile.files[0];
 
         if (!title) {
-            showError('Bitte Titel eingeben.');
+            showError(t('error-title'));
             return;
         }
         if (!peContent.value.trim()) {
-            showError('Bitte eine Beschreibung eingeben.');
+            showError(t('error-description'));
             return;
         }
         if (audioMode === 'url' && !audioUrl) {
-            showError('Bitte Audio-URL eingeben oder eine Datei hochladen.');
+            showError(t('error-audio-url'));
             return;
         }
         if (audioMode === 'file' && !audioFile) {
-            showError('Bitte eine Audiodatei auswählen.');
+            showError(t('error-audio-file'));
             return;
         }
         // Unvollständige Eingaben liefert das Feld als leeren Wert
         if (!peDate.value) {
-            showError('Bitte ein gültiges Veröffentlichungsdatum eingeben.');
+            showError(t('error-date'));
             return;
         }
 
@@ -508,7 +514,7 @@
             })
             .catch(function (err) {
                 setSaving(false);
-                showError(err && err.isServerResponse ? err.message : 'Netzwerkfehler beim Speichern.');
+                showError(err && err.isServerResponse ? err.message : t('network-error-save'));
             });
     });
 

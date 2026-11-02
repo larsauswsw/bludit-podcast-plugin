@@ -229,6 +229,10 @@ Lokal zusätzlich getestet (nicht auf der Live-Seite nötig): Bludit unter `/blo
   ```
 - [x] T69 **Episode bearbeiten → Episodenbild**: Bei einer `https://`-Adresse oder einer gewählten Datei erscheint eine kleine Vorschau. Ein zu kleines Bild (z. B. 800 × 800 px) hochladen und speichern → Hinweis über der Liste „Episodenbild gespeichert, aber es passt nicht zu Apples Vorgaben …“; die Episode ist trotzdem gespeichert.
 
+## U · Sprache der Oberfläche (014)
+- [ ] U70 Website auf Deutsch: **Admin → Podcast**, Formular und **Kanaleinstellungen** sehen aus wie bisher (z. B. „Neue Episode“, „Kanaleinstellungen“, Kategorie „Kinder und Familie → Kindererziehung (Parenting)“). Der Browser-Tab heißt jetzt „Podcast – Episoden - Bludit“ (vorher „Bludit“). Leeres Formular speichern → „Bitte Titel eingeben.“
+- [ ] U71 **Einstellungen → Allgemein → Sprache → English** speichern. **Admin → Podcast**: „New episode“, „Channel settings“, Datum als `2026-11-02`; Formular englisch, leeres Formular speichern → „Please enter a title.“; ☰ → **Delete** → Rückfrage „Really delete the episode “…”?“ (abbrechen). **Kanaleinstellungen**: englische Texte, die Kategorie nur mit englischem Namen, gewählte Werte unverändert; nach **Save** ist der Feed unverändert. Danach die Sprache zurück auf Deutsch.
+
 ## Bekannte offene Punkte (keine Testfehler)
 - Dashboard „Aktivitäten“ zeigt `&` in Titeln als `&amp;`: Bludit-Fehler (`syslog.class.php` speichert die Notiz escaped, `admin/views/dashboard.php` escaped erneut), betrifft auch Seiten aus dem Bludit-Editor; vom Plugin nicht behebbar.
 

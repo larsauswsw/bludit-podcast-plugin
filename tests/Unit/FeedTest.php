@@ -33,7 +33,7 @@ class FeedTest extends PodcastTestCase
         $reflection = new ReflectionClassConstant(Podcast::class, 'APPLE_CATEGORIES');
         $categories = $reflection->getValue();
         $this->assertCount(19, $categories);
-        $this->assertSame(91, array_sum(array_map(function ($c) { return count($c[1]); }, $categories)));
+        $this->assertSame(91, array_sum(array_map('count', $categories)));
     }
 
     /** @dataProvider categoryProvider */

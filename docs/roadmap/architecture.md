@@ -89,7 +89,7 @@ Workspace schreiben, in `beforeAll()` nur ausliefern.
 
 ## 014 · Mehrsprachigkeit der Admin-UI (de_DE/en über `$L`)
 
-Status: planned · Priorität: hoch · Aufwand: M · Bereich: `plugin.php`, `podcast-admin.js`, `languages/` · Issue: [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15)
+Status: done · Priorität: hoch · Aufwand: M · Bereich: `plugin.php`, `podcast-admin.js`, `languages/` · Issue: [#15](https://github.com/larsauswsw/bludit-podcast-plugin/issues/15)
 
 **Beschreibung**
 
@@ -102,11 +102,31 @@ Name und Beschreibung für die Plugin-Liste.
 
 **Akzeptanzkriterien**
 
-- [ ] Alle UI-Texte über `$L->get('…')` mit Schlüsseln in `en.json` und `de_DE.json`
-      (Kopien für `de_AT.json`/`de_CH.json`; Dateien angelegt, bisher nur
-      `plugin-data`).
-- [ ] Texte für das JS werden per `json_encode` als Objekt übergeben.
-- [ ] Deutsche Bludit-Installation zeigt deutsche, englische zeigt englische Texte.
+- [x] Alle UI-Texte über ~~`$L->get('…')`~~ die Sprachdateien mit Schlüsseln
+      in `en.json` und `de_DE.json` (Kopien für `de_AT.json`/`de_CH.json`).
+- [x] Texte für das JS werden per `json_encode` als Objekt übergeben.
+- [x] Deutsche Bludit-Installation zeigt deutsche, englische zeigt englische Texte.
+
+**Umsetzung:** Rund 200 Texte (Admin-Seiten, Kanaleinstellungen, Meldungen der
+Episoden-API, Upload- und Abfragefehler, Beschriftungen der Custom Fields,
+„Episode herunterladen“ im HTML5-Player) stehen unter `podcast-texts` in
+`languages/*.json`. Nicht über `$L`: Bludit erzeugt das Plugin, bevor es die
+Sprachdatei in `$L` übernimmt — die Meldung zu großer Uploads im Konstruktor
+käme sonst immer englisch —, und Schlüssel auf oberster Ebene würden Bludits
+eigene Übersetzungen (z. B. `save`) überschreiben. `language()` lädt die Datei
+der Sitesprache selbst (Sprachcode per Muster geprüft), fehlende Schlüssel und
+Sprachen ohne eigene Datei englisch. `text()` liefert Klartext, `html()` escapt
+Text und Werte, Markup aus dem Code nur per drittem Argument. Das Skript
+bekommt die `js-…`-Texte als `PODCAST_TEXTS`, Zahlen mit dem Dezimalzeichen
+der Sprache; das Datum in der Liste nutzt das Format der Sprache. Die Apple-
+Kategorien stehen nur noch englisch im Code; die deutschen Namen liegen unter
+`podcast-apple-categories` in den deutschen Dateien, Englisch zeigt die
+Originalnamen. `de_CH.json` schreibt „ss“ statt „ß“ wie Bludits eigene Datei.
+Nebenbei: Der Titel des Browser-Tabs („Podcast – Episoden - Bludit“) wird jetzt
+in `adminController()` gesetzt; in `adminView()` kam er zu spät. Tests:
+`LanguageTest` (gleiche Schlüssel und Platzhalter, jeder Schlüssel verwendet
+und vorhanden, Varianten, Rückfall, Escaping), Integrationstest mit
+umgestellter Sitesprache.
 
 **Betroffene Dateien**
 

@@ -15,6 +15,7 @@ export default [
                 // Von Bludit (bl-kernel/js/variables.php) bzw. adminView() gesetzt
                 tokenCSRF: 'readonly',
                 PODCAST_API_URL: 'readonly',
+                PODCAST_TEXTS: 'readonly',
             },
         },
         rules: {
