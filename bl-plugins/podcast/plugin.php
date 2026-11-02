@@ -908,7 +908,7 @@ class Podcast extends Plugin {
                     </td>
                     <td class="pt-3 text-center d-none d-md-table-cell"><?php echo htmlspecialchars($season) ?></td>
                     <td class="pt-3 text-center d-none d-md-table-cell"><?php echo htmlspecialchars($number) ?></td>
-                    <td class="pt-3 d-none d-lg-table-cell"><?php echo htmlspecialchars($get('itunes_type') ?: 'full') ?></td>
+                    <td class="pt-3 d-none d-lg-table-cell"><?php echo htmlspecialchars($this->episodeTypeLabel($get('itunes_type')), ENT_QUOTES) ?></td>
                     <td class="pt-3 text-center align-middle">
                       <div class="dropdown actionsDropdown">
                         <button class="btn btn-link text-secondary p-1 actionsDropdownToggle" type="button"
@@ -992,9 +992,9 @@ class Podcast extends Plugin {
             <div class="form-group col-6 col-md-3">
               <label for="pe-type"><?php echo $this->html('type') ?></label>
               <select class="custom-select" id="pe-type">
-                <option value="full">full</option>
-                <option value="trailer">trailer</option>
-                <option value="bonus">bonus</option>
+                <option value="full"><?php echo htmlspecialchars($this->episodeTypeLabel('full'), ENT_QUOTES) ?></option>
+                <option value="trailer"><?php echo htmlspecialchars($this->episodeTypeLabel('trailer'), ENT_QUOTES) ?></option>
+                <option value="bonus"><?php echo htmlspecialchars($this->episodeTypeLabel('bonus'), ENT_QUOTES) ?></option>
               </select>
             </div>
             <div class="form-group col-6 col-md-3">
@@ -2381,6 +2381,21 @@ class Podcast extends Plugin {
             $html .= ' <strong>' . $this->html('category-invalid', ['value' => $stored]) . '</strong>';
         }
         return $html . '</span></div>';
+    }
+
+    /**
+     * Episodentyp zur Anzeige in der Sitesprache; gespeichert und im Feed
+     * bleibt Apples Wert (full, trailer, bonus), unbekannte Werte gelten als full.
+     */
+    private function episodeTypeLabel($type) {
+        switch ($type) {
+            case 'trailer':
+                return $this->text('episode-type-trailer');
+            case 'bonus':
+                return $this->text('episode-type-bonus');
+            default:
+                return $this->text('episode-type-full');
+        }
     }
 
     /** Art des Podcasts für <itunes:type>: episodic (Standard) oder serial. */

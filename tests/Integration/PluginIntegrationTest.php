@@ -216,6 +216,7 @@ class PluginIntegrationTest extends TestCase
         $this->assertStringContainsString('var PODCAST_TEXTS = {', $episodes);
         $this->assertStringContainsString('"new-episode":"New episode"', $episodes);
         $this->assertStringNotContainsString('Neue Episode', $episodes);
+        $this->assertStringContainsString('d-lg-table-cell">Full</td>', $episodes, 'Episodentyp übersetzt');
         $this->assertSame('Unknown action', $admin->api(['podcast_api_action' => 'drop_everything'])['error'] ?? null);
         $settings = $admin->get('/admin/configure-plugin/Podcast');
         $this->assertStringContainsString('Apple Podcasts &amp; directories', $settings);
@@ -223,7 +224,10 @@ class PluginIntegrationTest extends TestCase
         $this->assertStringNotContainsString('Kinder und Familie', $settings);
 
         $language('de_DE');
-        $this->assertStringContainsString('Neue Episode', $admin->get('/admin/plugin/podcast'));
+        $episodes = $admin->get('/admin/plugin/podcast');
+        $this->assertStringContainsString('Neue Episode', $episodes);
+        $this->assertStringContainsString('d-lg-table-cell">Vollständig</td>', $episodes);
+        $this->assertStringContainsString('<option value="trailer">Trailer</option>', $episodes);
     }
 
     /** Ohne CSRF-Token meldet Bludit ab; der Aufruf verändert nichts. @depends testEnglishSiteShowsEnglishTexts */
